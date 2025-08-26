@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>שיעורים יומיים</title>
+<style>
+  :root { --bg:#f4f0e6; --bord:#d2691e22; --ink:#8b1538; --header:#8b1538; --gold:#f0c674; }
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,'David Libre',serif;
+    font-size:clamp(18px,1.6vw,24px);
+  }
+  .frame{
+    width:96vw;min-height:94vh;margin:2vh auto;background:#fff;border-radius:18px;
+    box-shadow:0 8px 28px rgba(0,0,0,.15);
+    padding:2vh 2vw;box-sizing:border-box;display:flex;flex-direction:column;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--header);color:var(--gold);
+    border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 20px rgba(0,0,0,.25)
+  }
+  header h1{margin:0;font-size:clamp(24px,4vw,48px);letter-spacing:.06em}
+  header .date{opacity:.9;font-size:clamp(14px,2.2vw,20px)}
+
+  /* פריסה קבועה עם grid-areas */
+  main{
+    flex:1;display:grid;gap:1rem;margin-top:1rem;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-areas:
+      "chumash tehillim tanya"
+      "r3      r1        mitzvos"
+      "hayom   hayom     hayom";
+  }
+  .card{
+    background:#fff;border:2px solid var(--bord);
+    border-radius:16px;padding:1rem;
+    box-shadow:0 4px 16px rgba(210,105,30,.15);
+    display:flex;flex-direction:column;min-height:140px;
+  }
+  .title{font-weight:800;margin-bottom:.4rem;font-size:1.15em;text-align:right;}
+  .content{white-space:pre-wrap;line-height:1.6;font-size:1.05em;}
+  /* שיוך אזורים */
+  #card-chumash{ grid-area:chumash }
+  #card-tehillim{ grid-area:tehillim }
+  #card-tanya{ grid-area:tanya }
+  #card-r3{ grid-area:r3 }
+  #card-r1{ grid-area:r1 }
+  #card-mitzvos{ grid-area:mitzvos }
+  #card-hayom{ grid-area:hayom; min-height:220px }
+  @media (max-width:900px){
+    main{
+      grid-template-columns:1fr;
+      grid-template-areas:
+        "chumash" "tehillim" "tanya"
+        "r3" "r1" "mitzvos"
+        "hayom";
+    }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <h1>שיעורים יומיים</h1>
+    <div class="date" id="date">טוען…</div>
+  </header>
+
+  <!-- כרטיסים קבועים במקומות קבועים -->
+  <main id="grid">
+    <div class="card" id="card-chumash"><div class="title">חומש עם רש״י</div><div class="content" id="chumash"></div></div>
+    <div class="card" id="card-tehillim"><div class="title">תהילים</div><div class="content" id="tehillim"></div></div>
+    <div class="card" id="card-tanya"><div class="title">תניא</div><div class="content" id="tanya"></div></div>
+
+    <div class="card" id="card-r3"><div class="title">רמב״ם – 3 פרקים</div><div class="content" id="r3"></div></div>
+    <div class="card" id="card-r1"><div class="title">רמב״ם – פרק 1</div><div class="content" id="r1"></div></div>
+    <div class="card" id="card-mitzvos"><div class="title">ספר המצוות</div><div class="content" id="mitzvos"></div></div>
+
+    <div class="card" id="card-hayom"><div class="title">היום יום</div><div class="content" id="hayom"></div></div>
+  </main>
+</div>
+
+<script>
+/* === כתובת ה-GViz (עם /d/<ID>/gviz) === */
+const SHEET_GVIZ =
+  "https://docs.google.com/spreadsheets/d/1rbL2BvRR7lK4ZT7ND5FV98I3f0zdaATJAZKCT0LOl7M/gviz/tq?tqx=out:json&gid=892136424";
+
+/* -------- טעינת GViz כ-<script> (JSONP) — עוקף CORS -------- */
+function loadGvizTable(url){
+  return new Promise((resolve, reject) => {
+    const tsUrl = url + "&t=" + Date.now(); // נגד קאש
+    const prev = (window.google && window.google.visualization &&
+                  window.google.visualization.Query &&
+                  window.google.visualization.Query.setResponse)
+                 ? window.google.visualization.Query.setResponse : null;
+
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    window.google.visualization.Query.setResponse = (resp) => {
+      try{
+        if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
+        resolve(resp.table);
+      } finally {
+        if (prev) window.google.visualization.Query.setResponse = prev;
+        script.remove();
+      }
+    };
+
+    const script = document.createElement('script');
+    script.src = tsUrl;
+    script.onerror = () => { if (prev) window.google.visualization.Query.setResponse = prev;
+      reject(new Error('GViz script load error')); };
+    document.body.appendChild(script);
+  });
+}
+
+/* -------- עזרי טבלה/תאריכים -------- */
+function cellValue(cell){
+  if (!cell) return "";
+  if (cell.f != null) return cell.f;
+  if (cell.v == null) return "";
+  if (typeof cell.v === "string" && /^Date\(/.test(cell.v)){
+    const m = cell.v.match(/^Date\((\d+),(\d+),(\d+)/);
+    if (m) return new Date(+m[1], +m[2], +m[3]);
+  }
+  return cell.v;
+}
+function rowToObj(cols, row){
+  const o = {}; cols.forEach((c,i)=>{ const k = c.label || `col_${i}`; o[k] = cellValue(row.c[i]); }); return o;
+}
+function keyYMD(d, tz='Asia/Jerusalem'){
+  const p = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'})
+    .formatToParts(d).reduce((a,p)=>(a[p.type]=p.value,a),{});
+  return `${p.year}-${p.month}-${p.day}`;
+}
+function normalizeDateString(s){
+  if (s==null) return null;
+  if (Object.prototype.toString.call(s)==='[object Date]' && !isNaN(s)) return s;
+  const clean = String(s).replace(/[\u200e\u200f]/g,'').trim();
+  let m = clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/); if (m) return new Date(+m[3],+m[2]-1,+m[1]);
+  m = clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);     if (m) return new Date(+m[1],+m[2]-1,+m[3]);
+  const t = Date.parse(clean); if (!isNaN(t)) return new Date(t);
+  return null;
+}
+function formatGreg(val){
+  if (val instanceof Date){
+    return new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(val);
+  }
+  return String((val??"")).replace(/[\u200e\u200f]/g,'').trim();
+}
+
+/* -------- מיפוי כותרות סלחני -------- */
+function normLabel(s){
+  return String(s||"")
+    .replace(/[\u200e\u200f]/g,'')               // סימני RTL נסתרים
+    .replace(/[\"׳״']/g,'')                      // כל סוגי גרשיים
+    .replace(/רש\s*י/g,'רשי')                    // רש״י -> רשי
+    .replace(/[–—\-]/g,' ')                      // כל סוגי המקף לרווח
+    .replace(/\s+/g,' ')                         // רווחים רציפים
+    .trim()
+    .toLowerCase();
+}
+const TARGETS = {
+  heb:      ["תאריך עברי"],
+  greg:     ["תאריך לועזי"],
+  chumash:  ["חומש עם רשי","חומש עם רשי"],     // כל וריאציה תתאחד ל"רשי"
+  tehillim: ["תהילים","תהלים"],
+  tanya:    ["תניא"],
+  rambam3:  ["רמבם 3 פרקים","רמבם 3 פרק"],
+  rambam1:  ["רמבם פרק 1","רמבם פרק אחד","רמבם 1 פרק"],
+  mitzvos:  ["ספר המצוות"],
+  hayom:    ["היום יום"],
+};
+function buildLabelMap(tableCols){
+  const map = new Map();
+  for (const c of tableCols){
+    const n = normLabel(c.label);
+    if (!map.has(n)) map.set(n, c.label); // שמור את המקור
+  }
+  return map;
+}
+function resolveColumnKeys(tableCols){
+  const labelMap = buildLabelMap(tableCols);
+  const resolved = {};
+  for (const [key, variants] of Object.entries(TARGETS)){
+    let found = null;
+    for (const v of variants){
+      const n = normLabel(v);
+      if (labelMap.has(n)) { found = labelMap.get(n); break; }
+    }
+    // נסיון גס: חיפוש לפי הכללה (למשל "רמבם 3")
+    if (!found){
+      for (const [n, original] of labelMap.entries()){
+        if (variants.some(v => n.includes(normLabel(v)))) { found = original; break; }
+      }
+    }
+    resolved[key] = found; // ייתכן null — נטפל ברינדור
+  }
+  return resolved;
+}
+
+/* -------- שליפה, בחירת היום, ורינדור -------- */
+async function fetchRowsAndCols(){
+  const table = await loadGvizTable(SHEET_GVIZ);
+  const rows = (table.rows||[]).map(r => rowToObj(table.cols, r));
+  const colKeys = resolveColumnKeys(table.cols);
+  return { rows, colKeys };
+}
+function pickTodayRow(rows, colKeys){
+  const tz = 'Asia/Jerusalem', todayKey = keyYMD(new Date(), tz);
+  let best=null, bestAbs=Infinity;
+  for (const r of rows){
+    const key = colKeys.greg; if (!key) continue;
+    const d = normalizeDateString(r[key]); if (!d || isNaN(d)) continue;
+    const k = keyYMD(d, tz);
+    if (k===todayKey) return r;
+    const dif = Math.abs((new Date(k)-new Date(todayKey))/(86400000));
+    if (dif<bestAbs){bestAbs=dif;best=r;}
+  }
+  return best;
+}
+function setDateText(str){ document.getElementById('date').textContent = str; }
+function renderFromRow(r, col){
+  setDateText(`${col.heb ? r[col.heb] : ""} | ${col.greg ? formatGreg(r[col.greg]) : ""}`);
+
+  const get = (key)=> {
+    if (!key) return "—";
+    const v = (r[key]??"").toString().trim();
+    return v.length ? v : "—";
+  };
+  document.getElementById('chumash').textContent = get(col.chumash);
+  document.getElementById('tehillim').textContent = get(col.tehillim);
+  document.getElementById('tanya').textContent    = get(col.tanya);
+
+  document.getElementById('r3').textContent       = get(col.rambam3);
+  document.getElementById('r1').textContent       = get(col.rambam1);
+  document.getElementById('mitzvos').textContent  = get(col.mitzvos);
+
+  document.getElementById('hayom').textContent    = get(col.hayom);
+}
+
+/* ---- הפעלה ---- */
+(async function init(){
+  try{
+    const { rows, colKeys } = await fetchRowsAndCols();
+    const picked = pickTodayRow(rows, colKeys);
+    if (!picked){ setDateText("לא נמצאה שורה להיום"); return; }
+    renderFromRow(picked, colKeys);
+  }catch(err){
+    console.error(err);
+    setDateText("שגיאה בטעינת נתונים מהגיליון");
+  }
+})();
+</script>
+</body>
+</html>
