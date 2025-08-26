@@ -4,43 +4,58 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>שיעורים יומיים</title>
+
+<!-- פונט נקי ונעים לעברית -->
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
+
 <style>
   :root { --bg:#f4f0e6; --bord:#d2691e22; --ink:#8b1538; --header:#8b1538; --gold:#f0c674; }
+  html,body{height:100%}
   body{
     margin:0;background:var(--bg);color:var(--ink);
-    font-family:system-ui,'David Libre',serif;
+    font-family:"Assistant",system-ui,"David Libre",serif;
     font-size:clamp(18px,1.6vw,24px);
+    text-align:center; /* הכל ממורכז כברירת מחדל */
   }
+
   .frame{
     width:96vw;min-height:94vh;margin:2vh auto;background:#fff;border-radius:18px;
     box-shadow:0 8px 28px rgba(0,0,0,.15);
     padding:2vh 2vw;box-sizing:border-box;display:flex;flex-direction:column;
   }
+
+  /* כותרת עליונה: תאריך משמאל, כותרת מימין (כמו שאהבת) */
   header{
     display:flex;align-items:center;justify-content:space-between;
     background:var(--header);color:var(--gold);
-    border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 20px rgba(0,0,0,.25)
+    border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 20px rgba(0,0,0,.25);
+    text-align:unset; /* לא למרכז בתוך הכותרת */
   }
   header h1{margin:0;font-size:clamp(24px,4vw,48px);letter-spacing:.06em}
-  header .date{opacity:.9;font-size:clamp(14px,2.2vw,20px)}
+  header .date{opacity:.9;font-size:clamp(14px,2.2vw,20px);text-align:left}
+
+  /* רווח של סנטימטר לפני הריבועים */
+  .spacer{height:1cm}
 
   /* פריסה קבועה עם grid-areas */
   main{
-    flex:1;display:grid;gap:1rem;margin-top:1rem;
+    flex:1;display:grid;gap:1rem;margin-top:0; /* הרווח עובר ל-.spacer */
     grid-template-columns:repeat(3,1fr);
     grid-template-areas:
       "chumash tehillim tanya"
       "r3      r1        mitzvos"
       "hayom   hayom     hayom";
   }
+
   .card{
     background:#fff;border:2px solid var(--bord);
     border-radius:16px;padding:1rem;
     box-shadow:0 4px 16px rgba(210,105,30,.15);
     display:flex;flex-direction:column;min-height:140px;
   }
-  .title{font-weight:800;margin-bottom:.4rem;font-size:1.15em;text-align:right;}
+  .title{font-weight:800;margin-bottom:.4rem;font-size:1.15em;}
   .content{white-space:pre-wrap;line-height:1.6;font-size:1.05em;}
+
   /* שיוך אזורים */
   #card-chumash{ grid-area:chumash }
   #card-tehillim{ grid-area:tehillim }
@@ -49,6 +64,7 @@
   #card-r1{ grid-area:r1 }
   #card-mitzvos{ grid-area:mitzvos }
   #card-hayom{ grid-area:hayom; min-height:220px }
+
   @media (max-width:900px){
     main{
       grid-template-columns:1fr;
@@ -63,9 +79,11 @@
 <body>
 <div class="frame">
   <header>
-    <h1>שיעורים יומיים</h1>
     <div class="date" id="date">טוען…</div>
+    <h1>שיעורים יומיים</h1>
   </header>
+
+  <div class="spacer" aria-hidden="true"></div>
 
   <!-- כרטיסים קבועים במקומות קבועים -->
   <main id="grid">
@@ -86,10 +104,10 @@
 const SHEET_GVIZ =
   "https://docs.google.com/spreadsheets/d/1rbL2BvRR7lK4ZT7ND5FV98I3f0zdaATJAZKCT0LOl7M/gviz/tq?tqx=out:json&gid=892136424";
 
-/* -------- טעינת GViz כ-<script> (JSONP) — עוקף CORS -------- */
+/* ---- טעינת GViz כ-<script> (JSONP) — עוקף CORS ---- */
 function loadGvizTable(url){
   return new Promise((resolve, reject) => {
-    const tsUrl = url + "&t=" + Date.now(); // נגד קאש
+    const tsUrl = url + "&t=" + Date.now();
     const prev = (window.google && window.google.visualization &&
                   window.google.visualization.Query &&
                   window.google.visualization.Query.setResponse)
@@ -116,7 +134,7 @@ function loadGvizTable(url){
   });
 }
 
-/* -------- עזרי טבלה/תאריכים -------- */
+/* ---- עזרי טבלה/תאריכים ---- */
 function cellValue(cell){
   if (!cell) return "";
   if (cell.f != null) return cell.f;
@@ -151,21 +169,22 @@ function formatGreg(val){
   return String((val??"")).replace(/[\u200e\u200f]/g,'').trim();
 }
 
-/* -------- מיפוי כותרות סלחני -------- */
+/* ---- מיפוי כותרות סלחני (כולל "יום") ---- */
 function normLabel(s){
   return String(s||"")
-    .replace(/[\u200e\u200f]/g,'')               // סימני RTL נסתרים
-    .replace(/[\"׳״']/g,'')                      // כל סוגי גרשיים
-    .replace(/רש\s*י/g,'רשי')                    // רש״י -> רשי
-    .replace(/[–—\-]/g,' ')                      // כל סוגי המקף לרווח
-    .replace(/\s+/g,' ')                         // רווחים רציפים
+    .replace(/[\u200e\u200f]/g,'')
+    .replace(/[\"׳״']/g,'')
+    .replace(/רש\s*י/g,'רשי')
+    .replace(/[–—\-]/g,' ')
+    .replace(/\s+/g,' ')
     .trim()
     .toLowerCase();
 }
 const TARGETS = {
+  day:      ["יום","יום בשבוע"],
   heb:      ["תאריך עברי"],
   greg:     ["תאריך לועזי"],
-  chumash:  ["חומש עם רשי","חומש עם רשי"],     // כל וריאציה תתאחד ל"רשי"
+  chumash:  ["חומש עם רשי","חומש עם רשי"],
   tehillim: ["תהילים","תהלים"],
   tanya:    ["תניא"],
   rambam3:  ["רמבם 3 פרקים","רמבם 3 פרק"],
@@ -177,7 +196,7 @@ function buildLabelMap(tableCols){
   const map = new Map();
   for (const c of tableCols){
     const n = normLabel(c.label);
-    if (!map.has(n)) map.set(n, c.label); // שמור את המקור
+    if (!map.has(n)) map.set(n, c.label);
   }
   return map;
 }
@@ -190,30 +209,29 @@ function resolveColumnKeys(tableCols){
       const n = normLabel(v);
       if (labelMap.has(n)) { found = labelMap.get(n); break; }
     }
-    // נסיון גס: חיפוש לפי הכללה (למשל "רמבם 3")
     if (!found){
       for (const [n, original] of labelMap.entries()){
         if (variants.some(v => n.includes(normLabel(v)))) { found = original; break; }
       }
     }
-    resolved[key] = found; // ייתכן null — נטפל ברינדור
+    resolved[key] = found;
   }
   return resolved;
 }
 
-/* -------- שליפה, בחירת היום, ורינדור -------- */
+/* ---- שליפה, בחירת היום, ורינדור ---- */
 async function fetchRowsAndCols(){
   const table = await loadGvizTable(SHEET_GVIZ);
   const rows = (table.rows||[]).map(r => rowToObj(table.cols, r));
   const colKeys = resolveColumnKeys(table.cols);
   return { rows, colKeys };
 }
-function pickTodayRow(rows, colKeys){
+function pickTodayRow(rows, col){
   const tz = 'Asia/Jerusalem', todayKey = keyYMD(new Date(), tz);
   let best=null, bestAbs=Infinity;
   for (const r of rows){
-    const key = colKeys.greg; if (!key) continue;
-    const d = normalizeDateString(r[key]); if (!d || isNaN(d)) continue;
+    const gk = col.greg; if (!gk) continue;
+    const d = normalizeDateString(r[gk]); if (!d || isNaN(d)) continue;
     const k = keyYMD(d, tz);
     if (k===todayKey) return r;
     const dif = Math.abs((new Date(k)-new Date(todayKey))/(86400000));
@@ -223,7 +241,11 @@ function pickTodayRow(rows, colKeys){
 }
 function setDateText(str){ document.getElementById('date').textContent = str; }
 function renderFromRow(r, col){
-  setDateText(`${col.heb ? r[col.heb] : ""} | ${col.greg ? formatGreg(r[col.greg]) : ""}`);
+  const weekday = col.day ? (r[col.day] || "").toString().trim() : "";
+  const heb = col.heb ? (r[col.heb] || "").toString().trim() : "";
+  const greg = col.greg ? formatGreg(r[col.greg]) : "";
+  // תאריך משמאל, אבל שאר הדף ממורכז
+  setDateText([weekday, [heb, greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · "));
 
   const get = (key)=> {
     if (!key) return "—";
