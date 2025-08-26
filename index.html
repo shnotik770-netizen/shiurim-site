@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>שיעורים יומיים</title>
 
-<!-- פונט נקי ונעים לעברית -->
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
-
 <style>
   :root { --bg:#f4f0e6; --bord:#d2691e22; --ink:#8b1538; --header:#8b1538; --gold:#f0c674; }
   html,body{height:100%}
@@ -15,38 +13,45 @@
     margin:0;background:var(--bg);color:var(--ink);
     font-family:"Assistant",system-ui,"David Libre",serif;
     font-size:clamp(18px,1.6vw,24px);
-    text-align:center; /* הכל ממורכז כברירת מחדל */
+    text-align:center;
   }
-
   .frame{
     width:96vw;min-height:94vh;margin:2vh auto;background:#fff;border-radius:18px;
     box-shadow:0 8px 28px rgba(0,0,0,.15);
     padding:2vh 2vw;box-sizing:border-box;display:flex;flex-direction:column;
   }
 
-  /* כותרת עליונה: תאריך משמאל, כותרת מימין (כמו שאהבת) */
-  header{
-    display:flex;align-items:center;justify-content:space-between;
+  /* כותרת עליונה: שתי שורות ממורכזות */
+  .page-header{
     background:var(--header);color:var(--gold);
-    border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 20px rgba(0,0,0,.25);
-    text-align:unset; /* לא למרכז בתוך הכותרת */
+    border-radius:14px;padding:.9rem 1rem 1.1rem;
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
   }
-  header h1{margin:0;font-size:clamp(24px,4vw,48px);letter-spacing:.06em}
-  header .date{opacity:.9;font-size:clamp(14px,2.2vw,20px);text-align:left}
+  .page-header h1{
+    margin:0;
+    font-weight:800;
+    font-size:clamp(28px,4.8vw,64px);
+    letter-spacing:.04em;
+    line-height:1.1;
+  }
+  .page-header .date{
+    margin-top:.35rem;
+    font-size:clamp(14px,2.1vw,22px);
+    opacity:.95;
+  }
 
   /* רווח של סנטימטר לפני הריבועים */
   .spacer{height:1cm}
 
-  /* פריסה קבועה עם grid-areas */
+  /* פריסה קבועה של הכרטיסים */
   main{
-    flex:1;display:grid;gap:1rem;margin-top:0; /* הרווח עובר ל-.spacer */
+    flex:1;display:grid;gap:1rem;margin-top:0;
     grid-template-columns:repeat(3,1fr);
     grid-template-areas:
       "chumash tehillim tanya"
       "r3      r1        mitzvos"
       "hayom   hayom     hayom";
   }
-
   .card{
     background:#fff;border:2px solid var(--bord);
     border-radius:16px;padding:1rem;
@@ -56,7 +61,6 @@
   .title{font-weight:800;margin-bottom:.4rem;font-size:1.15em;}
   .content{white-space:pre-wrap;line-height:1.6;font-size:1.05em;}
 
-  /* שיוך אזורים */
   #card-chumash{ grid-area:chumash }
   #card-tehillim{ grid-area:tehillim }
   #card-tanya{ grid-area:tanya }
@@ -78,14 +82,13 @@
 </head>
 <body>
 <div class="frame">
-  <header>
-    <div class="date" id="date">טוען…</div>
+  <header class="page-header">
     <h1>שיעורים יומיים</h1>
+    <div class="date" id="date">טוען…</div>
   </header>
 
   <div class="spacer" aria-hidden="true"></div>
 
-  <!-- כרטיסים קבועים במקומות קבועים -->
   <main id="grid">
     <div class="card" id="card-chumash"><div class="title">חומש עם רש״י</div><div class="content" id="chumash"></div></div>
     <div class="card" id="card-tehillim"><div class="title">תהילים</div><div class="content" id="tehillim"></div></div>
@@ -100,11 +103,11 @@
 </div>
 
 <script>
-/* === כתובת ה-GViz (עם /d/<ID>/gviz) === */
+/* === כתובת ה-GViz === */
 const SHEET_GVIZ =
   "https://docs.google.com/spreadsheets/d/1rbL2BvRR7lK4ZT7ND5FV98I3f0zdaATJAZKCT0LOl7M/gviz/tq?tqx=out:json&gid=892136424";
 
-/* ---- טעינת GViz כ-<script> (JSONP) — עוקף CORS ---- */
+/* טעינת GViz כ-<script> (עוקף CORS) */
 function loadGvizTable(url){
   return new Promise((resolve, reject) => {
     const tsUrl = url + "&t=" + Date.now();
@@ -112,20 +115,14 @@ function loadGvizTable(url){
                   window.google.visualization.Query &&
                   window.google.visualization.Query.setResponse)
                  ? window.google.visualization.Query.setResponse : null;
-
     window.google = window.google || {};
     window.google.visualization = window.google.visualization || {};
     window.google.visualization.Query = window.google.visualization.Query || {};
     window.google.visualization.Query.setResponse = (resp) => {
-      try{
-        if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
-        resolve(resp.table);
-      } finally {
-        if (prev) window.google.visualization.Query.setResponse = prev;
-        script.remove();
-      }
+      try{ if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
+           resolve(resp.table);
+      } finally { if (prev) window.google.visualization.Query.setResponse = prev; script.remove(); }
     };
-
     const script = document.createElement('script');
     script.src = tsUrl;
     script.onerror = () => { if (prev) window.google.visualization.Query.setResponse = prev;
@@ -134,146 +131,55 @@ function loadGvizTable(url){
   });
 }
 
-/* ---- עזרי טבלה/תאריכים ---- */
-function cellValue(cell){
-  if (!cell) return "";
-  if (cell.f != null) return cell.f;
-  if (cell.v == null) return "";
-  if (typeof cell.v === "string" && /^Date\(/.test(cell.v)){
-    const m = cell.v.match(/^Date\((\d+),(\d+),(\d+)/);
-    if (m) return new Date(+m[1], +m[2], +m[3]);
-  }
-  return cell.v;
-}
-function rowToObj(cols, row){
-  const o = {}; cols.forEach((c,i)=>{ const k = c.label || `col_${i}`; o[k] = cellValue(row.c[i]); }); return o;
-}
-function keyYMD(d, tz='Asia/Jerusalem'){
-  const p = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'})
-    .formatToParts(d).reduce((a,p)=>(a[p.type]=p.value,a),{});
-  return `${p.year}-${p.month}-${p.day}`;
-}
-function normalizeDateString(s){
-  if (s==null) return null;
-  if (Object.prototype.toString.call(s)==='[object Date]' && !isNaN(s)) return s;
-  const clean = String(s).replace(/[\u200e\u200f]/g,'').trim();
-  let m = clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/); if (m) return new Date(+m[3],+m[2]-1,+m[1]);
-  m = clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);     if (m) return new Date(+m[1],+m[2]-1,+m[3]);
-  const t = Date.parse(clean); if (!isNaN(t)) return new Date(t);
-  return null;
-}
-function formatGreg(val){
-  if (val instanceof Date){
-    return new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(val);
-  }
-  return String((val??"")).replace(/[\u200e\u200f]/g,'').trim();
-}
+/* עזרי טבלה/תאריכים */
+function cellValue(c){ if(!c) return ""; if(c.f!=null) return c.f; if(c.v==null) return "";
+  if(typeof c.v==="string" && /^Date\(/.test(c.v)){ const m=c.v.match(/^Date\((\d+),(\d+),(\d+)/);
+    if(m) return new Date(+m[1],+m[2],+m[3]); } return c.v; }
+function rowToObj(cols,row){ const o={}; cols.forEach((c,i)=>{ const k=c.label||`col_${i}`; o[k]=cellValue(row.c[i]); }); return o; }
+function keyYMD(d,tz='Asia/Jerusalem'){ const p=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).reduce((a,p)=>(a[p.type]=p.value,a),{}); return `${p.year}-${p.month}-${p.day}`; }
+function normalizeDateString(s){ if(s==null) return null;
+  if(Object.prototype.toString.call(s)==='[object Date]'&&!isNaN(s)) return s;
+  const clean=String(s).replace(/[\u200e\u200f]/g,'').trim();
+  let m=clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/); if(m) return new Date(+m[3],+m[2]-1,+m[1]);
+  m=clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/); if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  const t=Date.parse(clean); if(!isNaN(t)) return new Date(t); return null; }
+function formatGreg(v){ if(v instanceof Date){ return new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(v);} return String((v??"")).replace(/[\u200e\u200f]/g,'').trim(); }
 
-/* ---- מיפוי כותרות סלחני (כולל "יום") ---- */
-function normLabel(s){
-  return String(s||"")
-    .replace(/[\u200e\u200f]/g,'')
-    .replace(/[\"׳״']/g,'')
-    .replace(/רש\s*י/g,'רשי')
-    .replace(/[–—\-]/g,' ')
-    .replace(/\s+/g,' ')
-    .trim()
-    .toLowerCase();
-}
-const TARGETS = {
-  day:      ["יום","יום בשבוע"],
-  heb:      ["תאריך עברי"],
-  greg:     ["תאריך לועזי"],
-  chumash:  ["חומש עם רשי","חומש עם רשי"],
-  tehillim: ["תהילים","תהלים"],
-  tanya:    ["תניא"],
-  rambam3:  ["רמבם 3 פרקים","רמבם 3 פרק"],
-  rambam1:  ["רמבם פרק 1","רמבם פרק אחד","רמבם 1 פרק"],
-  mitzvos:  ["ספר המצוות"],
-  hayom:    ["היום יום"],
-};
-function buildLabelMap(tableCols){
-  const map = new Map();
-  for (const c of tableCols){
-    const n = normLabel(c.label);
-    if (!map.has(n)) map.set(n, c.label);
-  }
-  return map;
-}
-function resolveColumnKeys(tableCols){
-  const labelMap = buildLabelMap(tableCols);
-  const resolved = {};
-  for (const [key, variants] of Object.entries(TARGETS)){
-    let found = null;
-    for (const v of variants){
-      const n = normLabel(v);
-      if (labelMap.has(n)) { found = labelMap.get(n); break; }
-    }
-    if (!found){
-      for (const [n, original] of labelMap.entries()){
-        if (variants.some(v => n.includes(normLabel(v)))) { found = original; break; }
-      }
-    }
-    resolved[key] = found;
-  }
-  return resolved;
-}
+/* מיפוי כותרות סלחני (כולל "יום") */
+function normLabel(s){ return String(s||"").replace(/[\u200e\u200f]/g,'').replace(/[\"׳״']/g,'').replace(/רש\s*י/g,'רשי').replace(/[–—\-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
+const TARGETS={ day:["יום","יום בשבוע"], heb:["תאריך עברי"], greg:["תאריך לועזי"], chumash:["חומש עם רשי"], tehillim:["תהילים","תהלים"], tanya:["תניא"], rambam3:["רמבם 3 פרקים","רמבם 3 פרק"], rambam1:["רמבם פרק 1","רמבם פרק אחד","רמבם 1 פרק"], mitzvos:["ספר המצוות"], hayom:["היום יום"] };
+function buildLabelMap(cols){ const m=new Map(); for(const c of cols){ const n=normLabel(c.label); if(!m.has(n)) m.set(n,c.label);} return m; }
+function resolveColumnKeys(cols){ const map=buildLabelMap(cols); const out={}; for(const [k,vars] of Object.entries(TARGETS)){ let f=null; for(const v of vars){ const n=normLabel(v); if(map.has(n)){ f=map.get(n); break; } } if(!f){ for(const [n,orig] of map.entries()){ if(vars.some(v=>n.includes(normLabel(v)))){ f=orig; break; } } } out[k]=f; } return out; }
 
-/* ---- שליפה, בחירת היום, ורינדור ---- */
-async function fetchRowsAndCols(){
-  const table = await loadGvizTable(SHEET_GVIZ);
-  const rows = (table.rows||[]).map(r => rowToObj(table.cols, r));
-  const colKeys = resolveColumnKeys(table.cols);
-  return { rows, colKeys };
-}
-function pickTodayRow(rows, col){
-  const tz = 'Asia/Jerusalem', todayKey = keyYMD(new Date(), tz);
-  let best=null, bestAbs=Infinity;
-  for (const r of rows){
-    const gk = col.greg; if (!gk) continue;
-    const d = normalizeDateString(r[gk]); if (!d || isNaN(d)) continue;
-    const k = keyYMD(d, tz);
-    if (k===todayKey) return r;
-    const dif = Math.abs((new Date(k)-new Date(todayKey))/(86400000));
-    if (dif<bestAbs){bestAbs=dif;best=r;}
-  }
-  return best;
-}
-function setDateText(str){ document.getElementById('date').textContent = str; }
-function renderFromRow(r, col){
-  const weekday = col.day ? (r[col.day] || "").toString().trim() : "";
-  const heb = col.heb ? (r[col.heb] || "").toString().trim() : "";
+/* שליפה/רינדור */
+async function fetchRowsAndCols(){ const table=await loadGvizTable(SHEET_GVIZ); return { rows:(table.rows||[]).map(r=>rowToObj(table.cols,r)), colKeys:resolveColumnKeys(table.cols) }; }
+function pickTodayRow(rows,col){ const tz='Asia/Jerusalem', todayKey=keyYMD(new Date(),tz); let best=null,bestAbs=Infinity;
+  for(const r of rows){ const gk=col.greg; if(!gk) continue; const d=normalizeDateString(r[gk]); if(!d||isNaN(d)) continue;
+    const k=keyYMD(d,tz); if(k===todayKey) return r; const dif=Math.abs((new Date(k)-new Date(todayKey))/86400000); if(dif<bestAbs){bestAbs=dif;best=r;} }
+  return best; }
+function setDateText(s){ document.getElementById('date').textContent=s; }
+function renderFromRow(r,col){
+  const weekday = col.day ? (r[col.day]||"").toString().trim() : "";
+  const heb = col.heb ? (r[col.heb]||"").toString().trim() : "";
   const greg = col.greg ? formatGreg(r[col.greg]) : "";
-  // תאריך משמאל, אבל שאר הדף ממורכז
-  setDateText([weekday, [heb, greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · "));
+  setDateText([weekday,[heb,greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · "));
 
-  const get = (key)=> {
-    if (!key) return "—";
-    const v = (r[key]??"").toString().trim();
-    return v.length ? v : "—";
-  };
+  const get = (k)=> { if(!k) return "—"; const v=(r[k]??"").toString().trim(); return v.length?v:"—"; };
   document.getElementById('chumash').textContent = get(col.chumash);
   document.getElementById('tehillim').textContent = get(col.tehillim);
   document.getElementById('tanya').textContent    = get(col.tanya);
-
   document.getElementById('r3').textContent       = get(col.rambam3);
   document.getElementById('r1').textContent       = get(col.rambam1);
   document.getElementById('mitzvos').textContent  = get(col.mitzvos);
-
   document.getElementById('hayom').textContent    = get(col.hayom);
 }
-
-/* ---- הפעלה ---- */
 (async function init(){
   try{
     const { rows, colKeys } = await fetchRowsAndCols();
     const picked = pickTodayRow(rows, colKeys);
     if (!picked){ setDateText("לא נמצאה שורה להיום"); return; }
     renderFromRow(picked, colKeys);
-  }catch(err){
-    console.error(err);
-    setDateText("שגיאה בטעינת נתונים מהגיליון");
-  }
+  }catch(err){ console.error(err); setDateText("שגיאה בטעינת נתונים מהגיליון"); }
 })();
 </script>
 </body>
