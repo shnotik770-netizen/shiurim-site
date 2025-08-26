@@ -25,14 +25,28 @@
   }
 
   /* כותרת עליונה: תאריך משמאל, כותרת מימין (כמו שאהבת) */
-  header{
-    display:flex;align-items:center;justify-content:space-between;
-    background:var(--header);color:var(--gold);
-    border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 20px rgba(0,0,0,.25);
-    text-align:unset; /* לא למרכז בתוך הכותרת */
-  }
-  header h1{margin:0;font-size:clamp(24px,4vw,48px);letter-spacing:.06em}
-  header .date{opacity:.9;font-size:clamp(14px,2.2vw,20px);text-align:left}
+header{
+  display:flex;
+  align-items:center;
+  justify-content:center; /* לא space-between */
+  background:var(--header);color:var(--gold);
+  border-radius:14px;padding:.8rem 1rem;
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+header h1{
+  margin:0;
+  font-size:clamp(24px,4vw,48px);
+  letter-spacing:.06em;
+  flex:1;                /* תופס את הרוחב */
+  text-align:center;     /* ממורכז */
+}
+
+header .date{
+  opacity:.9;
+  font-size:clamp(14px,2.2vw,20px);
+  white-space:nowrap;
+}
 
   /* רווח של סנטימטר לפני הריבועים */
   .spacer{height:1cm}
