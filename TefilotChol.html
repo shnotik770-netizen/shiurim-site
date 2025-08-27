@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>זמני היום</title>
+<style>
+   <!-- פונט מודרני ונקי -->
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
+  body {
+    background-color: #f4f0e6;
+    color: #8b1538;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+  }
+  .frame {
+    width: 96vw;
+    height: 94vh;
+    background: linear-gradient(135deg, #f5f0e8 0%, #f2ede5 100%);
+    border: 10px solid #d2691e;
+    border-radius: 24px;
+    box-shadow: 0 12px 32px rgba(210,105,30,0.6);
+    padding: 2vh 2vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    user-select: none;
+  }
+  header {
+    background-color: #8b1538;
+    padding: 1vh 2vw;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  header h1 {
+    margin: 0;
+    font-size: calc(4.5vh * 2.5);
+    color: #f0c674;
+    letter-spacing: 0.4vw;
+    text-shadow: 0 0 14px #f0c674bb;
+    font-weight: 700;
+    text-align: center;
+  }
+  header .date {
+    position: absolute;
+    left: 2vw;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2.2vh;
+    color: rgba(240, 198, 116, 0.75);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 2vh 2vw;
+  }
+  .item {
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 8px 28px rgba(210,105,30,0.3);
+    padding: 1vh 1vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+  .time-label {
+    font-size: 4vh;
+    font-weight: 700;
+    color: #8b1538;
+    min-height: 4.5vh;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .time {
+    font-size: 4.5vh;
+    font-weight: 800;
+    color: #4a1a00;
+    background: #ff8800;
+    border-radius: 14px;
+    padding: 0.6vh 1.5vw;
+    margin-top: 0.7vh;
+    box-shadow: inset 0 0 10px #b25a1766;
+    letter-spacing: 0.1em;
+    user-select: text;
+    min-height: 5vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+  <div class="frame" role="main" aria-label="זמני היום עפולה">
+    <header>
+      <h1 id="title">זמני היום</h1>
+      <div class="date" id="date">טוען...</div>
+    </header>
+    <main id="zmanimList" aria-live="polite" aria-atomic="true" aria-relevant="all">
+      <!-- פריטי זמן יתמלאו כאן -->
+    </main>
+  </div>
+
+<script>
+const CORS_PROXY = "https://api.allorigins.win/get?url=";
+const RSS_URL = encodeURIComponent("https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30");
+
+const wantedItems = [
+  "עלות השחר (עלות השחר)",
+  "זמן טלית ותפילין המוקדם ביותר (משיכיר)",
+  "זריחה (הנץ החמה)",
+  "סוף זמן קריאת שמע",
+  "חצות (היום)",
+  "המנחה המוקדמת (מנחה גדולה)",
+  "שקיעת החמה (שקיעה)",
+  "לילה (צאת הכוכבים)"
+];
+
+const renameMap = {
+  "עלות השחר (עלות השחר)": "עלות השחר",
+  "זמן טלית ותפילין המוקדם ביותר (משיכיר)": "זמן טלית ותפילין",
+  "זריחה (הנץ החמה)": "זריחה",
+  "סוף זמן קריאת שמע": "סוף זמן<br>קריאת שמע",
+  "חצות (היום)": "חצות",
+  "המנחה המוקדמת (מנחה גדולה)": "מנחה גדולה",
+  "שקיעת החמה (שקיעה)": "שקיעת החמה",
+  "לילה (צאת הכוכבים)": "צאת הכוכבים"
+};
+
+function updateDate(dateStr) {
+  document.getElementById("date").innerHTML = dateStr;
+}
+
+function clearList() {
+  document.getElementById("zmanimList").innerHTML = "";
+}
+
+function addItem(time, desc) {
+  const list = document.getElementById("zmanimList");
+  const item = document.createElement("div");
+  item.className = "item";
+
+  const descDiv = document.createElement("div");
+  descDiv.className = "time-label";
+  descDiv.innerHTML = desc;
+
+  const timeDiv = document.createElement("div");
+  timeDiv.className = "time";
+  timeDiv.textContent = time;
+
+  item.appendChild(descDiv);
+  item.appendChild(timeDiv);
+
+  list.appendChild(item);
+}
+
+function filterAndFormat(items) {
+  const filtered = [];
+  const seenDesc = new Set();
+
+  for (const wanted of wantedItems) {
+    const found = Array.from(items).find(item => {
+      const title = item.querySelector("title")?.textContent || "";
+      return title.includes(wanted);
+    });
+    if (found) {
+      const descKey = renameMap[wanted] || wanted;
+      if (!seenDesc.has(descKey)) {
+        seenDesc.add(descKey);
+        const time = found.querySelector("category")?.textContent || "";
+        filtered.push({ time, desc: descKey });
+      }
+    }
+  }
+  return filtered;
+}
+
+async function fetchZmanim() {
+  const response = await fetch(CORS_PROXY + RSS_URL);
+  if (!response.ok) throw new Error("Network response was not ok");
+  const data = await response.json();
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(data.contents, "text/xml");
+
+  const channel = xml.querySelector("channel");
+  if (!channel) throw new Error("מבנה XML לא תקין");
+
+  const hebrewDate = channel.querySelector("hebrew_date")?.textContent || "";
+  const englishDate = channel.querySelector("english_date")?.textContent || "";
+
+  const items = channel.querySelectorAll("item");
+  const filteredItems = filterAndFormat(items);
+
+  return {
+    date: `${hebrewDate} / ${englishDate}`,
+    hebrewDate,
+    items: filteredItems
+  };
+}
+
+function displayZmanim(zmanim) {
+  updateDate(zmanim.date);
+  clearList();
+  zmanim.items.forEach(({ time, desc }) => addItem(time, desc));
+}
+
+async function loadZmanimWithHourlyCheck() {
+  const HOUR_MS = 60 * 60 * 1000;
+  const now = Date.now();
+  const storedRaw = localStorage.getItem("zmanimData");
+
+  if (storedRaw) {
+    try {
+      const stored = JSON.parse(storedRaw);
+      if (stored.timestamp && (now - stored.timestamp < HOUR_MS) && stored.zmanim && stored.zmanim.items.length) {
+        displayZmanim(stored.zmanim);
+        return;
+      }
+    } catch {}
+  }
+
+  try {
+    const zmanim = await fetchZmanim();
+    displayZmanim(zmanim);
+    localStorage.setItem("zmanimData", JSON.stringify({
+      timestamp: now,
+      zmanim
+    }));
+  } catch (error) {
+    console.error("Error loading zmanim:", error);
+    document.getElementById("date").textContent = "שגיאה בטעינת הנתונים";
+  }
+}
+
+loadZmanimWithHourlyCheck();
+</script>
+</body>
+</html>
