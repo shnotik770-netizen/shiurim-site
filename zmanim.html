@@ -4,17 +4,25 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>זמני היום</title>
+
+<!-- פונט מכובד וקלאסי (לא מודרני מדי) -->
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;600;800&family=David+Libre:wght@400;700&family=Noto+Serif+Hebrew:wght@400;600;700&display=swap" rel="stylesheet" />
+
 <style>
-   <!-- פונט מודרני ונקי -->
-  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
+  :root{
+    /* גובה קבוע לאזור השעה הכתום */
+    --time-box-h: 7.2vh;
+  }
+
   body {
     background-color: #f4f0e6;
-    font-family: 'David Libre', serif;
+    font-family: "Frank Ruhl Libre","David Libre","Noto Serif Hebrew",serif;
     color: #8b1538;
     margin: 0;
     padding: 0;
     direction: rtl;
   }
+
   .frame {
     width: 96vw;
     height: 94vh;
@@ -29,6 +37,7 @@
     justify-content: space-between;
     user-select: none;
   }
+
   header {
     background-color: #8b1538;
     padding: 1vh 2vw;
@@ -39,25 +48,28 @@
     justify-content: center;
     position: relative;
   }
+
   header h1 {
     margin: 0;
-    font-size: calc(4.5vh * 2.5);
+    font-size: calc(4.5vh * 2.2);
     color: #f0c674;
-    letter-spacing: 0.4vw;
+    letter-spacing: 0.35vw;
     text-shadow: 0 0 14px #f0c674bb;
     font-weight: 700;
     text-align: center;
   }
+
   header .date {
     position: absolute;
     left: 2vw;
     top: 50%;
     transform: translateY(-50%);
     font-size: 2.2vh;
-    color: rgba(240, 198, 116, 0.75);
-    font-weight: 500;
+    color: rgba(240, 198, 116, 0.85);
+    font-weight: 600;
     white-space: nowrap;
   }
+
   main {
     flex: 1;
     display: grid;
@@ -65,39 +77,53 @@
     grid-template-rows: repeat(2, 1fr);
     gap: 2vh 2vw;
   }
+
   .item {
     background: #fff;
     border-radius: 22px;
     box-shadow: 0 8px 28px rgba(210,105,30,0.3);
-    padding: 1vh 1vw;
+    padding: 0.6vh 1vw;              /* הכותרת תעלה מעט */
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
   }
+
   .time-label {
-    font-size: 4vh;
+    font-size: 3.8vh;
     font-weight: 700;
     color: #8b1538;
-    min-height: 4.5vh;
-    line-height: 1.1;
+    line-height: 1.05;
+    margin-bottom: 0.4vh;           /* מזיז את הכותרת מעט למעלה */
     white-space: normal;
   }
+
   .time {
-    font-size: 4.5vh;
+    height: var(--time-box-h);      /* גובה קבוע לכל הריבועים הכתומים */
+    font-size: 4.2vh;
     font-weight: 800;
     color: #4a1a00;
     background: #ff8800;
     border-radius: 14px;
-    padding: 0.6vh 1.5vw;
-    margin-top: 0.7vh;
+    padding: 0 1.5vw;
     box-shadow: inset 0 0 10px #b25a1766;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     user-select: text;
-    min-height: 5vh;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* התאמות רספונסיביות קצרות */
+  @media (max-width: 1100px){
+    main{ grid-template-columns: repeat(2,1fr); grid-template-rows: repeat(4,1fr); }
+    .time-label{ font-size: 3.6vh; }
+    .time{ font-size: 4vh; }
+  }
+  @media (max-width: 640px){
+    main{ grid-template-columns: 1fr; grid-template-rows: repeat(8,auto); }
+    .time-label{ font-size: 3.2vh; }
+    .time{ font-size: 3.8vh; }
   }
 </style>
 </head>
@@ -107,9 +133,8 @@
       <h1 id="title">זמני היום</h1>
       <div class="date" id="date">טוען...</div>
     </header>
-    <main id="zmanimList" aria-live="polite" aria-atomic="true" aria-relevant="all">
-      <!-- פריטי זמן יתמלאו כאן -->
-    </main>
+
+    <main id="zmanimList" aria-live="polite" aria-atomic="true" aria-relevant="all"></main>
   </div>
 
 <script>
@@ -138,8 +163,9 @@ const renameMap = {
   "לילה (צאת הכוכבים)": "צאת הכוכבים"
 };
 
-function updateDate(dateStr) {
-  document.getElementById("date").innerHTML = dateStr;
+function updateDateHebrew(hebrewDateStr) {
+  // הצגה בעברית בלבד (לפי ה-RSS). אם תרצה תאריך מקישור אחר – רק נחליף כאן.
+  document.getElementById("date").textContent = hebrewDateStr || "—";
 }
 
 function clearList() {
@@ -161,7 +187,6 @@ function addItem(time, desc) {
 
   item.appendChild(descDiv);
   item.appendChild(timeDiv);
-
   list.appendChild(item);
 }
 
@@ -198,22 +223,16 @@ async function fetchZmanim() {
   if (!channel) throw new Error("מבנה XML לא תקין");
 
   const hebrewDate = channel.querySelector("hebrew_date")?.textContent || "";
-  const englishDate = channel.querySelector("english_date")?.textContent || "";
-
   const items = channel.querySelectorAll("item");
   const filteredItems = filterAndFormat(items);
 
-  return {
-    date: `${hebrewDate} / ${englishDate}`,
-    hebrewDate,
-    items: filteredItems
-  };
+  return { hebrewDate, items: filteredItems };
 }
 
-function displayZmanim(zmanim) {
-  updateDate(zmanim.date);
+function displayZmanim(z) {
+  updateDateHebrew(z.hebrewDate);      // עברית בלבד
   clearList();
-  zmanim.items.forEach(({ time, desc }) => addItem(time, desc));
+  z.items.forEach(({ time, desc }) => addItem(time, desc));
 }
 
 async function loadZmanimWithHourlyCheck() {
@@ -234,10 +253,7 @@ async function loadZmanimWithHourlyCheck() {
   try {
     const zmanim = await fetchZmanim();
     displayZmanim(zmanim);
-    localStorage.setItem("zmanimData", JSON.stringify({
-      timestamp: now,
-      zmanim
-    }));
+    localStorage.setItem("zmanimData", JSON.stringify({ timestamp: now, zmanim }));
   } catch (error) {
     console.error("Error loading zmanim:", error);
     document.getElementById("date").textContent = "שגיאה בטעינת הנתונים";
@@ -245,6 +261,10 @@ async function loadZmanimWithHourlyCheck() {
 }
 
 loadZmanimWithHourlyCheck();
+
+/* אם תרצה להזין ידנית תאריך בעברית ממקור אחר:
+   updateDateHebrew("יום שלישי, ה׳ באלול תשפ״ה");
+*/
 </script>
 </body>
 </html>
