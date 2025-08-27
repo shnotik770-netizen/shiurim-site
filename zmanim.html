@@ -1,220 +1,250 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>זמני תפילות - יום חול</title>
-
-  <!-- פונט מודרני ונקי -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>זמני היום</title>
+<style>
+   <!-- פונט מודרני ונקי -->
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
-
-  <style>
-    :root{
-      --brand:#8b1538; --brand-2:#d2691e;
-      --bg-1:#f5f1e8; --bg-2:#f8f4eb; --panel:#f7f2eb;
-      --ink:#251a1a; --ink-2:#7b1f3a; --radius:16px;
-      --shadow-lg:0 6px 16px rgba(0,0,0,.16);
-      --shadow-sm:0 3px 12px rgba(0,0,0,.08);
-    }
-    *,*::before,*::after{box-sizing:border-box}
-    body{
-      margin:0; color:var(--ink);
-      font-family:'Assistant',system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans";
-      background:linear-gradient(135deg,var(--bg-1),var(--bg-2));
-    }
-    .h1{
-      font-weight:800;color:#fff;letter-spacing:.02em;
-      font-size:clamp(22px,4.6vw,50px);
-    }
-
-    .poster{
-      min-height:100dvh; display:grid;
-      grid-template-rows:auto 1fr auto; gap:16px;
-      padding:2vh 3vw; background:#fffdf9;
-    }
-    header.site-header{
-      display:grid; place-items:center; text-align:center;
-      background:var(--brand); border:3px solid var(--brand-2);
-      border-radius:16px; padding:1rem 1.2rem; box-shadow:var(--shadow-lg);
-    }
-
-    .grid-wrapper{
-      display:grid; gap:clamp(12px,2vw,28px); align-content:start;
-    }
-    /* עמודות רספונסיביות: 1/2/3 */
-    @media (max-width:640px){ .grid-wrapper{ grid-template-columns:1fr; } }
-    @media (min-width:641px) and (max-width:1024px){ .grid-wrapper{ grid-template-columns:repeat(2,1fr); } }
-    @media (min-width:1025px){ .grid-wrapper{ grid-template-columns:repeat(3,1fr); } }
-
-    .column{
-      background:var(--panel); padding:clamp(12px,2vh,24px);
-      border-radius:16px; border:2px solid #e3c5ad; box-shadow:var(--shadow-sm);
-      display:grid; grid-template-rows:auto 1fr; align-items:start;
-    }
-
-    /* כותרת עמודה – ממורכזת וגדולה */
-    .h2{
-      font-weight:800; color:var(--ink-2);
-      text-align:center; margin:0 0 .6rem;
-      font-size:clamp(22px,2.8vw,32px);
-    }
-
-    .times{
-      list-style:none; width:100%;
-      display:grid; grid-auto-rows:minmax(38px,auto);
-      gap:8px; margin:0; padding:0; height:100%;
-      align-content:space-between;
-    }
-    .time-item{
-      display:grid; place-items:center;
-      border-radius:12px; padding:.55rem .7rem;
-      background:#ffffffa6; border:1px dashed #e7d7c7;
-      font-size: clamp(23px,2.4vw,30px);font-weight: 600;
-      color:var(--ink-2);
-    }
-
-    footer.site-footer{
-      text-align:center; background:var(--brand); color:#fff;
-      border:3px solid var(--brand-2); border-radius:16px;
-      padding:.9rem; box-shadow:var(--shadow-lg); font-weight:800;
-      font-size:clamp(14px,1.8vw,22px);
-    }
-
-    /* מצב כהה */
-    @media (prefers-color-scheme: dark){
-      :root{ --bg-1:#2a2321; --bg-2:#3a312f; --panel:#2f2a29; --ink:#f9f7f4; }
-      body{ background:linear-gradient(135deg,var(--bg-1),var(--bg-2)); }
-      .column{ border-color:#5a3a2a; }
-      .time-item{ background:#00000022; border-color:#ffffff22; }
-    }
-
-    /* הדפסה A4 */
-    @media print{
-      @page{ size:A4 portrait; margin:10mm }
-      body{ background:#fff }
-      .poster{ background:#fff; min-height:auto; gap:8px; padding:0 }
-      header.site-header, footer.site-footer{ box-shadow:none; -webkit-print-color-adjust:exact; print-color-adjust:exact }
-    }
-  </style>
+  body {
+    background-color: #f4f0e6;
+    font-family: 'David Libre', serif;
+    color: #8b1538;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+  }
+  .frame {
+    width: 96vw;
+    height: 94vh;
+    background: linear-gradient(135deg, #f5f0e8 0%, #f2ede5 100%);
+    border: 10px solid #d2691e;
+    border-radius: 24px;
+    box-shadow: 0 12px 32px rgba(210,105,30,0.6);
+    padding: 2vh 2vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    user-select: none;
+  }
+  header {
+    background-color: #8b1538;
+    padding: 1vh 2vw;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  header h1 {
+    margin: 0;
+    font-size: calc(4.5vh * 2.5);
+    color: #f0c674;
+    letter-spacing: 0.4vw;
+    text-shadow: 0 0 14px #f0c674bb;
+    font-weight: 700;
+    text-align: center;
+  }
+  header .date {
+    position: absolute;
+    left: 2vw;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2.2vh;
+    color: rgba(240, 198, 116, 0.75);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 2vh 2vw;
+  }
+  .item {
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 8px 28px rgba(210,105,30,0.3);
+    padding: 1vh 1vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+  .time-label {
+    font-size: 4vh;
+    font-weight: 700;
+    color: #8b1538;
+    min-height: 4.5vh;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .time {
+    font-size: 4.5vh;
+    font-weight: 800;
+    color: #4a1a00;
+    background: #ff8800;
+    border-radius: 14px;
+    padding: 0.6vh 1.5vw;
+    margin-top: 0.7vh;
+    box-shadow: inset 0 0 10px #b25a1766;
+    letter-spacing: 0.1em;
+    user-select: text;
+    min-height: 5vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
 </head>
 <body>
-  <div class="poster" role="document">
-    <header class="site-header" role="banner" aria-label="כותרת ראשית">
-      <h1 class="h1">בית הכנסת חב״ד — זמני התפילות יום חול</h1>
+  <div class="frame" role="main" aria-label="זמני היום עפולה">
+    <header>
+      <h1 id="title">זמני היום</h1>
+      <div class="date" id="date">טוען...</div>
     </header>
-
-    <main role="main">
-      <div class="grid-wrapper" id="grid"><!-- נטען דינמית --></div>
+    <main id="zmanimList" aria-live="polite" aria-atomic="true" aria-relevant="all">
+      <!-- פריטי זמן יתמלאו כאן -->
     </main>
-
-    <footer class="site-footer" role="contentinfo">
-      אסור לדבר בשעת התפילה וקריאת התורה
-    </footer>
   </div>
 
-  <script>
-    /* מזהים של הגיליון */
-    const SHEET_ID = "1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8";
-    const GID      = 350737418;
-    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+<script>
+const CORS_PROXY = "https://api.allorigins.win/get?url=";
+const RSS_URL = encodeURIComponent("https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30");
 
-    /* טעינת GViz כ-<script> (JSONP) */
-    function loadGvizTable(url){
-      return new Promise((resolve, reject) => {
-        const tsUrl = url + "&t=" + Date.now();
-        const prev = (window.google && window.google.visualization &&
-                      window.google.visualization.Query &&
-                      window.google.visualization.Query.setResponse)
-                   ? window.google.visualization.Query.setResponse : null;
+const wantedItems = [
+  "עלות השחר (עלות השחר)",
+  "זמן טלית ותפילין המוקדם ביותר (משיכיר)",
+  "זריחה (הנץ החמה)",
+  "סוף זמן קריאת שמע",
+  "חצות (היום)",
+  "המנחה המוקדמת (מנחה גדולה)",
+  "שקיעת החמה (שקיעה)",
+  "לילה (צאת הכוכבים)"
+];
 
-        window.google = window.google || {};
-        window.google.visualization = window.google.visualization || {};
-        window.google.visualization.Query = window.google.visualization.Query || {};
-        window.google.visualization.Query.setResponse = (resp) => {
-          try{
-            if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
-            resolve(resp.table);
-          } finally {
-            if (prev) window.google.visualization.Query.setResponse = prev;
-            script.remove();
-          }
-        };
+const renameMap = {
+  "עלות השחר (עלות השחר)": "עלות השחר",
+  "זמן טלית ותפילין המוקדם ביותר (משיכיר)": "זמן טלית ותפילין",
+  "זריחה (הנץ החמה)": "זריחה",
+  "סוף זמן קריאת שמע": "סוף זמן<br>קריאת שמע",
+  "חצות (היום)": "חצות",
+  "המנחה המוקדמת (מנחה גדולה)": "מנחה גדולה",
+  "שקיעת החמה (שקיעה)": "שקיעת החמה",
+  "לילה (צאת הכוכבים)": "צאת הכוכבים"
+};
 
-        const script = document.createElement('script');
-        script.src = tsUrl;
-        script.onerror = () => { if (prev) window.google.visualization.Query.setResponse = prev;
-          reject(new Error('GViz script load error')); };
-        document.body.appendChild(script);
-      });
-    }
+function updateDate(dateStr) {
+  document.getElementById("date").innerHTML = dateStr;
+}
 
-    /* עזר */
-    function cellValue(c){ return (!c) ? "" : (c.f!=null ? c.f : (c.v==null ? "" : c.v)); }
+function clearList() {
+  document.getElementById("zmanimList").innerHTML = "";
+}
 
-    /* בניית כרטיס עמודה */
-    function createColumn(section){
-      const wrap = document.createElement('section');
-      wrap.className = 'column';
+function addItem(time, desc) {
+  const list = document.getElementById("zmanimList");
+  const item = document.createElement("div");
+  item.className = "item";
 
-      const h2 = document.createElement('h2');
-      h2.className = 'h2';
-      h2.textContent = section.title;
+  const descDiv = document.createElement("div");
+  descDiv.className = "time-label";
+  descDiv.innerHTML = desc;
 
-      const ul = document.createElement('ul');
-      ul.className = 'times';
+  const timeDiv = document.createElement("div");
+  timeDiv.className = "time";
+  timeDiv.textContent = time;
 
-      (section.items || []).forEach(txt => {
-        const li = document.createElement('li');
-        li.className = 'time-item';
-        li.textContent = txt;
-        ul.appendChild(li);
-      });
+  item.appendChild(descDiv);
+  item.appendChild(timeDiv);
 
-      wrap.append(h2, ul);
-      return wrap;
-    }
+  list.appendChild(item);
+}
 
-    function render(sections){
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      (sections || []).forEach(sec => grid.appendChild(createColumn(sec)));
-    }
+function filterAndFormat(items) {
+  const filtered = [];
+  const seenDesc = new Set();
 
-    /* המרה לפי מבנה: A=שם קבוצה, B..N=שעות */
-    function tableToSections(table){
-      const rows = table.rows || [];
-      const sections = [];
-
-      rows.forEach(r => {
-        const cells = r.c || [];
-        const rawTitle = cellValue(cells[0]).toString().trim();
-        const title = rawTitle;
-        // דילוג על שורת כותרות/Section
-        if (!title || title.toLowerCase() === 'section') return;
-
-        const items = [];
-        for (let i = 1; i < cells.length; i++){
-          const txt = cellValue(cells[i]).toString().trim();
-          if (txt) items.push(txt);
-        }
-        sections.push({ title, items });
-      });
-
-      return sections;
-    }
-
-    /* START */
-    (async function init(){
-      try{
-        const table = await loadGvizTable(GVIZ_URL);
-        const sections = tableToSections(table);
-        render(sections);
-      }catch(err){
-        console.error(err);
-        document.getElementById('grid').innerHTML =
-          `<div style="text-align:center;color:#b00;font-weight:700">שגיאה בטעינת הנתונים</div>`;
+  for (const wanted of wantedItems) {
+    const found = Array.from(items).find(item => {
+      const title = item.querySelector("title")?.textContent || "";
+      return title.includes(wanted);
+    });
+    if (found) {
+      const descKey = renameMap[wanted] || wanted;
+      if (!seenDesc.has(descKey)) {
+        seenDesc.add(descKey);
+        const time = found.querySelector("category")?.textContent || "";
+        filtered.push({ time, desc: descKey });
       }
-    })();
-  </script>
+    }
+  }
+  return filtered;
+}
+
+async function fetchZmanim() {
+  const response = await fetch(CORS_PROXY + RSS_URL);
+  if (!response.ok) throw new Error("Network response was not ok");
+  const data = await response.json();
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(data.contents, "text/xml");
+
+  const channel = xml.querySelector("channel");
+  if (!channel) throw new Error("מבנה XML לא תקין");
+
+  const hebrewDate = channel.querySelector("hebrew_date")?.textContent || "";
+  const englishDate = channel.querySelector("english_date")?.textContent || "";
+
+  const items = channel.querySelectorAll("item");
+  const filteredItems = filterAndFormat(items);
+
+  return {
+    date: `${hebrewDate} / ${englishDate}`,
+    hebrewDate,
+    items: filteredItems
+  };
+}
+
+function displayZmanim(zmanim) {
+  updateDate(zmanim.date);
+  clearList();
+  zmanim.items.forEach(({ time, desc }) => addItem(time, desc));
+}
+
+async function loadZmanimWithHourlyCheck() {
+  const HOUR_MS = 60 * 60 * 1000;
+  const now = Date.now();
+  const storedRaw = localStorage.getItem("zmanimData");
+
+  if (storedRaw) {
+    try {
+      const stored = JSON.parse(storedRaw);
+      if (stored.timestamp && (now - stored.timestamp < HOUR_MS) && stored.zmanim && stored.zmanim.items.length) {
+        displayZmanim(stored.zmanim);
+        return;
+      }
+    } catch {}
+  }
+
+  try {
+    const zmanim = await fetchZmanim();
+    displayZmanim(zmanim);
+    localStorage.setItem("zmanimData", JSON.stringify({
+      timestamp: now,
+      zmanim
+    }));
+  } catch (error) {
+    console.error("Error loading zmanim:", error);
+    document.getElementById("date").textContent = "שגיאה בטעינת הנתונים";
+  }
+}
+
+loadZmanimWithHourlyCheck();
+</script>
 </body>
 </html>
