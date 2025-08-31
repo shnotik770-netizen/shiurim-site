@@ -5,61 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>שיעורים יומיים</title>
 
+<!-- כותרות ותשתית -->
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
+<!-- פונטים לשיעורים עצמם (לא לכותרות) -->
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;600;800&family=David+Libre:wght@400;700&family=Noto+Serif+Hebrew:wght@400;600;700&display=swap" rel="stylesheet" />
+
 <style>
-  :root { --bg:#f4f0e6; --bord:#d2691e22; --ink:#8b1538; --header:#8b1538; --gold:#f0c674; }
-  html,body{height:100%}
+  :root{ --bg:#f4f0e6; --bord:#d2691e22; --ink:#8b1538; --header:#8b1538; --gold:#f0c674; }
+
+  /* עמוד תמיד בגובה מסך אחד, בלי פסים */
+  html,body{height:100%; overflow:hidden;}
   body{
-    margin:0;background:var(--bg);color:var(--ink);
+    margin:0; background:var(--bg); color:var(--ink);
     font-family:"Assistant",system-ui,"David Libre",serif;
     font-size:clamp(18px,1.6vw,24px);
     text-align:center;
   }
+
   .frame{
-    width:96vw;min-height:94vh;margin:2vh auto;background:#fff;border-radius:18px;
+    height:100vh; width:100vw; margin:0;
+    background:#fff; border-radius:18px;
     box-shadow:0 8px 28px rgba(0,0,0,.15);
-    padding:2vh 2vw;box-sizing:border-box;display:flex;flex-direction:column;
+    padding:2vh 2vw; box-sizing:border-box;
+    display:flex; flex-direction:column;
   }
 
-  /* כותרת עליונה: שתי שורות ממורכזות */
   .page-header{
-    background:var(--header);color:var(--gold);
-    border-radius:14px;padding:.9rem 1rem 1.1rem;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    background:var(--header); color:var(--gold);
+    border-radius:14px; padding:.9rem 1rem 1.1rem;
+    box-shadow:0 8px 20px rgba(0,0,0,.25); flex-shrink:0;
   }
   .page-header h1{
-    margin:0;
-    font-weight:750;
+    margin:0; font-weight:750;
     font-size:clamp(28px,4.8vw,64px);
-    letter-spacing:.04em;
-    line-height:1.1;
+    letter-spacing:.04em; line-height:1.1;
   }
   .page-header .date{
-    font-weight:550;    
-    margin-top:.35rem;
+    font-weight:550; margin-top:.35rem;
     font-size:clamp(15px,2.2vw,22px);
   }
 
-  /* רווח של סנטימטר לפני הריבועים */
-  .spacer{height:1cm}
+  .spacer{height:1cm; flex-shrink:0;}
 
-  /* פריסה קבועה של הכרטיסים */
   main{
-    flex:1;display:grid;gap:1rem;margin-top:0;
+    flex:1; min-height:0;
+    display:grid; gap:1rem; margin-top:0;
     grid-template-columns:repeat(3,1fr);
     grid-template-areas:
       "chumash tehillim tanya"
       "r3      r1        mitzvos"
       "hayom   hayom     hayom";
   }
+
   .card{
-    background:#fff;border:2px solid var(--bord);
-    border-radius:16px;padding:1rem;
+    background:#fff; border:2px solid var(--bord);
+    border-radius:16px; padding:1rem;
     box-shadow:0 4px 16px rgba(210,105,30,.15);
-    display:flex;flex-direction:column;min-height:140px;
+    display:flex; flex-direction:column; min-height:140px;
+    overflow:hidden;
   }
-  .title{font-weight:780;margin-bottom:.4rem;font-size:1.15em;}
-  .content{white-space:pre-wrap;font-weight:490;line-height:1.6;font-size:1.15em;margin-bottom:0;}
+
+  .title{
+    font-weight:780; margin-bottom:.4rem; font-size:1.15em;
+    font-family:"Assistant",system-ui,"David Libre",serif;
+    flex-shrink:0;
+  }
+
+  .content{
+    white-space:pre-wrap; line-height:1.6; font-size:1.15em; margin-bottom:0;
+    font-weight:490;
+    font-family:"Frank Ruhl Libre","David Libre","Noto Serif Hebrew",serif;
+    overflow:auto;
+  }
 
   #card-chumash{ grid-area:chumash }
   #card-tehillim{ grid-area:tehillim }
@@ -67,7 +84,17 @@
   #card-r3{ grid-area:r3 }
   #card-r1{ grid-area:r1 }
   #card-mitzvos{ grid-area:mitzvos }
-  #card-hayom{ grid-area:hayom; min-height:220px }
+  #card-hayom{ grid-area:hayom; }
+
+  /* היום יום – גובה מקסימלי + פונט גדול יותר */
+  #card-hayom .content{
+    font-size:calc(1.15em * 1.12);
+    max-height:clamp(220px, 32vh, 45vh);
+    scroll-behavior:smooth;
+  }
+
+  .content::-webkit-scrollbar{ width:0; height:0; }
+  .content{ scrollbar-width:none; }
 
   @media (max-width:900px){
     main{
@@ -76,6 +103,9 @@
         "chumash" "tehillim" "tanya"
         "r3" "r1" "mitzvos"
         "hayom";
+    }
+    #card-hayom .content{
+      max-height:clamp(220px, 38vh, 50vh);
     }
   }
 </style>
@@ -93,11 +123,9 @@
     <div class="card" id="card-chumash"><div class="title">חומש עם רש״י</div><div class="content" id="chumash"></div></div>
     <div class="card" id="card-tehillim"><div class="title">תהילים</div><div class="content" id="tehillim"></div></div>
     <div class="card" id="card-tanya"><div class="title">תניא</div><div class="content" id="tanya"></div></div>
-
     <div class="card" id="card-r3"><div class="title">רמב״ם – 3 פרקים</div><div class="content" id="r3"></div></div>
     <div class="card" id="card-r1"><div class="title">רמב״ם – פרק 1</div><div class="content" id="r1"></div></div>
     <div class="card" id="card-mitzvos"><div class="title">ספר המצוות</div><div class="content" id="mitzvos"></div></div>
-
     <div class="card" id="card-hayom"><div class="title">היום יום</div><div class="content" id="hayom"></div></div>
   </main>
 </div>
@@ -119,8 +147,9 @@ function loadGvizTable(url){
     window.google.visualization = window.google.visualization || {};
     window.google.visualization.Query = window.google.visualization.Query || {};
     window.google.visualization.Query.setResponse = (resp) => {
-      try{ if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
-           resolve(resp.table);
+      try{
+        if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
+        resolve(resp.table);
       } finally { if (prev) window.google.visualization.Query.setResponse = prev; script.remove(); }
     };
     const script = document.createElement('script');
@@ -173,14 +202,43 @@ function renderFromRow(r,col){
   document.getElementById('mitzvos').textContent  = get(col.mitzvos);
   document.getElementById('hayom').textContent    = get(col.hayom);
 }
+
+
+/* גלילה רק מטה עם השהיות */
+function enableAutoScroll(selector, delayMs=5000){
+  const el = document.querySelector(selector);
+  if(!el) return;
+  let timer = null;
+  function clearTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+  function startCycle(){
+    if(el.scrollHeight <= el.clientHeight) return;
+    const step=1, intervalMs=16;
+    timer=setInterval(()=>{
+      el.scrollTop=Math.min(el.scrollTop+step,el.scrollHeight-el.clientHeight);
+      if(el.scrollTop+el.clientHeight>=el.scrollHeight){
+        clearTimer();
+        setTimeout(()=>{
+          el.scrollTop=0;
+          setTimeout(()=>startCycle(),delayMs);
+        },delayMs);
+      }
+    },intervalMs);
+  }
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden) clearTimer(); });
+  setTimeout(()=>startCycle(),delayMs);
+}
+
+/* קריאה בסוף */
 (async function init(){
   try{
     const { rows, colKeys } = await fetchRowsAndCols();
     const picked = pickTodayRow(rows, colKeys);
     if (!picked){ setDateText("לא נמצאה שורה להיום"); return; }
     renderFromRow(picked, colKeys);
+    enableAutoScroll('#card-hayom .content',5000);
   }catch(err){ console.error(err); setDateText("שגיאה בטעינת נתונים מהגיליון"); }
 })();
+
 </script>
 </body>
 </html>
