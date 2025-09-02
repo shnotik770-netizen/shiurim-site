@@ -41,7 +41,7 @@
     letter-spacing:.04em; line-height:1.1;
   }
   .page-header .date{
-    font-weight:550; margin-top:.35rem;
+    color: #ffffff;font-weight:550; margin-top:.35rem;
     font-size:clamp(15px,2.2vw,22px);
   }
 
@@ -135,7 +135,26 @@
 const SHEET_GVIZ =
   "https://docs.google.com/spreadsheets/d/1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8/gviz/tq?tqx=out:json&gid=2146538857";
 
-/* טעינת GViz כ-<script> (עוקף CORS) */
+/* --- מטמון לשעה לכל הדף --- */
+const CACHE_KEY = "daily_lessons_payload_v1";
+const HOUR_MS   = 60 * 60 * 1000;
+
+function loadFromCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.timestamp || (Date.now() - obj.timestamp) >= HOUR_MS) return null;
+    return obj.payload || null;
+  }catch{ return null; }
+}
+function saveToCache(payload){
+  try{
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), payload }));
+  }catch{}
+}
+
+/* --- טעינת GViz כ-<script> (עוקף CORS) --- */
 function loadGvizTable(url){
   return new Promise((resolve, reject) => {
     const tsUrl = url + "&t=" + Date.now();
@@ -160,7 +179,7 @@ function loadGvizTable(url){
   });
 }
 
-/* עזרי טבלה/תאריכים */
+/* --- עזרי טבלה/תאריכים --- */
 function cellValue(c){ if(!c) return ""; if(c.f!=null) return c.f; if(c.v==null) return "";
   if(typeof c.v==="string" && /^Date\(/.test(c.v)){ const m=c.v.match(/^Date\((\d+),(\d+),(\d+)/);
     if(m) return new Date(+m[1],+m[2],+m[3]); } return c.v; }
@@ -180,31 +199,47 @@ const TARGETS={ day:["יום","יום בשבוע"], heb:["תאריך עברי"],
 function buildLabelMap(cols){ const m=new Map(); for(const c of cols){ const n=normLabel(c.label); if(!m.has(n)) m.set(n,c.label);} return m; }
 function resolveColumnKeys(cols){ const map=buildLabelMap(cols); const out={}; for(const [k,vars] of Object.entries(TARGETS)){ let f=null; for(const v of vars){ const n=normLabel(v); if(map.has(n)){ f=map.get(n); break; } } if(!f){ for(const [n,orig] of map.entries()){ if(vars.some(v=>n.includes(normLabel(v)))){ f=orig; break; } } } out[k]=f; } return out; }
 
-/* שליפה/רינדור */
+/* שליפה/בנייה */
 async function fetchRowsAndCols(){ const table=await loadGvizTable(SHEET_GVIZ); return { rows:(table.rows||[]).map(r=>rowToObj(table.cols,r)), colKeys:resolveColumnKeys(table.cols) }; }
 function pickTodayRow(rows,col){ const tz='Asia/Jerusalem', todayKey=keyYMD(new Date(),tz); let best=null,bestAbs=Infinity;
   for(const r of rows){ const gk=col.greg; if(!gk) continue; const d=normalizeDateString(r[gk]); if(!d||isNaN(d)) continue;
     const k=keyYMD(d,tz); if(k===todayKey) return r; const dif=Math.abs((new Date(k)-new Date(todayKey))/86400000); if(dif<bestAbs){bestAbs=dif;best=r;} }
   return best; }
-function setDateText(s){ document.getElementById('date').textContent=s; }
-function renderFromRow(r,col){
-  const weekday = col.day ? (r[col.day]||"").toString().trim() : "";
-  const heb = col.heb ? (r[col.heb]||"").toString().trim() : "";
-  const greg = col.greg ? formatGreg(r[col.greg]) : "";
-  setDateText([weekday,[heb,greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · "));
 
-  const get = (k)=> { if(!k) return "—"; const v=(r[k]??"").toString().trim(); return v.length?v:"—"; };
-  document.getElementById('chumash').textContent = get(col.chumash);
-  document.getElementById('tehillim').textContent = get(col.tehillim);
-  document.getElementById('tanya').textContent    = get(col.tanya);
-  document.getElementById('r3').textContent       = get(col.rambam3);
-  document.getElementById('r1').textContent       = get(col.rambam1);
-  document.getElementById('mitzvos').textContent  = get(col.mitzvos);
-  document.getElementById('hayom').textContent    = get(col.hayom);
+/* רינדור למסך מתוך אובייקט payload מוכן */
+function renderFromPayload(p){
+  document.getElementById('date').textContent = p.dateText || "";
+  document.getElementById('chumash').textContent = p.chumash || "—";
+  document.getElementById('tehillim').textContent = p.tehillim || "—";
+  document.getElementById('tanya').textContent    = p.tanya || "—";
+  document.getElementById('r3').textContent       = p.r3 || "—";
+  document.getElementById('r1').textContent       = p.r1 || "—";
+  document.getElementById('mitzvos').textContent  = p.mitzvos || "—";
+  document.getElementById('hayom').textContent    = p.hayom || "—";
 }
 
+/* בניית payload אחיד משורה שנבחרה */
+function buildPayloadFromRow(row, col){
+  const weekday = col.day ? (row[col.day]||"").toString().trim() : "";
+  const heb     = col.heb ? (row[col.heb]||"").toString().trim() : "";
+  const greg    = col.greg ? formatGreg(row[col.greg]) : "";
+  const dateText = [weekday,[heb,greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · ");
 
-/* גלילה רק מטה עם השהיות */
+  const get = (k)=> { if(!k) return "—"; const v=(row[k]??"").toString().trim(); return v.length?v:"—"; };
+
+  return {
+    dateText,
+    chumash:  get(col.chumash),
+    tehillim: get(col.tehillim),
+    tanya:    get(col.tanya),
+    r3:       get(col.rambam3),
+    r1:       get(col.rambam1),
+    mitzvos:  get(col.mitzvos),
+    hayom:    get(col.hayom),
+  };
+}
+
+/* גלילה רק מטה עם השהיות (ל’היום יום’) */
 function enableAutoScroll(selector, delayMs=5000){
   const el = document.querySelector(selector);
   if(!el) return;
@@ -228,17 +263,35 @@ function enableAutoScroll(selector, delayMs=5000){
   setTimeout(()=>startCycle(),delayMs);
 }
 
-/* קריאה בסוף */
+/* --- התחלה: מטמון לשעה --- */
 (async function init(){
   try{
+    // 1) נסה מטמון
+    const cached = loadFromCache();
+    if (cached){
+      renderFromPayload(cached);
+      enableAutoScroll('#card-hayom .content',5000);
+      return;
+    }
+
+    // 2) אין מטמון תקף -> טען מהגיליון, בנה payload, רנדר ושמור לשעה
     const { rows, colKeys } = await fetchRowsAndCols();
     const picked = pickTodayRow(rows, colKeys);
-    if (!picked){ setDateText("לא נמצאה שורה להיום"); return; }
-    renderFromRow(picked, colKeys);
-    enableAutoScroll('#card-hayom .content',5000);
-  }catch(err){ console.error(err); setDateText("שגיאה בטעינת נתונים מהגיליון"); }
-})();
+    if (!picked){
+      document.getElementById('date').textContent = "לא נמצאה שורה להיום";
+      return;
+    }
 
+    const payload = buildPayloadFromRow(picked, colKeys);
+    renderFromPayload(payload);
+    saveToCache(payload);
+
+    enableAutoScroll('#card-hayom .content',5000);
+  }catch(err){
+    console.error(err);
+    document.getElementById('date').textContent = "שגיאה בטעינת נתונים מהגיליון";
+  }
+})();
 </script>
 </body>
 </html>
