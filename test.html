@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>זמני היום</title>
+<style>
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    background-color: #f4f0e6;
+    font-family: 'David Libre', serif;
+    color: #8b1538;
+    direction: rtl;
+  }
+
+  .frame {
+    width: 96vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f0e8 0%, #f2ede5 100%);
+    border: 10px solid #d2691e;
+    border-radius: 24px;
+    box-shadow: 0 12px 32px rgba(210,105,30,0.6);
+    padding: 2vh 2vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    margin: 0 auto;
+  }
+
+  header {
+    background-color: #8b1538;
+    padding: 2vh 2vw;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+  header h1 {
+    margin: 0;
+    font-size: calc(5vh * 2.2);
+    color: #f0c674;
+    letter-spacing: 0.3vw;
+    text-shadow: 0 0 14px #f0c674bb;
+    font-weight: 700;
+  }
+  header .date {
+    margin-top: 0.6vh;
+    font-size: 3.3vh;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* המסגרת – שלא תגלוש מעבר למסך */
+.frame{
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* הגריד הכללי: 4 עמודות, כל עמודה עם מינימום סביר */
+main{
+  display: grid;
+ margin-top: 5vh;
+  grid-template-columns: repeat(3, minmax(240px, 1fr)); /* 👈 מינימום לעמודה */
+  gap: clamp(12px, 2vw, 24px);
+  justify-items: center;   /* 👈 מרכז את הכרטיס בתוך העמודה */
+}
+
+/* הכרטיס – לא רוחב קשיח! נכנס לעמודה, מקסימום 320px */
+.item{
+  width: 100%;             /* 👈 תפס את רוחב העמודה */
+  max-width: 320px;        /* אבל לא יותר מזה */
+  height: 180px;
+
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 4px 14px rgba(210,105,30,0.25);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:16px;
+  box-sizing:border-box;
+}
+
+/* הכותרת – ממורכזת אנכית ואופקית בחלק העליון (2/3) */
+.time-label{
+  flex: 2;
+  display:flex;
+  align-items:center;      /* מרכז אנכי */
+  justify-content:center;  /* מרכז אופקי */
+  width:100%;
+  margin:0;
+  text-align:center;
+  font-size:38px;
+  font-weight:bold;
+}
+
+/* הריבוע הכתום – שליש תחתון */
+.time{
+  flex: 1;
+  width:70%;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+  background:#f07a22;
+  color:#000;
+  font-weight:bold;
+  font-size:38px;
+}
+
+/* רספונסיביות */
+@media (max-width:1100px){
+  main{ grid-template-columns: repeat(3, minmax(240px, 1fr)); }
+}
+@media (max-width:720px){
+  main{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+}
+
+/* אופציונלי: למקרה של פיקסל-שניים גלישה */
+html, body { overflow-x: hidden; }
+
+</style>
+</head>
+<body>
+  <div class="frame" role="main" aria-label="זמני היום עפולה">
+    <header>
+      <div class="header-content">
+        <h1 id="title">זמני היום</h1>
+        <div class="date" id="date">טוען...</div>
+      </div>
+    </header>
+
+    <main id="zmanimList" aria-live="polite" aria-atomic="true" aria-relevant="all">
+      <!-- פריטי זמן יתמלאו כאן -->
+    </main>
+  </div>
+
+<script>
+/* === מקור נתוני תאריך (GViz) === */
+const SHEET_GVIZ_DATE =
+  "https://docs.google.com/spreadsheets/d/1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8/gviz/tq?tqx=out:json&gid=2146538857";
+
+/* טוען GViz */
+function loadGvizTable(url){
+  return new Promise((resolve, reject) => {
+    const tsUrl = url + "&t=" + Date.now();
+    const prev = (window.google && window.google.visualization &&
+                  window.google.visualization.Query &&
+                  window.google.visualization.Query.setResponse)
+                 ? window.google.visualization.Query.setResponse : null;
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    window.google.visualization.Query.setResponse = (resp) => {
+      try{
+        if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
+        resolve(resp.table);
+      } finally { if (prev) window.google.visualization.Query.setResponse = prev; script.remove(); }
+    };
+    const script = document.createElement('script');
+    script.src = tsUrl;
+    script.onerror = () => { if (prev) window.google.visualization.Query.setResponse = prev;
+      reject(new Error('GViz script load error')); };
+    document.body.appendChild(script);
+  });
+}
+
+function cellValue(c){ if(!c) return ""; if(c.f!=null) return c.f; if(c.v==null) return "";
+  if(typeof c.v==="string" && /^Date\(/.test(c.v)){ const m=c.v.match(/^Date\((\d+),(\d+),(\d+)/);
+    if(m) return new Date(+m[1],+m[2],+m[3]); } return c.v; }
+function rowToObj(cols,row){ const o={}; cols.forEach((c,i)=>{ const k=c.label||`col_${i}`; o[k]=cellValue(row.c[i]); }); return o; }
+function normLabel(s){ return String(s||"").replace(/[\u200e\u200f]/g,'').replace(/[\"׳״']/g,'').replace(/[–—\-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
+const DATE_TARGETS = { day:["יום","יום בשבוע"], heb:["תאריך עברי"], greg:["תאריך לועזי"] };
+function buildLabelMap(cols){ const m=new Map(); for(const c of cols){ const n=normLabel(c.label); if(!m.has(n)) m.set(n,c.label);} return m; }
+function resolveDateCols(cols){ const map=buildLabelMap(cols); const out={}; for(const [key, aliases] of Object.entries(DATE_TARGETS)){ let found=null; for(const alias of aliases){ const n=normLabel(alias); if(map.has(n)){ found=map.get(n); break; } } if(!found){ for(const [n,orig] of map.entries()){ if(aliases.some(a=>n.includes(normLabel(a)))){ found=orig; break; } } } out[key]=found; } return out; }
+function keyYMD(d,tz='Asia/Jerusalem'){ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).reduce((a,p)=>(a[p.type]=p.value,a),{}); return `${parts.year}-${parts.month}-${parts.day}`; }
+function normalizeDateString(s){ if(s==null) return null; if(Object.prototype.toString.call(s)==='[object Date]'&&!isNaN(s)) return s; const clean=String(s).replace(/[\u200e\u200f]/g,'').trim(); let m=clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/); if(m) return new Date(+m[3],+m[2]-1,+m[1]); m=clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/); if(m) return new Date(+m[1],+m[2]-1,+m[3]); const t=Date.parse(clean); if(!isNaN(t)) return new Date(t); return null; }
+function formatGreg(v){ if(v instanceof Date){ return new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(v);} return String((v??"")).replace(/[\u200e\u200f]/g,'').trim(); }
+function pickTodayRow(rows,col){ const tz='Asia/Jerusalem', todayKey=keyYMD(new Date(),tz); let best=null,bestAbs=Infinity; for(const r of rows){ const gk=col.greg; if(!gk) continue; const d=normalizeDateString(r[gk]); if(!d||isNaN(d)) continue; const k=keyYMD(d,tz); if(k===todayKey) return r; const dif=Math.abs((new Date(k)-new Date(todayKey))/86400000); if(dif<bestAbs){bestAbs=dif;best=r;} } return best; }
+
+async function setHeaderDateFromSheet(){
+  try{
+    const table=await loadGvizTable(SHEET_GVIZ_DATE);
+    const rows=(table.rows||[]).map(r=>rowToObj(table.cols,r));
+    const col=resolveDateCols(table.cols);
+    const picked=pickTodayRow(rows,col);
+    if(!picked){ document.getElementById('date').textContent="לא נמצא תאריך"; return; }
+    const weekday = col.day ? (picked[col.day]||"").toString().trim() : "";
+    const heb     = col.heb ? (picked[col.heb]||"").toString().trim() : "";
+    const greg    = col.greg ? formatGreg(picked[col.greg]) : "";
+    const text=[weekday,[heb,greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · ");
+    document.getElementById('date').textContent=text;
+  }catch(err){ console.error(err); document.getElementById('date').textContent="שגיאה בתאריך"; }
+}
+
+/* === מקור נתוני זמני היום (RSS) === */
+const CORS_PROXY = "https://api.allorigins.win/get?url=";
+const RSS_URL = encodeURIComponent("https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30");
+const wantedItems = ["עלות השחר (עלות השחר)","זמן טלית ותפילין המוקדם ביותר (משיכיר)","זריחה (הנץ החמה)","סוף זמן קריאת שמע","חצות (היום)","המנחה המוקדמת (מנחה גדולה)","שקיעת החמה (שקיעה)","לילה (צאת הכוכבים)"];
+const renameMap = {"עלות השחר (עלות השחר)":"עלות השחר","זמן טלית ותפילין המוקדם ביותר (משיכיר)":"זמן טלית ותפילין","זריחה (הנץ החמה)":"זריחה","סוף זמן קריאת שמע":"סוף זמן<br>קריאת שמע","חצות (היום)":"חצות","המנחה המוקדמת (מנחה גדולה)":"מנחה גדולה","שקיעת החמה (שקיעה)":"שקיעת החמה","לילה (צאת הכוכבים)":"צאת הכוכבים"};
+
+function clearList(){ document.getElementById("zmanimList").innerHTML=""; }
+function addItem(time,desc){ const list=document.getElementById("zmanimList"); const item=document.createElement("div"); item.className="item"; const descDiv=document.createElement("div"); descDiv.className="time-label"; descDiv.innerHTML=desc; const timeDiv=document.createElement("div"); timeDiv.className="time"; timeDiv.textContent=time; item.appendChild(descDiv); item.appendChild(timeDiv); list.appendChild(item); }
+function filterAndFormat(items){ const filtered=[]; const seenDesc=new Set(); for(const wanted of wantedItems){ const found=Array.from(items).find(item=>{ const title=item.querySelector("title")?.textContent||""; return title.includes(wanted);}); if(found){ const descKey=renameMap[wanted]||wanted; if(!seenDesc.has(descKey)){ seenDesc.add(descKey); const time=found.querySelector("category")?.textContent||""; filtered.push({time,desc:descKey}); } } } return filtered; }
+async function fetchZmanim(){ const response=await fetch(CORS_PROXY+RSS_URL); if(!response.ok) throw new Error("Network response was not ok"); const data=await response.json(); const parser=new DOMParser(); const xml=parser.parseFromString(data.contents,"text/xml"); const channel=xml.querySelector("channel"); if(!channel) throw new Error("מבנה XML לא תקין"); const items=channel.querySelectorAll("item"); const filteredItems=filterAndFormat(items); return {items:filteredItems}; }
+function displayZmanim(zmanim){ clearList(); zmanim.items.forEach(({time,desc})=>addItem(time,desc)); }
+async function loadZmanimWithHourlyCheck(){ const HOUR_MS=60*60*1000; const now=Date.now(); const storedRaw=localStorage.getItem("zmanimData"); if(storedRaw){ try{ const stored=JSON.parse(storedRaw); if(stored.timestamp&&(now-stored.timestamp<HOUR_MS)&&stored.zmanim&&stored.zmanim.items.length){ displayZmanim(stored.zmanim); return; } }catch{} } try{ const zmanim=await fetchZmanim(); displayZmanim(zmanim); localStorage.setItem("zmanimData",JSON.stringify({timestamp:now,zmanim})); }catch(error){ console.error("Error loading zmanim:",error); document.getElementById("date").textContent="שגיאה בטעינת הנתונים"; } }
+
+/* הפעלה ראשונית */
+setHeaderDateFromSheet();
+loadZmanimWithHourlyCheck();
+</script>
+</body>
+</html>
