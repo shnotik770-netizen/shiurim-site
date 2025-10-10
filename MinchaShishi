@@ -4,62 +4,56 @@
   <meta charset="UTF-8">
   <title>ערב שבת קודש</title>
   <style>
-    body {
-      font-family: "Arial", sans-serif;
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
       background-color: #fff8e1;
+      font-family: "Arial", sans-serif;
       color: #3e2723;
-      text-align: center;
-      padding: 30px;
-    }
-
-    .box {
-      border: 3px solid #ffcc80;
-      border-radius: 15px;
-      padding: 25px;
       display: flex;
-      align-items: center;
       justify-content: center;
-      max-width: 600px;
-      margin: auto;
+      align-items: center;
+      text-align: center;
+    }
+
+    .content {
+      border: 8px solid #ffcc80;
       background-color: #fff3e0;
-      box-shadow: 0 0 15px #fbe9e7;
+      border-radius: 40px;
+      padding: 5vh 5vw;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.15);
+      max-width: 90vw;
+      max-height: 90vh;
     }
 
-    .text {
-      font-size: 1.5em;
-      line-height: 1.6;
-      flex: 1;
+    .content h1 {
+      font-size: 6vw;
+      margin: 0.2em 0;
     }
 
-    .candle {
-      margin-right: 20px;
-      animation: flicker 2s infinite;
+    .content h2 {
+      font-size: 4vw;
+      margin: 0.2em 0;
     }
 
-    .candle img {
-      width: 70px;
-      height: auto;
+    .content h3 {
+      font-size: 3.5vw;
+      margin: 0.2em 0;
     }
 
-    @keyframes flicker {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
+    @media (max-width: 600px) {
+      .content h1 { font-size: 9vw; }
+      .content h2 { font-size: 7vw; }
+      .content h3 { font-size: 6vw; }
     }
   </style>
 </head>
 <body>
-
-  <div class="box">
-    <div class="candle">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Shabbat_candles2.jpg/80px-Shabbat_candles2.jpg" alt="נרות שבת">
-    </div>
-    <div class="text">
-      <strong>ערב שבת קודש - יום שישי</strong><br>
-      מנחה גדולה<br>
-      בשעה <strong>13:00</strong>
-    </div>
+  <div class="content">
+    <h1>ערב שבת קודש - יום שישי</h1>
+    <h2>מנחה גדולה</h2>
+    <h3>בשעה 13:00</h3>
   </div>
-
 </body>
 </html>
