@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ערב שבת קודש</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      background-color: #fff8e1;
+      color: #3e2723;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .box {
+      border: 3px solid #ffcc80;
+      border-radius: 15px;
+      padding: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff3e0;
+      box-shadow: 0 0 15px #fbe9e7;
+    }
+
+    .text {
+      font-size: 1.5em;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .candle {
+      margin-right: 20px;
+      animation: flicker 2s infinite;
+    }
+
+    .candle img {
+      width: 70px;
+      height: auto;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <div class="candle">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Shabbat_candles2.jpg/80px-Shabbat_candles2.jpg" alt="נרות שבת">
+    </div>
+    <div class="text">
+      <strong>ערב שבת קודש - יום שישי</strong><br>
+      מנחה גדולה<br>
+      בשעה <strong>13:00</strong>
+    </div>
+  </div>
+
+</body>
+</html>
