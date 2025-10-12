@@ -6,9 +6,6 @@
   <title>הקפות שניות בעפולה</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@100;200;300;400;500;600;700;800;900&family=Assistant:wght@200;300;400;500;600;700;800&family=Rubik:wght@300;400;500;600;700;800;900&family=Varela+Round&family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ================================
-       מבנה כללי והגדרות בסיס
-       ================================ */
     * {
       margin: 0;
       padding: 0;
@@ -28,7 +25,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      box-sizing: border-box;
     }
 
     .container {
@@ -90,33 +86,28 @@
 
     .main-title {
       font-size: 140px;
-      font-family: 'Heebo', sans-serif;
+      font-family: 'Rubik', sans-serif;
       font-weight: 900;
       text-align: center;
-      color: #722f37;
-      background: linear-gradient(135deg, #8b1538 0%, #722f37 50%, #5d1a28 100%);
+      background: linear-gradient(135deg, #ffd700 0%, #ffcc33 50%, #ffaa00 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
       text-shadow: 
-        0 4px 8px rgba(0,0,0,0.3),
-        0 0 30px rgba(139,21,56,0.2);
+        0 4px 12px rgba(0,0,0,0.5),
+        0 0 40px rgba(255,215,0,0.8);
       animation: zoomIn 1.3s ease forwards;
       opacity: 0;
       line-height: 1.1;
       letter-spacing: 6px;
       margin-bottom: 20px;
     }
-    
-
 
     .subtitle {
       font-size: 60px;
-      font-family: 'Assistant', sans-serif;
+      font-family: 'Comfortaa', cursive;
       font-weight: 600;
-      color: #722f37;
-      margin-top: 20px;
-      text-shadow: 0 2px 4px rgba(139,21,56,0.3);
+      color: #ffef9f;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
       opacity: 0;
       animation: fadeIn 1s ease forwards;
       animation-delay: 1.2s;
@@ -138,7 +129,6 @@
       animation-delay: 10s;
     }
 
-    /* ב״ה קטן בצד ימין למעלה גם במסך השני */
     .scene2 .bh-fixed {
       position: absolute;
       top: 20px;
@@ -162,72 +152,48 @@
       border: 2px solid rgba(45,45,45,0.1);
     }
 
-    /* טיפוגרפיה והיררכיה */
-    .event-bh {
-      font-size: 48px;
-      color: #e0e0e0;
-      margin-bottom: 20px;
-    }
-
+    /* טקסטים */
     .event-title {
       font-size: 100px;
       font-family: 'Heebo', sans-serif;
       font-weight: 900;
       color: #1e3a8a;
-      margin-bottom: 25px;
-      text-shadow: 0 4px 8px rgba(30,58,138,0.3);
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
       letter-spacing: 4px;
-      text-align: center;
+      margin-bottom: 25px;
     }
-    
-
 
     .event-subtitle {
-      font-size: 40px;
-      font-family: 'Heebo', sans-serif;
+      font-size: 42px;
+      font-family: 'Varela Round', sans-serif;
       font-weight: 700;
-      color: #1e3a8a;
+      color: #7e22ce;
       margin-bottom: 15px;
     }
 
-    .event-date {
-      font-size: 24px;
+    .event-date, .event-location, .event-address {
+      font-size: 28px;
       font-family: 'Assistant', sans-serif;
       font-weight: 700;
-      color: #1e3a8a;
+      color: #312e81;
       margin-bottom: 10px;
-    }
-
-    .event-location {
-      font-size: 24px;
-      font-family: 'Assistant', sans-serif;
-      font-weight: 700;
-      color: #1e3a8a;
-      margin-bottom: 10px;
-    }
-
-    .event-address {
-      font-size: 18px;
-      font-family: 'Assistant', sans-serif;
-      font-weight: 600;
-      color: #1e3a8a;
-      margin-bottom: 15px;
     }
 
     .event-time {
-      font-size: 45px;
-      font-family: 'Heebo', sans-serif;
+      font-size: 50px;
+      font-family: 'Rubik', sans-serif;
       font-weight: 900;
-      color: #1e3a8a;
+      color: #d97706;
+      text-shadow: 0 0 10px rgba(255,180,0,0.7);
       margin-bottom: 20px;
     }
 
     .event-closing {
-      font-size: 40px;
-      font-family: 'Heebo', sans-serif;
+      font-size: 42px;
+      font-family: 'Comfortaa', cursive;
       font-weight: 700;
-      color: #1e3a8a;
-      line-height: 1.3;
+      color: #be185d;
+      line-height: 1.4;
       margin-bottom: 1.5cm;
     }
 
@@ -252,17 +218,11 @@
       filter: drop-shadow(0 0 15px rgba(255,215,0,0.7));
     }
 
-    /* אנימציות */
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes fadeOut { to { opacity: 0; } }
     @keyframes zoomIn {
       from { opacity: 0; transform: scale(0.3); }
       to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
     }
     @keyframes floatMusic {
       0% { transform: translate(0,0) scale(0); opacity: 0; }
@@ -270,28 +230,11 @@
       100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1); opacity: 0; }
     }
     @keyframes musicPulse {
-      0% { 
-        transform: scale(0) rotate(0deg);
-        opacity: 0;
-        filter: hue-rotate(0deg);
-      }
-      20% { 
-        opacity: 1;
-        transform: scale(1.2) rotate(180deg);
-      }
-      80% { 
-        opacity: 1;
-        transform: scale(1) rotate(360deg);
-        filter: hue-rotate(180deg);
-      }
-      100% { 
-        transform: scale(0) rotate(540deg);
-        opacity: 0;
-        filter: hue-rotate(360deg);
-      }
+      0% { transform: scale(0) rotate(0deg); opacity: 0; }
+      20% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+      80% { opacity: 1; transform: scale(1) rotate(360deg); }
+      100% { transform: scale(0) rotate(540deg); opacity: 0; }
     }
-    
-
   </style>
 </head>
 
@@ -328,14 +271,12 @@
   </div>
 
   <script>
-    // מעבר מסצנה 1 לסצנה 2
     setTimeout(() => {
       const s1 = document.getElementById('scene1');
       s1.classList.add('fadeOut');
       setTimeout(() => s1.style.display = 'none', 1000);
     }, 10000);
 
-    // יצירת תווים מוזיקליים
     const symbols = ['🎵', '🎶', '♫', '♩', '♬'];
     const notesContainer = document.getElementById('musicNotes');
 
@@ -358,18 +299,15 @@
       setTimeout(() => note.remove(), 8000);
     }
 
-    // אלמנטים מוזיקליים מיוחדים
     const musicSymbols = ['🎼', '🎹', '🎸', '🎺', '🎷', '🥁', '🎤', '🎧', '🔊', '🎻'];
     const musicContainer = document.getElementById('musicElements');
 
     function createMusicElements() {
-      // יוצר 2 אלמנטים במקומות שונים
       for (let i = 0; i < 2; i++) {
         const element = document.createElement('div');
         element.className = 'music-element';
         element.textContent = musicSymbols[Math.floor(Math.random() * musicSymbols.length)];
         
-        // מיקום אקראי על המסך
         const x = Math.random() * (window.innerWidth - 100);
         const y = Math.random() * (window.innerHeight - 100);
         
@@ -378,7 +316,6 @@
         
         musicContainer.appendChild(element);
         
-        // מסיר את האלמנט אחרי 3.5 שניות
         setTimeout(() => {
           if (element.parentNode) {
             element.remove();
@@ -389,11 +326,9 @@
 
     setTimeout(() => {
       setInterval(createMusicNote, 600);
-      // מפעיל אלמנטים מוזיקליים כל 4 שניות
       setInterval(createMusicElements, 4000);
-      // מפעיל מיד פעם אחת
       createMusicElements();
     }, 10200);
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98d1d047f3e18e48',t:'MTc2MDIyMTk0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
