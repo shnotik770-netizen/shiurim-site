@@ -50,19 +50,18 @@
     font-weight: 600;
   }
 
-  /* הגריד הכללי */
+  /* הגריד */
   main {
     display: grid;
     margin-top: 5vh;
     gap: clamp(12px, 2vw, 24px);
     justify-items: center;
   }
-
   main.cols-4 { grid-template-columns: repeat(4, minmax(240px, 1fr)); }
   main.cols-3 { grid-template-columns: repeat(3, minmax(240px, 1fr)); }
   main.cols-2 { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
 
-  .item{
+  .item {
     width: 100%;
     max-width: 320px;
     height: 180px;
@@ -76,7 +75,7 @@
     box-sizing:border-box;
   }
 
-  .time-label{
+  .time-label {
     flex: 2;
     display:flex;
     align-items:center;
@@ -88,7 +87,7 @@
     font-weight:bold;
   }
 
-  .time{
+  .time {
     flex: 1;
     width:70%;
     height:40px;
@@ -198,33 +197,40 @@ function addItem(time,desc){
 
 function filterAndFormat(items){
   const filtered=[];
+  const pushUnique=(time,desc)=>{ if(!filtered.some(x=>x.desc===desc)) filtered.push({time,desc}); };
+
   items.forEach(item=>{
     const title=item.querySelector("title")?.textContent||"";
     const time=item.querySelector("category")?.textContent||"";
 
     if (title.includes("עלות השחר")) {
-      filtered.push({time,desc:"עלות השחר"});
+      pushUnique(time,"עלות השחר");
     }
     else if (title.includes("משיכיר")) {
-      filtered.push({time,desc:"זמן טלית ותפילין"});
+      pushUnique(time,"זמן טלית ותפילין");
     }
     else if (title.includes("זריחה")) {
-      filtered.push({time,desc:"זריחה"});
+      pushUnique(time,"זריחה");
     }
     else if (title.includes("קריאת שמע")) {
-      filtered.push({time,desc:"סוף זמן קריאת שמע"});
+      pushUnique(time,"סוף זמן קריאת שמע");
     }
-    else if (title.includes("חצות")) {
-      filtered.push({time,desc:"חצות"});
+    // ❌ לא מציגים חצות הלילה
+    else if (title.includes("חצות הלילה")) {
+      // לא נכנס לרשימה
+    }
+    // ✅ רק חצות היום
+    else if (title.includes("חצות") && !title.includes("הלילה")) {
+      pushUnique(time,"חצות");
     }
     else if (title.includes("מנחה גדולה")) {
-      filtered.push({time,desc:"מנחה גדולה"});
+      pushUnique(time,"מנחה גדולה");
     }
     else if (title.includes("שקיעה")) {
-      filtered.push({time,desc:"שקיעת החמה"});
+      pushUnique(time,"שקיעת החמה");
     }
     else if (title.includes("צאת") || title.includes("יציאת")) {
-      filtered.push({time,desc:title.replace(/ - .*/,"").trim()});
+      pushUnique(time,title.replace(/ - .*/,"").trim());
     }
   });
   return filtered;
