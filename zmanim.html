@@ -50,77 +50,59 @@
     font-weight: 600;
   }
 
-  /* המסגרת – שלא תגלוש מעבר למסך */
-.frame{
-  width: 100%;
-  max-width: 100vw;
-  box-sizing: border-box;
-}
+  /* הגריד הכללי */
+  main {
+    display: grid;
+    margin-top: 5vh;
+    gap: clamp(12px, 2vw, 24px);
+    justify-items: center;
+  }
 
-/* הגריד הכללי: 4 עמודות, כל עמודה עם מינימום סביר */
-main{
-  display: grid;
- margin-top: 5vh;
-  grid-template-columns: repeat(4, minmax(240px, 1fr)); /* 👈 מינימום לעמודה */
-  gap: clamp(12px, 2vw, 24px);
-  justify-items: center;   /* 👈 מרכז את הכרטיס בתוך העמודה */
-}
+  main.cols-4 { grid-template-columns: repeat(4, minmax(240px, 1fr)); }
+  main.cols-3 { grid-template-columns: repeat(3, minmax(240px, 1fr)); }
+  main.cols-2 { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
 
-/* הכרטיס – לא רוחב קשיח! נכנס לעמודה, מקסימום 320px */
-.item{
-  width: 100%;             /* 👈 תפס את רוחב העמודה */
-  max-width: 320px;        /* אבל לא יותר מזה */
-  height: 180px;
+  .item{
+    width: 100%;
+    max-width: 320px;
+    height: 180px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 14px rgba(210,105,30,0.25);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+    box-sizing:border-box;
+  }
 
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 4px 14px rgba(210,105,30,0.25);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:16px;
-  box-sizing:border-box;
-}
+  .time-label{
+    flex: 2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    margin:0;
+    text-align:center;
+    font-size:38px;
+    font-weight:bold;
+  }
 
-/* הכותרת – ממורכזת אנכית ואופקית בחלק העליון (2/3) */
-.time-label{
-  flex: 2;
-  display:flex;
-  align-items:center;      /* מרכז אנכי */
-  justify-content:center;  /* מרכז אופקי */
-  width:100%;
-  margin:0;
-  text-align:center;
-  font-size:38px;
-  font-weight:bold;
-}
+  .time{
+    flex: 1;
+    width:70%;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:6px;
+    background:#f07a22;
+    color:#000;
+    font-weight:bold;
+    font-size:38px;
+  }
 
-/* הריבוע הכתום – שליש תחתון */
-.time{
-  flex: 1;
-  width:70%;
-  height:40px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:6px;
-  background:#f07a22;
-  color:#000;
-  font-weight:bold;
-  font-size:38px;
-}
-
-/* רספונסיביות */
-@media (max-width:1100px){
-  main{ grid-template-columns: repeat(3, minmax(240px, 1fr)); }
-}
-@media (max-width:720px){
-  main{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
-}
-
-/* אופציונלי: למקרה של פיקסל-שניים גלישה */
-html, body { overflow-x: hidden; }
-
+  html, body { overflow-x: hidden; }
 </style>
 </head>
 <body>
@@ -142,7 +124,6 @@ html, body { overflow-x: hidden; }
 const SHEET_GVIZ_DATE =
   "https://docs.google.com/spreadsheets/d/1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8/gviz/tq?tqx=out:json&gid=2146538857";
 
-/* טוען GViz */
 function loadGvizTable(url){
   return new Promise((resolve, reject) => {
     const tsUrl = url + "&t=" + Date.now();
@@ -198,15 +179,111 @@ async function setHeaderDateFromSheet(){
 /* === מקור נתוני זמני היום (RSS) === */
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
 const RSS_URL = encodeURIComponent("https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30");
-const wantedItems = ["עלות השחר (עלות השחר)","זמן טלית ותפילין המוקדם ביותר (משיכיר)","זריחה (הנץ החמה)","סוף זמן קריאת שמע","חצות (היום)","המנחה המוקדמת (מנחה גדולה)","שקיעת החמה (שקיעה)","לילה (צאת הכוכבים)"];
-const renameMap = {"עלות השחר (עלות השחר)":"עלות השחר","זמן טלית ותפילין המוקדם ביותר (משיכיר)":"זמן טלית ותפילין","זריחה (הנץ החמה)":"זריחה","סוף זמן קריאת שמע":"סוף זמן<br>קריאת שמע","חצות (היום)":"חצות","המנחה המוקדמת (מנחה גדולה)":"מנחה גדולה","שקיעת החמה (שקיעה)":"שקיעת החמה","לילה (צאת הכוכבים)":"צאת הכוכבים"};
 
 function clearList(){ document.getElementById("zmanimList").innerHTML=""; }
-function addItem(time,desc){ const list=document.getElementById("zmanimList"); const item=document.createElement("div"); item.className="item"; const descDiv=document.createElement("div"); descDiv.className="time-label"; descDiv.innerHTML=desc; const timeDiv=document.createElement("div"); timeDiv.className="time"; timeDiv.textContent=time; item.appendChild(descDiv); item.appendChild(timeDiv); list.appendChild(item); }
-function filterAndFormat(items){ const filtered=[]; const seenDesc=new Set(); for(const wanted of wantedItems){ const found=Array.from(items).find(item=>{ const title=item.querySelector("title")?.textContent||""; return title.includes(wanted);}); if(found){ const descKey=renameMap[wanted]||wanted; if(!seenDesc.has(descKey)){ seenDesc.add(descKey); const time=found.querySelector("category")?.textContent||""; filtered.push({time,desc:descKey}); } } } return filtered; }
-async function fetchZmanim(){ const response=await fetch(CORS_PROXY+RSS_URL); if(!response.ok) throw new Error("Network response was not ok"); const data=await response.json(); const parser=new DOMParser(); const xml=parser.parseFromString(data.contents,"text/xml"); const channel=xml.querySelector("channel"); if(!channel) throw new Error("מבנה XML לא תקין"); const items=channel.querySelectorAll("item"); const filteredItems=filterAndFormat(items); return {items:filteredItems}; }
-function displayZmanim(zmanim){ clearList(); zmanim.items.forEach(({time,desc})=>addItem(time,desc)); }
-async function loadZmanimWithHourlyCheck(){ const HOUR_MS=60*60*1000; const now=Date.now(); const storedRaw=localStorage.getItem("zmanimData"); if(storedRaw){ try{ const stored=JSON.parse(storedRaw); if(stored.timestamp&&(now-stored.timestamp<HOUR_MS)&&stored.zmanim&&stored.zmanim.items.length){ displayZmanim(stored.zmanim); return; } }catch{} } try{ const zmanim=await fetchZmanim(); displayZmanim(zmanim); localStorage.setItem("zmanimData",JSON.stringify({timestamp:now,zmanim})); }catch(error){ console.error("Error loading zmanim:",error); document.getElementById("date").textContent="שגיאה בטעינת הנתונים"; } }
+function addItem(time,desc){ 
+  const list=document.getElementById("zmanimList"); 
+  const item=document.createElement("div"); 
+  item.className="item"; 
+  const descDiv=document.createElement("div"); 
+  descDiv.className="time-label"; 
+  descDiv.innerHTML=desc; 
+  const timeDiv=document.createElement("div"); 
+  timeDiv.className="time"; 
+  timeDiv.textContent=time; 
+  item.appendChild(descDiv); 
+  item.appendChild(timeDiv); 
+  list.appendChild(item); 
+}
+
+function filterAndFormat(items){
+  const filtered=[];
+  items.forEach(item=>{
+    const title=item.querySelector("title")?.textContent||"";
+    const time=item.querySelector("category")?.textContent||"";
+
+    if (title.includes("עלות השחר")) {
+      filtered.push({time,desc:"עלות השחר"});
+    }
+    else if (title.includes("משיכיר")) {
+      filtered.push({time,desc:"זמן טלית ותפילין"});
+    }
+    else if (title.includes("זריחה")) {
+      filtered.push({time,desc:"זריחה"});
+    }
+    else if (title.includes("קריאת שמע")) {
+      filtered.push({time,desc:"סוף זמן קריאת שמע"});
+    }
+    else if (title.includes("חצות")) {
+      filtered.push({time,desc:"חצות"});
+    }
+    else if (title.includes("מנחה גדולה")) {
+      filtered.push({time,desc:"מנחה גדולה"});
+    }
+    else if (title.includes("שקיעה")) {
+      filtered.push({time,desc:"שקיעת החמה"});
+    }
+    else if (title.includes("צאת") || title.includes("יציאת")) {
+      filtered.push({time,desc:title.replace(/ - .*/,"").trim()});
+    }
+  });
+  return filtered;
+}
+
+async function fetchZmanim(){
+  const response=await fetch(CORS_PROXY+RSS_URL);
+  if(!response.ok) throw new Error("Network response was not ok");
+  const data=await response.json();
+  const parser=new DOMParser();
+  const xml=parser.parseFromString(data.contents,"text/xml");
+  const channel=xml.querySelector("channel");
+  if(!channel) throw new Error("מבנה XML לא תקין");
+  const items=channel.querySelectorAll("item");
+  const filteredItems=filterAndFormat(items);
+  return {items:filteredItems};
+}
+
+function adjustGridColumns(){
+  const list=document.getElementById("zmanimList");
+  const count=list.children.length;
+  list.classList.remove("cols-4","cols-3","cols-2");
+  if(count<=2){
+    list.classList.add("cols-2");
+  } else if(count===3){
+    list.classList.add("cols-3");
+  } else {
+    list.classList.add("cols-4");
+  }
+}
+
+function displayZmanim(zmanim){
+  clearList();
+  zmanim.items.forEach(({time,desc})=>addItem(time,desc));
+  adjustGridColumns();
+}
+
+async function loadZmanimWithHourlyCheck(){
+  const HOUR_MS=60*60*1000;
+  const now=Date.now();
+  const storedRaw=localStorage.getItem("zmanimData");
+  if(storedRaw){
+    try{
+      const stored=JSON.parse(storedRaw);
+      if(stored.timestamp&&(now-stored.timestamp<HOUR_MS)&&stored.zmanim&&stored.zmanim.items.length){
+        displayZmanim(stored.zmanim);
+        return;
+      }
+    }catch{}
+  }
+  try{
+    const zmanim=await fetchZmanim();
+    displayZmanim(zmanim);
+    localStorage.setItem("zmanimData",JSON.stringify({timestamp:now,zmanim}));
+  }catch(error){
+    console.error("Error loading zmanim:",error);
+    document.getElementById("date").textContent="שגיאה בטעינת הנתונים";
+  }
+}
 
 /* הפעלה ראשונית */
 setHeaderDateFromSheet();
