@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מודעה דינמית</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: 'Varela Round', sans-serif;
+      background-color: #fff8e1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    #content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+      padding: 2vh 3vw;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .line {
+      width: 75%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+      border-radius: 20px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 1.2rem 1rem;
+    }
+
+    /* גדלים */
+    .size-ענק    { font-size: 12vh; }
+    .size-גדול   { font-size: 6vh; }
+    .size-בינוני { font-size: 4.5vh; }
+    .size-קטן    { font-size: 3vh; }
+
+    /* רקעים כהים */
+    .bg-תכלת     { background-color: #0288d1; }
+    .bg-ירוק     { background-color: #2e7d32; }
+    .bg-אדום     { background-color: #8b1538; color: white; }
+
+    /* רקע ללא – ביטול כל ריבוע */
+    .bg-ללא {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+
+    /* צבעי טקסט */
+    .color-שחור  { color: #000; }
+    .color-לבן   { color: #fff; }
+    .color-כחול  { color: #1565c0; }
+    .color-כתום  { color: #ef6c00; }
+    .color-ירוק  { color: #aeea00; }
+  </style>
+</head>
+<body>
+
+  <div id="content"><!-- נטען דינמית --></div>
+
+<script>
+  const SHEET_ID = "1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8";
+  const GID = "1783649615";
+  const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+  const CACHE_KEY = "gvizDataCache";
+  const CACHE_TIME_KEY = "gvizDataTimestamp";
+
+  function cellValue(cell) {
+    return (!cell) ? '' : (cell.f != null ? cell.f : cell.v ?? '');
+  }
+
+  function tableToLines(table) {
+    const rows = table.rows || [];
+    if (rows.length < 2) return [];
+    const headers = rows[0].c.map(cellValue);
+    return rows.slice(1).map(row => {
+      const item = {};
+      row.c.forEach((cell, i) => {
+        item[headers[i]] = cellValue(cell).toString().trim();
+      });
+      return item;
+    });
+  }
+
+  function renderLines(lines) {
+    const container = document.getElementById("content");
+    container.innerHTML = '';
+    lines.forEach(line => {
+      const div = document.createElement('div');
+      const size = `size-${line["גודל"]}`;
+      const bg = `bg-${line["רקע"]}`;
+      const color = `color-${line["צבע טקסט"]}`;
+      div.className = `line ${size} ${bg} ${color}`;
+      div.textContent = line["טקסט"];
+      container.appendChild(div);
+    });
+  }
+
+  function processData(data) {
+    try {
+      const table = data.table;
+      const lines = tableToLines(table);
+      renderLines(lines);
+    } catch (err) {
+      console.error("\u05e9\u05d2\u05d9\u05d0\u05d4 \u05d1\u05e2\u05d9\u05d1\u05d5\u05d3 \u05d4\u05e0\u05ea\u05d5\u05e0\u05d9\u05dd:", err);
+      document.getElementById("content").innerHTML =
+        '<div style="color:red;font-size:2em">\u05e9\u05d2\u05d9\u05d0\u05d4 \u05d1\u05e0\u05ea\u05d5\u05e0\u05d9\u05dd</div>';
+    }
+  }
+
+  window.google = {
+    visualization: {
+      Query: {
+        setResponse: function (data) {
+          // שמור בזיכרון מקומי עם טיימסטמפ
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now());
+          processData(data);
+        }
+      }
+    }
+  };
+
+  // בדיקת מטמון
+  const lastTime = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0', 10);
+  const now = Date.now();
+  const ONE_HOUR = 1000 * 60 * 60;
+
+  if (now - lastTime < ONE_HOUR) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+      processData(cached);
+    } catch (e) {
+      loadScript();
+    }
+  } else {
+    loadScript();
+  }
+
+  function loadScript() {
+    const script = document.createElement('script');
+    script.src = GVIZ_URL;
+    document.body.appendChild(script);
+  }
+</script>
+
+</body>
+</html>
