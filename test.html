@@ -142,14 +142,9 @@
       transition: grid-template-columns .55s cubic-bezier(.4,0,.2,1);
     }
 
-    /* ── Spotlight modes ── */
-    /* arvit-mode: spotlight 25% left + 3 regular cols */
-    .grid-wrapper.arvit-mode {
-      grid-template-columns: minmax(180px, 25%) repeat(3, 1fr);
-    }
-    /* mincha-mode: spotlight 25% right + 3 regular cols */
-    .grid-wrapper.mincha-mode {
-      grid-template-columns: repeat(3, 1fr) minmax(180px, 25%);
+    /* ── All spotlight modes: spotlight LEFT 25% + regular cols ── */
+    .grid-wrapper.spotlight-mode {
+      grid-template-columns: minmax(180px, 25%) repeat(var(--reg-cols, 3), 1fr);
     }
 
     /* ─── Generic spotlight card ─── */
@@ -166,19 +161,24 @@
     .prayer-spotlight::before { content:'✦'; position:absolute; top:10px; right:14px; color:var(--gold); opacity:.35; font-size:18px; }
     .prayer-spotlight::after  { content:'✦'; position:absolute; bottom:10px; left:14px; color:var(--gold); opacity:.35; font-size:18px; }
 
-    /* arvit spotlight — dark purple */
+    /* Spotlight visible when parent has spotlight-mode */
+    .spotlight-mode .prayer-spotlight { display: flex; }
+
+    /* arvit — dark purple */
     .arvit-spotlight {
       background: linear-gradient(155deg, #1a0030 0%, var(--crimson-deep) 60%, #0d001a 100%);
       animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
     }
-    .arvit-mode .arvit-spotlight { display: flex; }
-
-    /* mincha spotlight — warm crimson */
+    /* mincha — warm crimson */
     .mincha-spotlight {
       background: linear-gradient(155deg, var(--crimson-deep) 0%, #6a0020 60%, #3a000e 100%);
       animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
     }
-    .mincha-mode .mincha-spotlight { display: flex; }
+    /* shacharit — deep navy-gold */
+    .shacharit-spotlight {
+      background: linear-gradient(155deg, #0a1830 0%, #1a3060 60%, #0a0e20 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
+    }
 
     @keyframes spotlightIn {
       from { opacity:0; transform:scale(.9); }
@@ -187,23 +187,26 @@
 
     .sp-title {
       font-family: 'Frank Ruhl Libre', serif;
-      font-size: clamp(16px, 2.2vw, 30px);
+      font-size: clamp(15px, 2vw, 27px);
       color: var(--gold-light); font-weight: 900;
       letter-spacing: .05em;
       text-shadow: 0 0 18px rgba(200,150,42,0.55);
       line-height: 1.2;
     }
-    .sp-subtitle {
-      font-size: clamp(10px, 1vw, 14px);
-      color: var(--gold); opacity: .7; font-weight: 400;
-    }
     .sp-time {
-      font-size: clamp(38px, 5.5vw, 76px);
+      font-size: clamp(36px, 5vw, 70px);
       font-weight: 900;
       font-family: 'Frank Ruhl Libre', serif;
       color: #fff;
       text-shadow: 0 0 28px rgba(200,150,42,0.65), 0 4px 18px rgba(0,0,0,.55);
       line-height: 1;
+    }
+    .sp-countdown {
+      font-size: clamp(12px, 1.3vw, 18px);
+      color: var(--gold-light);
+      font-weight: 600;
+      opacity: .85;
+      letter-spacing: .04em;
     }
     .sp-pulse {
       width: 11px; height: 11px; background: var(--gold); border-radius: 50%;
@@ -280,15 +283,23 @@
     }
     .time-item:hover { background: rgba(200,150,42,.11); border-color: var(--gold); }
 
-    /* Two-line item (two prayers in one box) */
-    .time-item.two-line {
-      flex-direction: column;
-      gap: 1px;
-      line-height: 1.15;
+    /* Side-by-side item: two times in one row */
+    .time-item.side-by-side {
+      flex-direction: row;
+      gap: 0;
+      padding: 2px 4px;
     }
-    .time-item.two-line .line2 {
-      font-size: .85em;
-      opacity: .85;
+    .time-item.side-by-side .sbs-left,
+    .time-item.side-by-side .sbs-right {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .time-item.side-by-side .sbs-divider {
+      width: 1px;
+      align-self: stretch;
+      margin: 6px 0;
+      background: rgba(200,150,42,0.35);
+      flex-shrink: 0;
     }
 
     /* מנחה גדולה — first mincha */
@@ -443,72 +454,23 @@ function nextHalf(d) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PRAYER-TIME BUILDERS
-   Returns array of { label, cls, line2? }
-══════════════════════════════════════════════════════════ */
-function buildMincha(minchaGedola, sunset) {
-  if (!minchaGedola || !sunset) return [{label:'ממתין לנתונים...', cls:'loading'}];
-  const first     = floorTo5(minchaGedola);
-  const lastMincha = floorTo5(addMin(sunset, -15));
-
-  // First item: "מנחה גדולה - HH:MM"
-  const items = [{ label: `מנחה גדולה — ${fmt(first)}`, cls: 'mincha-gedola' }];
-  const seen  = new Set([fmt(first)]);
-
-  let cur = nextHalf(addMin(first, 1));
-  while (cur < lastMincha) {
-    const f = fmt(cur);
-    if (!seen.has(f)) { seen.add(f); items.push({ label: f, cls: '' }); }
-    cur = addMin(cur, 30);
-  }
-
-  // Last item: "HH:MM - בזמן"
-  const lastF = fmt(lastMincha);
-  if (!seen.has(lastF)) {
-    items.push({ label: `${lastF} — בזמן`, cls: 'mincha-last' });
-  } else {
-    // Mark existing last as mincha-last
-    const li = items.find(i => i.label === lastF);
-    if (li) { li.label = `${lastF} — בזמן`; li.cls = 'mincha-last'; }
-  }
-
-  return items;
-}
-
-function buildArvit(tzet, lastArvit) {
-  if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
-  const first = floorTo5(tzet);
-
-  // First item: "HH:MM - בזמן"
-  const items = [{ label: `${fmt(first)} — בזמן`, cls: 'tzet' }];
-  const seen  = new Set([fmt(first)]);
-
-  let cur = nextHalf(addMin(first, 1));
-  while (lastArvit && cur <= lastArvit) {
-    const f = fmt(cur);
-    if (!seen.has(f)) { seen.add(f); items.push({ label: f, cls: '' }); }
-    cur = addMin(cur, 30);
-  }
-  return items;
-}
-
-/* ══════════════════════════════════════════════════════════
-   SHEET: can pack multiple times in one cell (comma/space separated)
-   → split into "two-line" items
+   SHEET: pack multiple times in one cell → side-by-side item
 ══════════════════════════════════════════════════════════ */
 function parseSheetItems(rawItems) {
   const result = [];
   rawItems.forEach(txt => {
-    // If the cell contains a comma or multiple time-like tokens, make a two-line item
     const times = txt.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
     if (times.length >= 2) {
-      result.push({ label: times[0], line2: times[1], cls: 'two-line' });
+      result.push({ left: times[0], right: times[1], cls: 'side-by-side' });
     } else {
       result.push({ label: txt, cls: '' });
     }
   });
   return result;
 }
+
+/* Count "visual rows" an item array occupies (side-by-side = 1 row) */
+function countRows(items) { return items.length; }
 
 /* ══════════════════════════════════════════════════════════
    HEBCAL ZMANIM
@@ -677,19 +639,21 @@ function makeColumn(title, itemDefs) {
 
   (itemDefs || []).forEach(def => {
     const li = document.createElement('li');
-    const s = typeof def === 'string';
-    const item = s ? { label: def, cls: '' } : def;
+    const item = typeof def === 'string' ? { label: def, cls: '' } : def;
     li.className = 'time-item' + (item.cls ? ' ' + item.cls : '');
 
-    if (item.line2) {
-      // Two-line layout
-      const span1 = document.createElement('span');
-      span1.textContent = item.label;
-      const span2 = document.createElement('span');
-      span2.className = 'line2';
-      span2.textContent = item.line2;
-      li.appendChild(span1);
-      li.appendChild(span2);
+    if (item.cls === 'side-by-side') {
+      const lSpan = document.createElement('span');
+      lSpan.className = 'sbs-left';
+      lSpan.textContent = item.left;
+      const div = document.createElement('span');
+      div.className = 'sbs-divider';
+      const rSpan = document.createElement('span');
+      rSpan.className = 'sbs-right';
+      rSpan.textContent = item.right;
+      li.appendChild(lSpan);
+      li.appendChild(div);
+      li.appendChild(rSpan);
     } else {
       li.textContent = item.label;
     }
@@ -701,65 +665,195 @@ function makeColumn(title, itemDefs) {
   return sec;
 }
 
-function makeSpotlight(type, title, time) {
+function makeSpotlight(type, title, prayerTime, minsUntil) {
   const div = document.createElement('div');
   div.className = `prayer-spotlight ${type}-spotlight`;
+
+  // countdown text
+  let countdownHtml = '';
+  if (minsUntil > 0) {
+    const h = Math.floor(minsUntil / 60);
+    const m = minsUntil % 60;
+    const parts = [];
+    if (h > 0) parts.push(`${h} שעות`);
+    if (m > 0 || h === 0) parts.push(`${m} דקות`);
+    countdownHtml = `<div class="sp-countdown">בעוד ${parts.join(' ו')}</div>`;
+  } else {
+    countdownHtml = `<div class="sp-countdown">עכשיו!</div>`;
+  }
+
   div.innerHTML = `
     <div class="sp-title">${title}</div>
-    <div class="sp-time">${time}</div>
+    <div class="sp-time">${prayerTime}</div>
+    ${countdownHtml}
     <div class="sp-pulse"></div>
   `;
   return div;
 }
 
-function render(zmanim, mode) {
-  // mode: 'normal' | 'arvit' | 'mincha-first' | 'mincha-last'
+/* ══════════════════════════════════════════════════════════
+   DYNAMIC LAYOUT
+   Logic:
+   1. Count shacharit rows (the "reference" — usually the most spread-out column)
+   2. Mincha & arvit get up to 2 extra rows via side-by-side pairing, capped at shacharit+2
+   3. Grid columns are spread proportionally so no column ever scrolls
+══════════════════════════════════════════════════════════ */
+
+/**
+ * Pack a flat list of time-strings into items,
+ * pairing into side-by-side so total rows ≤ maxRows.
+ * first/last items are always kept solo (special styling).
+ */
+function packItems(rawItems, maxRows) {
+  if (!rawItems || !rawItems.length) return rawItems;
+  if (rawItems.length <= maxRows) return rawItems; // already fits, no pairing needed
+
+  // First & last must stay solo
+  const first = rawItems[0];
+  const last  = rawItems[rawItems.length - 1];
+  const mid   = rawItems.slice(1, -1);
+
+  const paired = [];
+  for (let i = 0; i < mid.length; i += 2) {
+    if (i + 1 < mid.length && paired.length + 2 + (mid.length - i - 2) > (maxRows - 2)) {
+      // Need to pair
+      paired.push({ left: mid[i].label || mid[i], right: mid[i+1].label || mid[i+1], cls: 'side-by-side' });
+    } else {
+      paired.push(mid[i]);
+      if (i + 1 < mid.length) paired.push(mid[i+1]);
+    }
+  }
+  return [first, ...paired, last];
+}
+
+/**
+ * Build mincha items, then pack so rows ≤ maxRows
+ */
+function buildMinchaFit(minchaGedola, sunset, maxRows) {
+  if (!minchaGedola || !sunset) return [{label:'ממתין לנתונים...', cls:'loading'}];
+  const first      = floorTo5(minchaGedola);
+  const lastMincha = floorTo5(addMin(sunset, -15));
+
+  const rawMid = [];
+  const seen   = new Set([fmt(first), fmt(lastMincha)]);
+  let cur = nextHalf(addMin(first, 1));
+  while (cur < lastMincha) {
+    const f = fmt(cur);
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); }
+    cur = addMin(cur, 30);
+  }
+
+  const firstItem = { label: `מנחה גדולה — ${fmt(first)}`, cls: 'mincha-gedola' };
+  const lastItem  = { label: `${fmt(lastMincha)} — בזמן`,  cls: 'mincha-last' };
+
+  // How many rows left for middle?
+  const midMaxRows = Math.max(0, maxRows - 2); // -2 for first and last
+  const midItems = [];
+  // Pair until we fit
+  let i = 0;
+  while (i < rawMid.length) {
+    if (midItems.length < midMaxRows - 1 || i + 1 >= rawMid.length) {
+      // Can still add without pairing — but check if we'll overflow
+      const remaining = rawMid.length - i;
+      const rowsLeft  = midMaxRows - midItems.length;
+      if (remaining > rowsLeft && i + 1 < rawMid.length) {
+        // Force pair
+        midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+        i += 2;
+      } else {
+        midItems.push({ label: rawMid[i], cls: '' });
+        i++;
+      }
+    } else {
+      // Pair
+      if (i + 1 < rawMid.length) {
+        midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+        i += 2;
+      } else {
+        midItems.push({ label: rawMid[i], cls: '' });
+        i++;
+      }
+    }
+  }
+
+  return [firstItem, ...midItems, lastItem];
+}
+
+/**
+ * Build arvit items, packed so rows ≤ maxRows
+ */
+function buildArvitFit(tzet, lastArvit, maxRows) {
+  if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
+  const first = floorTo5(tzet);
+  const firstItem = { label: `${fmt(first)} — בזמן`, cls: 'tzet' };
+
+  const rawMid = [];
+  const seen   = new Set([fmt(first)]);
+  let cur = nextHalf(addMin(first, 1));
+  while (lastArvit && cur <= lastArvit) {
+    const f = fmt(cur);
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); }
+    cur = addMin(cur, 30);
+  }
+
+  const midMaxRows = Math.max(0, maxRows - 1);
+  const midItems = [];
+  let i = 0;
+  while (i < rawMid.length) {
+    const remaining = rawMid.length - i;
+    const rowsLeft  = midMaxRows - midItems.length;
+    if (remaining > rowsLeft && i + 1 < rawMid.length) {
+      midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+      i += 2;
+    } else {
+      midItems.push({ label: rawMid[i], cls: '' });
+      i++;
+    }
+  }
+
+  return [firstItem, ...midItems];
+}
+
+function render(zmanim, modeObj) {
+  const { mode, minsUntil, prayerTime, title, type } = modeObj;
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   grid.className = 'grid-wrapper';
-  if (mode === 'arvit')        grid.classList.add('arvit-mode');
-  if (mode === 'mincha-first' || mode === 'mincha-last') grid.classList.add('mincha-mode');
 
   const now = getNow();
   const lastArvit = lastArvitFromSheet ? hhmmToDate(lastArvitFromSheet, now) : null;
-  const minchaItems = buildMincha(zmanim?.minchaGedola, zmanim?.sunset);
-  const arvitItems  = buildArvit(zmanim?.tzet, lastArvit);
 
-  // Static sections (shacharit etc.) with two-line support
-  const staticCols = (sheetSections || []).map(sec =>
-    makeColumn(sec.title, parseSheetItems(sec.items))
-  );
-  const minchaCol = makeColumn('מנחה', minchaItems);
-  const arvitCol  = makeColumn('ערבית', arvitItems);
+  const staticParsed = (sheetSections || []).map(sec => ({
+    title: sec.title,
+    items: parseSheetItems(sec.items)
+  }));
 
-  if (mode === 'arvit') {
-    // Spotlight on the LEFT (25%), all 3 normal cols to the right (including arvit)
-    const spot = makeSpotlight('arvit', 'תפילת ערבית ראשונה', arvitItems[0]?.label || '--:--');
+  const shacharitRows = staticParsed.reduce((mx, s) => Math.max(mx, s.items.length), 3);
+  const maxRows = shacharitRows + 2;
+
+  const minchaItems = buildMinchaFit(zmanim?.minchaGedola, zmanim?.sunset, maxRows);
+  const arvitItems  = buildArvitFit(zmanim?.tzet, lastArvit, maxRows);
+
+  const staticCols = staticParsed.map(s => makeColumn(s.title, s.items));
+  const minchaCol  = makeColumn('מנחה',  minchaItems);
+  const arvitCol   = makeColumn('ערבית', arvitItems);
+
+  const totalRegCols = staticCols.length + 2; // mincha + arvit
+
+  if (mode !== 'normal') {
+    // Always: spotlight LEFT, then regular columns
+    grid.classList.add('spotlight-mode');
+    grid.style.setProperty('--reg-cols', totalRegCols);
+    grid.style.gridTemplateColumns = `minmax(180px,25%) repeat(${totalRegCols}, 1fr)`;
+
+    const spot = makeSpotlight(type, title, prayerTime, minsUntil);
     grid.appendChild(spot);
     staticCols.forEach(c => grid.appendChild(c));
     grid.appendChild(minchaCol);
     grid.appendChild(arvitCol);
-
-  } else if (mode === 'mincha-first') {
-    // Spotlight on RIGHT (25%): next mincha = first one
-    staticCols.forEach(c => grid.appendChild(c));
-    grid.appendChild(minchaCol);
-    grid.appendChild(arvitCol);
-    const spot = makeSpotlight('mincha', 'מנחה גדולה', minchaItems[0]?.label?.replace(/מנחה גדולה — /, '') || '--:--');
-    grid.appendChild(spot);
-
-  } else if (mode === 'mincha-last') {
-    // Spotlight on RIGHT (25%): next mincha = last one
-    staticCols.forEach(c => grid.appendChild(c));
-    grid.appendChild(minchaCol);
-    grid.appendChild(arvitCol);
-    const lastItem = minchaItems[minchaItems.length - 1];
-    const lastTime = lastItem?.label?.replace(/ — בזמן/, '') || '--:--';
-    const spot = makeSpotlight('mincha', 'מנחה אחרונה', lastTime);
-    grid.appendChild(spot);
 
   } else {
-    // Normal: 3 cols
+    grid.style.gridTemplateColumns = `repeat(${totalRegCols}, 1fr)`;
     staticCols.forEach(c => grid.appendChild(c));
     grid.appendChild(minchaCol);
     grid.appendChild(arvitCol);
@@ -768,42 +862,67 @@ function render(zmanim, mode) {
 
 /* ══════════════════════════════════════════════════════════
    MODE DETECTION
-   Returns: 'normal' | 'mincha-first' | 'mincha-last' | 'arvit'
+   Returns: { mode, minsUntil, prayerTime, title, type }
+   mode: 'normal' | 'shacharit' | 'mincha-first' | 'mincha-last' | 'arvit'
 ══════════════════════════════════════════════════════════ */
 function detectMode(zmanim) {
-  if (!zmanim) return 'normal';
+  if (!zmanim) return { mode: 'normal' };
   const now = getNow();
+
+  // Shacharit: first time from sheet sections
+  let shacharitFirst = null;
+  if (sheetSections && sheetSections.length) {
+    // Find the earliest time across all static sections
+    sheetSections.forEach(sec => {
+      (sec.items || []).forEach(txt => {
+        // Each cell may have comma-separated times — take the first
+        const t = txt.split(/[,،\n]/)[0].trim();
+        const d = hhmmToDate(t, now);
+        if (d && (!shacharitFirst || d < shacharitFirst)) shacharitFirst = d;
+      });
+    });
+  }
 
   const minchaFirst = zmanim.minchaGedola ? floorTo5(zmanim.minchaGedola) : null;
   const minchaLast  = zmanim.sunset       ? floorTo5(addMin(zmanim.sunset, -15)) : null;
   const tzet        = zmanim.tzet;
 
-  // Arvit spotlight: 10 min before tzet until 2h after
+  // Check each event: show spotlight 10 min before until the event passes (or 10 min after for mincha)
+  // Priority: arvit > mincha-last > mincha-first > shacharit
+
   if (tzet) {
     const mins = (tzet - now) / 60000;
-    if (mins <= 10 && mins >= -120) return 'arvit';
+    if (mins <= 10 && mins >= -120)
+      return { mode: 'arvit', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(tzet), title: 'תפילת ערבית ראשונה', type: 'arvit' };
   }
-
-  // Mincha-first spotlight: 10 min before first mincha until 10 min after
-  if (minchaFirst) {
-    const mins = (minchaFirst - now) / 60000;
-    if (mins <= 10 && mins >= -10) return 'mincha-first';
-  }
-
-  // Mincha-last spotlight: 10 min before last mincha until 10 min after
   if (minchaLast) {
     const mins = (minchaLast - now) / 60000;
-    if (mins <= 10 && mins >= -10) return 'mincha-last';
+    if (mins <= 10 && mins >= -10)
+      return { mode: 'mincha-last', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(minchaLast), title: 'מנחה אחרונה', type: 'mincha' };
+  }
+  if (minchaFirst) {
+    const mins = (minchaFirst - now) / 60000;
+    if (mins <= 10 && mins >= -10)
+      return { mode: 'mincha-first', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(minchaFirst), title: 'מנחה גדולה', type: 'mincha' };
+  }
+  if (shacharitFirst) {
+    const mins = (shacharitFirst - now) / 60000;
+    if (mins <= 10 && mins >= -10)
+      return { mode: 'shacharit', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(shacharitFirst), title: 'שחרית ראשונה', type: 'shacharit' };
   }
 
-  return 'normal';
+  return { mode: 'normal' };
 }
 
 /* ══════════════════════════════════════════════════════════
    TICK LOOP
 ══════════════════════════════════════════════════════════ */
 let lastMinute    = -1;
-let lastMode      = null;
+let lastModeKey   = null;
 let currentZmanim = null;
 let loadedDateKey = null;
 
@@ -818,11 +937,13 @@ function tick() {
     return;
   }
 
-  const mode = detectMode(currentZmanim);
-  if (curMin !== lastMinute || mode !== lastMode) {
-    lastMinute = curMin;
-    lastMode   = mode;
-    render(currentZmanim, mode);
+  const modeObj = detectMode(currentZmanim);
+  const modeKey = modeObj.mode + ':' + (modeObj.minsUntil ?? '');
+
+  if (curMin !== lastMinute || modeKey !== lastModeKey) {
+    lastMinute  = curMin;
+    lastModeKey = modeKey;
+    render(currentZmanim, modeObj);
   }
 }
 
@@ -852,7 +973,8 @@ async function fullRefresh(now, dateKey) {
     currentZmanim = null;
   }
 
-  lastMinute = -1;
+  lastMinute  = -1;
+  lastModeKey = null;
   tick();
 }
 
