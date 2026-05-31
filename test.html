@@ -72,9 +72,7 @@
       font-family: 'Heebo', sans-serif; font-size: 12px; cursor: pointer;
       width: 120px;
     }
-    .sim-panel input[type="time"].zman-override {
-      width: 70px;
-    }
+    .sim-panel input[type="time"].zman-override { width: 70px; }
     .sim-btn {
       background: var(--crimson); border: 1px solid rgba(200,150,42,0.6);
       color: var(--gold-light); padding: 3px 10px; border-radius: 6px;
@@ -82,10 +80,7 @@
       font-weight: 700; transition: background .2s; white-space: nowrap;
     }
     .sim-btn:hover { background: #9a1840; }
-    .sim-status {
-      margin-right: auto;
-      color: #888; font-size: 11px;
-    }
+    .sim-status { margin-right: auto; color: #888; font-size: 11px; }
     .sim-status .ok { color: #5d5; }
     .sim-status .err { color: #d55; }
     .sim-status .loading { color: #aa8; }
@@ -137,52 +132,79 @@
       display: flex; flex-direction: column;
     }
 
+    /* ── Normal: 3 equal columns ── */
     .grid-wrapper {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: clamp(7px, 1vw, 18px);
       flex: 1;
+      min-height: 0;
       transition: grid-template-columns .55s cubic-bezier(.4,0,.2,1);
     }
+
+    /* ── Spotlight modes ── */
+    /* arvit-mode: spotlight 25% left + 3 regular cols */
     .grid-wrapper.arvit-mode {
-      grid-template-columns: minmax(240px, 34%) repeat(3, 1fr);
+      grid-template-columns: minmax(180px, 25%) repeat(3, 1fr);
+    }
+    /* mincha-mode: spotlight 25% right + 3 regular cols */
+    .grid-wrapper.mincha-mode {
+      grid-template-columns: repeat(3, 1fr) minmax(180px, 25%);
     }
 
-    /* ─── Arvit spotlight ─── */
-    .arvit-spotlight {
+    /* ─── Generic spotlight card ─── */
+    .prayer-spotlight {
       display: none;
-      background: linear-gradient(155deg, #1a0030 0%, var(--crimson-deep) 60%, #0d001a 100%);
       border: 3px solid var(--gold);
       border-radius: var(--r);
       box-shadow: 0 0 50px rgba(200,150,42,0.38), inset 0 0 40px rgba(0,0,0,.45);
       align-items: center; justify-content: center;
-      text-align: center; flex-direction: column; gap: 10px;
-      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
+      text-align: center; flex-direction: column; gap: 8px;
       position: relative; overflow: hidden;
+      padding: 12px;
+    }
+    .prayer-spotlight::before { content:'✦'; position:absolute; top:10px; right:14px; color:var(--gold); opacity:.35; font-size:18px; }
+    .prayer-spotlight::after  { content:'✦'; position:absolute; bottom:10px; left:14px; color:var(--gold); opacity:.35; font-size:18px; }
+
+    /* arvit spotlight — dark purple */
+    .arvit-spotlight {
+      background: linear-gradient(155deg, #1a0030 0%, var(--crimson-deep) 60%, #0d001a 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
     }
     .arvit-mode .arvit-spotlight { display: flex; }
-    .arvit-spotlight::before { content:'✦'; position:absolute; top:10px; right:14px; color:var(--gold); opacity:.35; font-size:18px; }
-    .arvit-spotlight::after  { content:'✦'; position:absolute; bottom:10px; left:14px; color:var(--gold); opacity:.35; font-size:18px; }
-    @keyframes spotlightIn {
-      from { opacity:0; transform:scale(.9) translateX(-18px); }
-      to   { opacity:1; transform:scale(1)  translateX(0); }
+
+    /* mincha spotlight — warm crimson */
+    .mincha-spotlight {
+      background: linear-gradient(155deg, var(--crimson-deep) 0%, #6a0020 60%, #3a000e 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
     }
-    .sp-label {
+    .mincha-mode .mincha-spotlight { display: flex; }
+
+    @keyframes spotlightIn {
+      from { opacity:0; transform:scale(.9); }
+      to   { opacity:1; transform:scale(1); }
+    }
+
+    .sp-title {
       font-family: 'Frank Ruhl Libre', serif;
-      font-size: clamp(13px, 1.7vw, 22px);
-      color: var(--gold-light); font-weight: 700;
-      letter-spacing: .06em;
+      font-size: clamp(16px, 2.2vw, 30px);
+      color: var(--gold-light); font-weight: 900;
+      letter-spacing: .05em;
       text-shadow: 0 0 18px rgba(200,150,42,0.55);
+      line-height: 1.2;
+    }
+    .sp-subtitle {
+      font-size: clamp(10px, 1vw, 14px);
+      color: var(--gold); opacity: .7; font-weight: 400;
     }
     .sp-time {
-      font-size: clamp(40px, 6vw, 80px);
+      font-size: clamp(38px, 5.5vw, 76px);
       font-weight: 900;
       font-family: 'Frank Ruhl Libre', serif;
       color: #fff;
       text-shadow: 0 0 28px rgba(200,150,42,0.65), 0 4px 18px rgba(0,0,0,.55);
       line-height: 1;
     }
-    .sp-sub { font-size: clamp(11px, 1.1vw, 15px); color: var(--gold); opacity: .8; font-weight: 400; }
     .sp-pulse {
       width: 11px; height: 11px; background: var(--gold); border-radius: 50%;
       animation: ring 1.5s ease-in-out infinite;
@@ -202,12 +224,14 @@
       display: flex; flex-direction: column;
       overflow: hidden;
       transition: transform .4s ease, opacity .4s ease;
-      height: 100%;
+      min-height: 0;
     }
-    .arvit-mode .column { transform: scale(.96); opacity: .88; }
+    .arvit-mode .column,
+    .mincha-mode .column { transform: scale(.97); opacity: .9; }
+
     .col-header {
       background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-deep) 100%);
-      padding: clamp(7px,1.2vh,16px) clamp(8px,1vw,18px);
+      padding: clamp(6px,1.1vh,14px) clamp(8px,1vw,18px);
       text-align: center;
       border-bottom: 2px solid var(--gold);
       position: relative; flex-shrink: 0;
@@ -219,49 +243,81 @@
     .col-title {
       font-family: 'Frank Ruhl Libre', serif;
       font-weight: 900; color: #fff;
-      font-size: clamp(16px, 2vw, 26px);
+      font-size: clamp(15px, 1.9vw, 25px);
       letter-spacing: .03em;
       text-shadow: 0 2px 8px rgba(0,0,0,.4);
     }
+
     .col-body {
-      padding: clamp(6px,1vh,14px) clamp(6px,.8vw,12px);
-      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+      padding: clamp(5px,.9vh,12px) clamp(5px,.7vw,10px);
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; min-height: 0;
     }
+
     .times {
       list-style: none;
       display: flex; flex-direction: column;
-      gap: 4px; flex: 1;
+      gap: 3px; flex: 1; min-height: 0;
     }
+
+    /* Each item gets equal share of available height — no overflow ever */
     .time-item {
       background: linear-gradient(135deg, rgba(255,255,255,.72) 0%, rgba(255,255,255,.42) 100%);
       border: 1px solid rgba(200,150,42,.20);
-      border-radius: 10px;
-      padding: clamp(4px,.8vh,10px) clamp(6px,.6vw,12px);
+      border-radius: 8px;
       text-align: center;
       font-family: 'Frank Ruhl Libre', serif;
-      font-size: clamp(15px, 1.75vw, 24px);
+      /* Font scales with item height via container queries fallback:
+         use a smaller clamp — items shrink to fit */
+      font-size: clamp(12px, 1.55vw, 22px);
       font-weight: 700; color: var(--ink-mid);
-      flex: 1;
+      flex: 1; min-height: 0;
       display: flex; align-items: center; justify-content: center;
       transition: background .2s, border-color .2s;
       position: relative;
+      padding: 2px 6px;
+      overflow: hidden;
     }
     .time-item:hover { background: rgba(200,150,42,.11); border-color: var(--gold); }
-    .time-item.bizman {
+
+    /* Two-line item (two prayers in one box) */
+    .time-item.two-line {
+      flex-direction: column;
+      gap: 1px;
+      line-height: 1.15;
+    }
+    .time-item.two-line .line2 {
+      font-size: .85em;
+      opacity: .85;
+    }
+
+    /* מנחה גדולה — first mincha */
+    .time-item.mincha-gedola {
       background: linear-gradient(135deg, rgba(122,16,48,.07) 0%, rgba(200,150,42,.09) 100%);
       border: 2px solid rgba(200,150,42,.48);
       color: var(--crimson); font-weight: 900;
     }
-    .time-item.bizman::before {
-      content: '★'; position: absolute; left: 9px;
-      color: var(--gold); font-size: 12px; opacity: .75;
+    .time-item.mincha-gedola::before {
+      content: '★'; position: absolute; left: 7px;
+      color: var(--gold); font-size: 11px; opacity: .75;
     }
+
+    /* מנחה — last "בזמן" item */
+    .time-item.mincha-last {
+      background: linear-gradient(135deg, rgba(100,10,30,.08) 0%, rgba(180,80,10,.10) 100%);
+      border: 2px solid rgba(200,120,42,.50);
+      color: var(--crimson-deep); font-weight: 900;
+    }
+
+    /* ערבית first (tzet) */
     .time-item.tzet {
       background: linear-gradient(135deg, rgba(20,0,50,.07) 0%, rgba(80,20,140,.08) 100%);
       border: 2px solid rgba(100,40,180,.32);
       color: #3a1060; font-weight: 900;
     }
-    .time-item.tzet::before { content:'🌙'; position:absolute; left:8px; font-size:13px; }
+    .time-item.tzet::before { content:'🌙'; position:absolute; left:6px; font-size:11px; }
+
+    /* shimmer */
     .time-item.loading {
       background: linear-gradient(90deg, #e8e0d0 25%, #d8d0c0 50%, #e8e0d0 75%);
       background-size: 200% 100%;
@@ -296,30 +352,24 @@
 <!-- ══ SIMULATION PANEL ══ -->
 <div class="sim-panel">
   <span class="sim-badge">🧪 סימולציה</span>
-
-  <!-- Date + time -->
   <div class="sim-group">
     <label>תאריך:</label>
     <input type="date" id="simDate" />
     <label>שעה:</label>
     <input type="time" id="simTime" />
   </div>
-
-  <!-- Zmanim manual overrides -->
   <div class="sim-group">
     <label>מנחה גד':</label>
-    <input type="time" id="ovMinchaGedola" class="zman-override" placeholder="אוטו" title="עקוף מנחה גדולה" />
+    <input type="time" id="ovMinchaGedola" class="zman-override" title="עקוף מנחה גדולה" />
     <label>שקיעה:</label>
-    <input type="time" id="ovSunset" class="zman-override" placeholder="אוטו" title="עקוף שקיעה" />
+    <input type="time" id="ovSunset" class="zman-override" title="עקוף שקיעה" />
     <label>צאת:</label>
-    <input type="time" id="ovTzet" class="zman-override" placeholder="אוטו" title="עקוף צאת הכוכבים" />
+    <input type="time" id="ovTzet" class="zman-override" title="עקוף צאת הכוכבים" />
   </div>
-
   <div class="sim-group">
     <button class="sim-btn" onclick="applySimulation()">עדכן</button>
     <button class="sim-btn" onclick="resetAll()">אפס הכל</button>
   </div>
-
   <span class="sim-status" id="simStatus"><span class="loading">טוען...</span></span>
 </div>
 
@@ -332,23 +382,19 @@
     </h1>
     <div class="header-sub" id="dateDisplay">טוען תאריך...</div>
   </header>
-
   <main>
     <div class="grid-wrapper" id="grid"></div>
   </main>
-
   <footer class="site-footer">✦ &nbsp; אסור לדבר בשעת התפילה וקריאת התורה &nbsp; ✦</footer>
 </div>
 
 <script>
 /* ══════════════════════════════════════════════════════════
-   CONSTANTS — עפולה
+   CONSTANTS
 ══════════════════════════════════════════════════════════ */
 const LAT  = 32.6078;
 const LNG  = 35.2897;
 const TZID = 'Asia/Jerusalem';
-
-// Google Sheet — prayer schedule (shacharit rows + last arvit)
 const SHEET_ID  = "1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8";
 const GID_TIMES = 350737418;
 const GVIZ_TIMES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID_TIMES}`;
@@ -356,9 +402,8 @@ const GVIZ_TIMES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?t
 /* ══════════════════════════════════════════════════════════
    SIMULATION STATE
 ══════════════════════════════════════════════════════════ */
-let simDateTime = null;          // overridden "now"
-let simZmanim   = {};            // manual zmanim overrides { minchaGedola, sunset, tzet }
-
+let simDateTime = null;
+let simZmanim   = {};
 function getNow() { return simDateTime ? new Date(simDateTime) : new Date(); }
 
 /* ══════════════════════════════════════════════════════════
@@ -368,8 +413,6 @@ function fmt(date) {
   if (!date || isNaN(date)) return '--:--';
   return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
-
-// "HH:MM" string → Date object on the reference date
 function hhmmToDate(str, refDate) {
   if (!str) return null;
   const m = str.match(/(\d{1,2}):(\d{2})/);
@@ -378,22 +421,15 @@ function hhmmToDate(str, refDate) {
   d.setHours(+m[1], +m[2], 0, 0);
   return d;
 }
-
-// ISO timestamp string → Date
-function isoToDate(str) {
-  if (!str) return null;
-  return new Date(str);
-}
-
+function isoToDate(str) { return str ? new Date(str) : null; }
 function keyYMD(d) {
   const p = new Intl.DateTimeFormat('en-CA', {
     timeZone: TZID, year:'numeric', month:'2-digit', day:'2-digit'
-  }).formatToParts(d).reduce((a,p)=>(a[p.type]=p.value,a), {});
+  }).formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a), {});
   return `${p.year}-${p.month}-${p.day}`;
 }
-
 function addMin(d, m) { return new Date(d.getTime() + m * 60000); }
-function floorTo5(d)  {
+function floorTo5(d) {
   const r = new Date(d); r.setSeconds(0,0);
   r.setMinutes(Math.floor(r.getMinutes()/5)*5);
   return r;
@@ -403,35 +439,50 @@ function nextHalf(d) {
   const m = r.getMinutes();
   if (m === 0 || m === 30) return r;
   if (m < 30) { r.setMinutes(30); return r; }
-  r.setHours(r.getHours()+1); r.setMinutes(0);
-  return r;
+  r.setHours(r.getHours()+1); r.setMinutes(0); return r;
 }
 
 /* ══════════════════════════════════════════════════════════
    PRAYER-TIME BUILDERS
+   Returns array of { label, cls, line2? }
 ══════════════════════════════════════════════════════════ */
 function buildMincha(minchaGedola, sunset) {
   if (!minchaGedola || !sunset) return [{label:'ממתין לנתונים...', cls:'loading'}];
-  const first    = floorTo5(minchaGedola);
+  const first     = floorTo5(minchaGedola);
   const lastMincha = floorTo5(addMin(sunset, -15));
-  const items = [{ label: `בזמן - ${fmt(first)}`, cls: 'bizman' }];
+
+  // First item: "מנחה גדולה - HH:MM"
+  const items = [{ label: `מנחה גדולה — ${fmt(first)}`, cls: 'mincha-gedola' }];
+  const seen  = new Set([fmt(first)]);
+
   let cur = nextHalf(addMin(first, 1));
-  const seen = new Set([fmt(first)]);
-  while (cur <= lastMincha) {
+  while (cur < lastMincha) {
     const f = fmt(cur);
     if (!seen.has(f)) { seen.add(f); items.push({ label: f, cls: '' }); }
     cur = addMin(cur, 30);
   }
+
+  // Last item: "HH:MM - בזמן"
   const lastF = fmt(lastMincha);
-  if (!seen.has(lastF)) items.push({ label: lastF, cls: '' });
+  if (!seen.has(lastF)) {
+    items.push({ label: `${lastF} — בזמן`, cls: 'mincha-last' });
+  } else {
+    // Mark existing last as mincha-last
+    const li = items.find(i => i.label === lastF);
+    if (li) { li.label = `${lastF} — בזמן`; li.cls = 'mincha-last'; }
+  }
+
   return items;
 }
 
 function buildArvit(tzet, lastArvit) {
   if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
   const first = floorTo5(tzet);
-  const items = [{ label: fmt(first), cls: 'tzet' }];
+
+  // First item: "HH:MM - בזמן"
+  const items = [{ label: `${fmt(first)} — בזמן`, cls: 'tzet' }];
   const seen  = new Set([fmt(first)]);
+
   let cur = nextHalf(addMin(first, 1));
   while (lastArvit && cur <= lastArvit) {
     const f = fmt(cur);
@@ -442,10 +493,27 @@ function buildArvit(tzet, lastArvit) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   HEBCAL ZMANIM API
-   Returns { minchaGedola: Date, sunset: Date, tzet: Date }
+   SHEET: can pack multiple times in one cell (comma/space separated)
+   → split into "two-line" items
 ══════════════════════════════════════════════════════════ */
-let zmanimCache = null;  // { dateKey, minchaGedola, sunset, tzet }
+function parseSheetItems(rawItems) {
+  const result = [];
+  rawItems.forEach(txt => {
+    // If the cell contains a comma or multiple time-like tokens, make a two-line item
+    const times = txt.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
+    if (times.length >= 2) {
+      result.push({ label: times[0], line2: times[1], cls: 'two-line' });
+    } else {
+      result.push({ label: txt, cls: '' });
+    }
+  });
+  return result;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEBCAL ZMANIM
+══════════════════════════════════════════════════════════ */
+let zmanimCache = null;
 
 async function fetchHebcalZmanim(dateKey) {
   const url = `https://www.hebcal.com/zmanim?cfg=json&latitude=${LAT}&longitude=${LNG}&tzid=${TZID}&date=${dateKey}`;
@@ -453,35 +521,25 @@ async function fetchHebcalZmanim(dateKey) {
   if (!resp.ok) throw new Error(`Hebcal ${resp.status}`);
   const json = await resp.json();
   const t = json.times || {};
-  // minchaGedola: prefer minchaGedola, fallback minchaGedolaBaalHatanya
-  const mg  = t.minchaGedola  || t.minchaGedolaBaalHatanya;
-  const ss  = t.sunset;
-  // tzet: prefer tzeit7083deg (3 medium stars, most common Israel practice), then baalHatanya, then tzeit85deg
-  const tz  = t.tzeit7083deg  || t.tzaisBaalHatanya || t.tzeit85deg || t.dusk;
   return {
-    minchaGedola: isoToDate(mg),
-    sunset:       isoToDate(ss),
-    tzet:         isoToDate(tz)
+    minchaGedola: isoToDate(t.minchaGedola || t.minchaGedolaBaalHatanya),
+    sunset:       isoToDate(t.sunset),
+    tzet:         isoToDate(t.tzeit7083deg || t.tzaisBaalHatanya || t.tzeit85deg || t.dusk),
   };
 }
 
 async function getZmanim() {
   const now = getNow();
   const dateKey = keyYMD(now);
-
-  // Apply manual sim overrides on top
   let base = { minchaGedola: null, sunset: null, tzet: null };
 
-  // Cache hit?
   if (zmanimCache && zmanimCache.dateKey === dateKey) {
     base = zmanimCache;
   } else {
-    // Try localStorage
     try {
       const s = JSON.parse(localStorage.getItem('zmanim_cache') || 'null');
       if (s && s.dateKey === dateKey) {
-        base = {
-          dateKey,
+        base = { dateKey,
           minchaGedola: s.minchaGedola ? new Date(s.minchaGedola) : null,
           sunset:       s.sunset       ? new Date(s.sunset)       : null,
           tzet:         s.tzet         ? new Date(s.tzet)         : null,
@@ -490,61 +548,47 @@ async function getZmanim() {
       }
     } catch {}
   }
-
   if (!zmanimCache || zmanimCache.dateKey !== dateKey) {
-    const fetched = await fetchHebcalZmanim(dateKey);
-    base = { dateKey, ...fetched };
+    const f = await fetchHebcalZmanim(dateKey);
+    base = { dateKey, ...f };
     zmanimCache = base;
-    try {
-      localStorage.setItem('zmanim_cache', JSON.stringify({
-        dateKey,
-        minchaGedola: fetched.minchaGedola?.toISOString(),
-        sunset:       fetched.sunset?.toISOString(),
-        tzet:         fetched.tzet?.toISOString(),
-      }));
-    } catch {}
+    try { localStorage.setItem('zmanim_cache', JSON.stringify({
+      dateKey,
+      minchaGedola: f.minchaGedola?.toISOString(),
+      sunset:       f.sunset?.toISOString(),
+      tzet:         f.tzet?.toISOString(),
+    })); } catch {}
   }
-
-  // Merge sim overrides
   return {
     minchaGedola: simZmanim.minchaGedola ? hhmmToDate(simZmanim.minchaGedola, now) : base.minchaGedola,
-    sunset:       simZmanim.sunset       ? hhmmToDate(simZmanim.sunset,       now) : base.sunset,
-    tzet:         simZmanim.tzet         ? hhmmToDate(simZmanim.tzet,         now) : base.tzet,
+    sunset:       simZmanim.sunset       ? hhmmToDate(simZmanim.sunset, now)       : base.sunset,
+    tzet:         simZmanim.tzet         ? hhmmToDate(simZmanim.tzet, now)         : base.tzet,
   };
 }
 
 /* ══════════════════════════════════════════════════════════
-   HEBCAL DATE — Hebrew date string
-   /converter?cfg=json&gy=Y&gm=M&gd=D&g2h=1
+   HEBCAL DATE
 ══════════════════════════════════════════════════════════ */
-let hebrewDateCache = {};  // dateKey → string
-
+let hebrewDateCache = {};
 async function fetchHebrewDate(dateKey) {
   if (hebrewDateCache[dateKey]) return hebrewDateCache[dateKey];
-  const [y, m, d] = dateKey.split('-');
+  const [y,m,d] = dateKey.split('-');
   const url = `https://www.hebcal.com/converter?cfg=json&gy=${+y}&gm=${+m}&gd=${+d}&g2h=1`;
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HebCal conv ${resp.status}`);
+  if (!resp.ok) throw new Error(`HebCal ${resp.status}`);
   const json = await resp.json();
-  // json: { hy, hm, hd, hebrew (string), heDateParts, dayOfWeek... }
-  // Build: "יום ראשון · כ׳ בסיוון תשפ"ה | 29.5.2025"
-  const dow  = json.dayOfWeek || '';   // e.g. "Sunday"
-  const heb  = json.hebrew    || '';   // e.g. "כ׳ בסיוון תשפ"ה"
-  const greg = `${+d}.${+m}.${y}`;
-  // Translate English day → Hebrew
   const dayMap = {
     Sunday:'יום ראשון', Monday:'יום שני', Tuesday:'יום שלישי',
     Wednesday:'יום רביעי', Thursday:'יום חמישי', Friday:'יום שישי', Saturday:'שבת קודש'
   };
-  const dowHe = dayMap[dow] || dow;
-  const result = `${dowHe} · ${heb} | ${greg}`;
+  const dowHe = dayMap[json.dayOfWeek] || json.dayOfWeek || '';
+  const result = `${dowHe} · ${json.hebrew || ''} | ${+d}.${+m}.${y}`;
   hebrewDateCache[dateKey] = result;
   return result;
 }
 
 /* ══════════════════════════════════════════════════════════
-   GVIZ: sheet prayer times
-   Reads shacharit sections + extracts last arvit time
+   GVIZ SHEET LOADER
 ══════════════════════════════════════════════════════════ */
 let sheetSections    = null;
 let lastArvitFromSheet = null;
@@ -571,55 +615,43 @@ function loadGviz(url) {
     document.body.appendChild(script);
   });
 }
-
-function gvizCellValue(c) {
+function gvizCell(c) {
   if (!c) return '';
   if (c.f != null) return c.f;
   if (c.v == null) return '';
   return String(c.v);
 }
-
-// Identify if a section title is "arvit / maariv" by keywords
-function isArvitSection(title) {
-  const t = title.replace(/[\u0591-\u05C7]/g, '').trim(); // strip niqqud/taamim
-  const arvitWords = ['ערבית','מעריב','מעריב','לילה','ליל','לילי','ערב','arvit','maariv'];
-  return arvitWords.some(w => t.includes(w));
+function isArvitSection(t) {
+  const s = t.replace(/[\u0591-\u05C7]/g,'').trim();
+  return ['ערבית','מעריב','לילה','ליל','ערב'].some(w => s.includes(w));
 }
-
-// Identify if a section title is "mincha" — to SKIP it (will be auto-computed)
-function isMinchaSection(title) {
-  const t = title.replace(/[\u0591-\u05C7]/g, '').trim();
-  const minchaWords = ['מנחה','מנחות','mincha','mincha'];
-  return minchaWords.some(w => t.includes(w));
+function isMinchaSection(t) {
+  const s = t.replace(/[\u0591-\u05C7]/g,'').trim();
+  return ['מנחה','מנחות'].some(w => s.includes(w));
 }
 
 async function loadSheetTimes() {
   const table = await loadGviz(GVIZ_TIMES);
-  const rows = table.rows || [];
+  const rows  = table.rows || [];
   const sections = [];
   let lastArvit = null;
-
   rows.forEach(r => {
     const cells = r.c || [];
-    const rawTitle = gvizCellValue(cells[0]).trim();
+    const rawTitle = String(gvizCell(cells[0])).trim();
     if (!rawTitle || rawTitle.toLowerCase() === 'section') return;
-
     const items = [];
     for (let i = 1; i < cells.length; i++) {
-      const txt = gvizCellValue(cells[i]).trim();
+      const txt = String(gvizCell(cells[i])).trim();
       if (txt) items.push(txt);
     }
-
     if (isMinchaSection(rawTitle)) {
-      // Skip — mincha is auto-computed. Do nothing.
+      /* skip */
     } else if (isArvitSection(rawTitle)) {
-      // Extract last time for arvit cutoff; skip from static render
       if (items.length) lastArvit = items[items.length - 1];
     } else {
       sections.push({ title: rawTitle, items });
     }
   });
-
   sheetSections    = sections;
   lastArvitFromSheet = lastArvit;
 }
@@ -630,82 +662,154 @@ async function loadSheetTimes() {
 function makeColumn(title, itemDefs) {
   const sec = document.createElement('section');
   sec.className = 'column';
+
   const hdr = document.createElement('div');
   hdr.className = 'col-header';
   const h2 = document.createElement('h2');
   h2.className = 'col-title';
   h2.textContent = title;
   hdr.appendChild(h2);
+
   const body = document.createElement('div');
   body.className = 'col-body';
   const ul = document.createElement('ul');
   ul.className = 'times';
+
   (itemDefs || []).forEach(def => {
     const li = document.createElement('li');
     const s = typeof def === 'string';
-    li.className = 'time-item' + (s ? '' : (def.cls ? ' '+def.cls : ''));
-    li.textContent = s ? def : def.label;
+    const item = s ? { label: def, cls: '' } : def;
+    li.className = 'time-item' + (item.cls ? ' ' + item.cls : '');
+
+    if (item.line2) {
+      // Two-line layout
+      const span1 = document.createElement('span');
+      span1.textContent = item.label;
+      const span2 = document.createElement('span');
+      span2.className = 'line2';
+      span2.textContent = item.line2;
+      li.appendChild(span1);
+      li.appendChild(span2);
+    } else {
+      li.textContent = item.label;
+    }
     ul.appendChild(li);
   });
+
   body.appendChild(ul);
   sec.append(hdr, body);
   return sec;
 }
 
-function makeArvitSpotlight(firstTime) {
+function makeSpotlight(type, title, time) {
   const div = document.createElement('div');
-  div.className = 'arvit-spotlight';
+  div.className = `prayer-spotlight ${type}-spotlight`;
   div.innerHTML = `
-    <div class="sp-label">תפילת ערבית</div>
-    <div class="sp-label" style="font-size:clamp(11px,1vw,14px);opacity:.6;font-weight:400">צאת הכוכבים — עפולה</div>
-    <div class="sp-time">${firstTime}</div>
-    <div class="sp-sub">המשך כל חצי שעה</div>
+    <div class="sp-title">${title}</div>
+    <div class="sp-time">${time}</div>
     <div class="sp-pulse"></div>
   `;
   return div;
 }
 
-function render(zmanim, isArvitMode) {
+function render(zmanim, mode) {
+  // mode: 'normal' | 'arvit' | 'mincha-first' | 'mincha-last'
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  grid.classList.toggle('arvit-mode', isArvitMode);
+  grid.className = 'grid-wrapper';
+  if (mode === 'arvit')        grid.classList.add('arvit-mode');
+  if (mode === 'mincha-first' || mode === 'mincha-last') grid.classList.add('mincha-mode');
 
   const now = getNow();
   const lastArvit = lastArvitFromSheet ? hhmmToDate(lastArvitFromSheet, now) : null;
-
-  // Auto-computed columns
   const minchaItems = buildMincha(zmanim?.minchaGedola, zmanim?.sunset);
   const arvitItems  = buildArvit(zmanim?.tzet, lastArvit);
 
-  const allCols = [];
-  // Static (shacharit etc.) — only non-mincha, non-arvit sections from sheet
-  (sheetSections || []).forEach(sec =>
-    allCols.push(makeColumn(sec.title, sec.items.map(i => ({ label: i, cls: '' }))))
+  // Static sections (shacharit etc.) with two-line support
+  const staticCols = (sheetSections || []).map(sec =>
+    makeColumn(sec.title, parseSheetItems(sec.items))
   );
-  // Mincha (always auto)
-  allCols.push(makeColumn('מנחה', minchaItems));
+  const minchaCol = makeColumn('מנחה', minchaItems);
+  const arvitCol  = makeColumn('ערבית', arvitItems);
 
-  if (isArvitMode && arvitItems.length) {
-    const spot = makeArvitSpotlight(arvitItems[0].label);
+  if (mode === 'arvit') {
+    // Spotlight on the LEFT (25%), all 3 normal cols to the right (including arvit)
+    const spot = makeSpotlight('arvit', 'תפילת ערבית ראשונה', arvitItems[0]?.label || '--:--');
     grid.appendChild(spot);
-    allCols.forEach(c => grid.appendChild(c));
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
+
+  } else if (mode === 'mincha-first') {
+    // Spotlight on RIGHT (25%): next mincha = first one
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
+    const spot = makeSpotlight('mincha', 'מנחה גדולה', minchaItems[0]?.label?.replace(/מנחה גדולה — /, '') || '--:--');
+    grid.appendChild(spot);
+
+  } else if (mode === 'mincha-last') {
+    // Spotlight on RIGHT (25%): next mincha = last one
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
+    const lastItem = minchaItems[minchaItems.length - 1];
+    const lastTime = lastItem?.label?.replace(/ — בזמן/, '') || '--:--';
+    const spot = makeSpotlight('mincha', 'מנחה אחרונה', lastTime);
+    grid.appendChild(spot);
+
   } else {
-    allCols.push(makeColumn('ערבית', arvitItems));
-    allCols.forEach(c => grid.appendChild(c));
+    // Normal: 3 cols
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
   }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODE DETECTION
+   Returns: 'normal' | 'mincha-first' | 'mincha-last' | 'arvit'
+══════════════════════════════════════════════════════════ */
+function detectMode(zmanim) {
+  if (!zmanim) return 'normal';
+  const now = getNow();
+
+  const minchaFirst = zmanim.minchaGedola ? floorTo5(zmanim.minchaGedola) : null;
+  const minchaLast  = zmanim.sunset       ? floorTo5(addMin(zmanim.sunset, -15)) : null;
+  const tzet        = zmanim.tzet;
+
+  // Arvit spotlight: 10 min before tzet until 2h after
+  if (tzet) {
+    const mins = (tzet - now) / 60000;
+    if (mins <= 10 && mins >= -120) return 'arvit';
+  }
+
+  // Mincha-first spotlight: 10 min before first mincha until 10 min after
+  if (minchaFirst) {
+    const mins = (minchaFirst - now) / 60000;
+    if (mins <= 10 && mins >= -10) return 'mincha-first';
+  }
+
+  // Mincha-last spotlight: 10 min before last mincha until 10 min after
+  if (minchaLast) {
+    const mins = (minchaLast - now) / 60000;
+    if (mins <= 10 && mins >= -10) return 'mincha-last';
+  }
+
+  return 'normal';
 }
 
 /* ══════════════════════════════════════════════════════════
    TICK LOOP
 ══════════════════════════════════════════════════════════ */
-let lastMinute   = -1;
-let lastArvitMode = null;
+let lastMinute    = -1;
+let lastMode      = null;
 let currentZmanim = null;
 let loadedDateKey = null;
 
 function tick() {
-  const now = getNow();
-  const curMin = now.getHours() * 60 + now.getMinutes();
+  const now     = getNow();
+  const curMin  = now.getHours() * 60 + now.getMinutes();
   const dateKey = keyYMD(now);
 
   if (dateKey !== loadedDateKey) {
@@ -714,23 +818,17 @@ function tick() {
     return;
   }
 
-  let isArvitMode = false;
-  if (currentZmanim?.tzet) {
-    const mins = (currentZmanim.tzet - now) / 60000;
-    isArvitMode = mins <= 10 && mins >= -120;
-  }
-
-  if (curMin !== lastMinute || isArvitMode !== lastArvitMode) {
-    lastMinute    = curMin;
-    lastArvitMode = isArvitMode;
-    render(currentZmanim, isArvitMode);
+  const mode = detectMode(currentZmanim);
+  if (curMin !== lastMinute || mode !== lastMode) {
+    lastMinute = curMin;
+    lastMode   = mode;
+    render(currentZmanim, mode);
   }
 }
 
 async function fullRefresh(now, dateKey) {
   setStatus('loading', 'טוען זמנים...');
 
-  // Hebrew date from HebCal
   try {
     const dateStr = await fetchHebrewDate(dateKey);
     document.getElementById('dateDisplay').textContent = dateStr;
@@ -740,7 +838,6 @@ async function fullRefresh(now, dateKey) {
       now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   }
 
-  // Zmanim
   try {
     currentZmanim = await getZmanim();
     setStatus('ok',
@@ -751,7 +848,7 @@ async function fullRefresh(now, dateKey) {
     );
   } catch (e) {
     console.error('Zmanim fetch fail', e);
-    setStatus('err', 'שגיאה בטעינת זמנים: ' + e.message);
+    setStatus('err', 'שגיאה: ' + e.message);
     currentZmanim = null;
   }
 
@@ -760,8 +857,7 @@ async function fullRefresh(now, dateKey) {
 }
 
 function setStatus(type, msg) {
-  const el = document.getElementById('simStatus');
-  el.innerHTML = `<span class="${type}">${msg}</span>`;
+  document.getElementById('simStatus').innerHTML = `<span class="${type}">${msg}</span>`;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -770,42 +866,27 @@ function setStatus(type, msg) {
 function applySimulation() {
   const d = document.getElementById('simDate').value;
   const t = document.getElementById('simTime').value;
-
-  // Read zmanim overrides
   simZmanim = {
     minchaGedola: document.getElementById('ovMinchaGedola').value || null,
     sunset:       document.getElementById('ovSunset').value       || null,
     tzet:         document.getElementById('ovTzet').value         || null,
   };
-
-  if (d && t) {
-    simDateTime = new Date(`${d}T${t}`);
-  }
-
-  // Clear caches so data re-fetches for new date
-  zmanimCache  = null;
+  if (d && t) simDateTime = new Date(`${d}T${t}`);
+  zmanimCache   = null;
   loadedDateKey = null;
-  lastMinute   = -1;
-
-  const now = getNow();
-  fullRefresh(now, keyYMD(now));
+  lastMinute    = -1;
+  fullRefresh(getNow(), keyYMD(getNow()));
 }
 
 function resetAll() {
-  simDateTime  = null;
-  simZmanim    = {};
-  zmanimCache  = null;
-  loadedDateKey = null;
-  lastMinute   = -1;
-
+  simDateTime = null; simZmanim = {}; zmanimCache = null;
+  loadedDateKey = null; lastMinute = -1;
   const now = new Date();
   document.getElementById('simDate').value = keyYMD(now);
   document.getElementById('simTime').value =
     String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('ovMinchaGedola').value = '';
-  document.getElementById('ovSunset').value = '';
-  document.getElementById('ovTzet').value = '';
-
+  ['ovMinchaGedola','ovSunset','ovTzet'].forEach(id =>
+    document.getElementById(id).value = '');
   fullRefresh(now, keyYMD(now));
 }
 
@@ -813,32 +894,24 @@ function resetAll() {
    INIT
 ══════════════════════════════════════════════════════════ */
 (async function init() {
-  // Loading placeholders
   document.getElementById('grid').innerHTML =
     `<section class="column"><div class="col-header"><h2 class="col-title">טוען...</h2></div>
      <div class="col-body"><ul class="times">
        ${Array(5).fill('<li class="time-item loading">--:--</li>').join('')}
      </ul></div></section>`.repeat(3);
 
-  // Init sim panel with now
   const now = new Date();
   document.getElementById('simDate').value = keyYMD(now);
   document.getElementById('simTime').value =
     String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 
-  // Load sheet (shacharit + last arvit)
-  try {
-    await loadSheetTimes();
-  } catch (e) {
+  try { await loadSheetTimes(); }
+  catch (e) {
     console.warn('Sheet load fail', e);
-    sheetSections      = [];
-    lastArvitFromSheet = '22:00';
+    sheetSections = []; lastArvitFromSheet = '22:00';
   }
 
-  // First data load
   await fullRefresh(now, keyYMD(now));
-
-  // Tick every second
   setInterval(tick, 1000);
 })();
 </script>
