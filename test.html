@@ -473,20 +473,87 @@ function parseSheetItems(rawItems) {
 function countRows(items) { return items.length; }
 
 /* ══════════════════════════════════════════════════════════
-   HEBCAL ZMANIM
+   PROXY CHAIN (same approach as dailystudy-table.html / dailystudy-dashboard.html / zmanim.html:
+   he.chabad.org sends no Access-Control-Allow-Origin, so a direct browser fetch() is blocked
+   by CORS even though the URL loads fine in a normal tab. Every proxy here, and chabad.org's
+   own bot protection, fail intermittently rather than consistently - trying each in turn
+   (2 retries apiece) smooths over transient blips without pretending any one is fully reliable.
+══════════════════════════════════════════════════════════ */
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+async function fetchWithRetry(url, options, attempts = 3, delayMs = 1200) {
+  let lastError;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res;
+    } catch (e) {
+      lastError = e;
+      if (i < attempts - 1) await sleep(delayMs);
+    }
+  }
+  throw lastError;
+}
+
+// Deploy google-apps-script/chabad-rss-proxy.gs and paste its /exec URL here to try it
+// first - Google's own servers may have a different bot-protection reputation than free
+// public proxies. Left empty, skips straight to the public proxies below.
+const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbz3wnB2VY7KfFlE_b75Gw8T_gpHPyGLR5_xtNETcc6nN74Rywh2bn2tljewDqRrzfk_/exec';
+
+async function fetchViaProxyChain(targetUrl) {
+  const attempts = [];
+  if (APPS_SCRIPT_PROXY_URL) {
+    attempts.push({ name: 'Apps Script', url: APPS_SCRIPT_PROXY_URL + '?url=' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+  }
+  attempts.push({ name: 'allorigins.win', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), extract: async (res) => (await res.json()).contents });
+  attempts.push({ name: 'corsproxy.io', url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      const res = await fetchWithRetry(attempt.url, { cache: 'no-store' }, 2, 1000);
+      const text = await attempt.extract(res);
+      console.info(`[proxy chain] succeeded via ${attempt.name} for ${targetUrl}`);
+      return text;
+    } catch (e) {
+      lastError = e;
+      console.warn(`[proxy chain] ${attempt.name} failed:`, e.message);
+    }
+  }
+  throw lastError || new Error('All proxy attempts failed');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHABAD.ORG ZMANIM RSS (replaces the previous Hebcal zmanim API - per instructions, the
+   day's prayer times come exclusively from chabad.org's own feed now). Note: unlike Hebcal's
+   API, this feed only ever reflects "today" - the simulation panel's date picker can no
+   longer pull live data for an arbitrary date, only the manual zman-override inputs still work
+   for testing other dates.
 ══════════════════════════════════════════════════════════ */
 let zmanimCache = null;
+const CHABAD_ZMANIM_RSS_URL = 'https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30';
 
-async function fetchHebcalZmanim(dateKey) {
-  const url = `https://www.hebcal.com/zmanim?cfg=json&latitude=${LAT}&longitude=${LNG}&tzid=${TZID}&date=${dateKey}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Hebcal ${resp.status}`);
-  const json = await resp.json();
-  const t = json.times || {};
+async function fetchChabadZmanim() {
+  const xmlText = await fetchViaProxyChain(CHABAD_ZMANIM_RSS_URL);
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  const channel = doc.querySelector('channel');
+  if (!channel) throw new Error('מבנה XML לא תקין');
+  const items = Array.from(channel.querySelectorAll('item'));
+
+  function findTime(predicate) {
+    const item = items.find((it) => predicate(it.querySelector('title')?.textContent || ''));
+    if (!item) return null;
+    const timeStr = item.querySelector('category')?.textContent || '';
+    return hhmmToDate(timeStr, getNow());
+  }
+
   return {
-    minchaGedola: isoToDate(t.minchaGedola || t.minchaGedolaBaalHatanya),
-    sunset:       isoToDate(t.sunset),
-    tzet:         isoToDate(t.tzeit7083deg || t.tzaisBaalHatanya || t.tzeit85deg || t.dusk),
+    minchaGedola: findTime((t) => t.includes('מנחה גדולה')),
+    sunset:       findTime((t) => t.includes('שקיעה')),
+    // "צאת הכוכבים" specifically, not other exit-time items that might appear on the feed
+    tzet:         findTime((t) => t.includes('צאת') && t.includes('כוכבים'))
+                  || findTime((t) => t.includes('צאת') || t.includes('יציאת')),
   };
 }
 
@@ -511,7 +578,7 @@ async function getZmanim() {
     } catch {}
   }
   if (!zmanimCache || zmanimCache.dateKey !== dateKey) {
-    const f = await fetchHebcalZmanim(dateKey);
+    const f = await fetchChabadZmanim();
     base = { dateKey, ...f };
     zmanimCache = base;
     try { localStorage.setItem('zmanim_cache', JSON.stringify({
@@ -784,7 +851,7 @@ function buildMinchaFit(minchaGedola, sunset, maxRows) {
  */
 function buildArvitFit(tzet, lastArvit, maxRows) {
   if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
-  const first = floorTo5(tzet);
+  const first = tzet; // exact צאת הכוכבים time, not rounded (per instructions)
   const firstItem = { label: `${fmt(first)} — בזמן`, cls: 'tzet' };
 
   const rawMid = [];
@@ -890,9 +957,11 @@ function detectMode(zmanim) {
   // Check each event: show spotlight 10 min before until the event passes (or 10 min after for mincha)
   // Priority: arvit > mincha-last > mincha-first > shacharit
 
+  // Arvit and first-Mincha notices disappear the moment their prayer's minute passes
+  // (mins >= 0), rather than lingering afterward, per instructions.
   if (tzet) {
     const mins = (tzet - now) / 60000;
-    if (mins <= 10 && mins >= -120)
+    if (mins <= 10 && mins >= 0)
       return { mode: 'arvit', minsUntil: Math.max(0, Math.round(mins)),
                prayerTime: fmt(tzet), title: 'תפילת ערבית ראשונה', type: 'arvit' };
   }
@@ -904,7 +973,7 @@ function detectMode(zmanim) {
   }
   if (minchaFirst) {
     const mins = (minchaFirst - now) / 60000;
-    if (mins <= 10 && mins >= -10)
+    if (mins <= 10 && mins >= 0)
       return { mode: 'mincha-first', minsUntil: Math.max(0, Math.round(mins)),
                prayerTime: fmt(minchaFirst), title: 'מנחה גדולה', type: 'mincha' };
   }
