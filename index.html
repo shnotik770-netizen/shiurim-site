@@ -212,7 +212,57 @@ function pickTodayRow(rows,col){ const tz='Asia/Jerusalem', todayKey=keyYMD(new 
  * Same logic already tested end-to-end in dailystudy-table.html.
  * =================================================================== */
 const SEFARIA_CALENDARS_URL = 'https://www.sefaria.org/api/calendars';
-const RSS_FEED_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://he.chabad.org/tools/rss/dailystudy_rss.xml');
+const DAILYSTUDY_RSS_URL = 'https://he.chabad.org/tools/rss/dailystudy_rss.xml';
+
+// Deploy google-apps-script/chabad-rss-proxy.gs and paste its /exec URL here to try it
+// first - Google's own servers may have a different bot-protection reputation than
+// Cloudflare Workers or free public proxies. Left empty, skips straight to the public
+// proxies below.
+const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbz3wnB2VY7KfFlE_b75Gw8T_gpHPyGLR5_xtNETcc6nN74Rywh2bn2tljewDqRrzfk_/exec';
+
+function sleep(ms){ return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+// Every proxy here (Apps Script, allorigins.win, corsproxy.io) and chabad.org's own bot
+// protection are outside our control and fail intermittently rather than consistently -
+// retrying each one, then falling through to the next, smooths over transient blips
+// without pretending any single one is fully reliable.
+async function fetchWithRetry(url, options, attempts=3, delayMs=1200){
+  let lastError;
+  for(let i=0; i<attempts; i++){
+    try{
+      const res = await fetch(url, options);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return res;
+    }catch(e){
+      lastError = e;
+      if(i < attempts-1) await sleep(delayMs);
+    }
+  }
+  throw lastError;
+}
+
+// Tries each proxy in turn (2 attempts each, so a full pass across all three still stays
+// reasonably quick) and returns the target URL's raw text from whichever one succeeds first.
+async function fetchViaProxyChain(targetUrl){
+  const attempts = [];
+  if(APPS_SCRIPT_PROXY_URL){
+    attempts.push({ url: APPS_SCRIPT_PROXY_URL + '?url=' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+  }
+  attempts.push({ url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), extract: async (res) => (await res.json()).contents });
+  attempts.push({ url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+
+  let lastError;
+  for(const attempt of attempts){
+    try{
+      const res = await fetchWithRetry(attempt.url, { cache: 'no-store' }, 2, 1000);
+      return await attempt.extract(res);
+    }catch(e){
+      lastError = e;
+      console.warn('Proxy attempt failed:', attempt.url, e.message);
+    }
+  }
+  throw lastError || new Error('All proxy attempts failed');
+}
 
 const TEHILLIM_TABLE = {
   1:[1,9],2:[10,17],3:[18,22],4:[23,28],5:[29,34],6:[35,38],7:[39,43],8:[44,48],9:[49,54],10:[55,59],
@@ -220,7 +270,7 @@ const TEHILLIM_TABLE = {
   21:[104,105],22:[106,107],23:[108,112],24:[113,118],27:[120,134],28:[135,139],29:[140,144],30:[145,150],
 };
 const TANYA_SECTION_HE = {
-  'Likutei Amarim':'ליקוטי אמרים', "Sha'ar HaYichud VehaEmunah":'שער היחוד והאמונה',
+  'Likutei Amarim':'ליקוטי אמרים', 'Likkutei Amarim':'ליקוטי אמרים', "Sha'ar HaYichud VehaEmunah":'שער היחוד והאמונה',
   'Iggeret HaTeshuvah':'אגרת התשובה', 'Iggeret HaKodesh':'אגרת הקודש', 'Kuntres Acharon':'קונטרס אחרון',
 };
 const BOOK_HE = { Genesis:'בראשית', Exodus:'שמות', Leviticus:'ויקרא', Numbers:'במדבר', Deuteronomy:'דברים' };
@@ -358,32 +408,46 @@ async function buildTanyaText(cal, date){
 // (left blank on screen, per instructions, rather than showing stale content).
 async function fetchMitzvosText(date){
   try{
-    const res = await fetch(RSS_FEED_URL, { cache:'no-store' });
-    if(!res.ok) throw new Error('RSS HTTP '+res.status);
-    const xmlText = await res.text();
+    const xmlText = await fetchViaProxyChain(DAILYSTUDY_RSS_URL);
     const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
     if(doc.querySelector('parsererror')) throw new Error('XML לא תקין');
     const item = Array.from(doc.querySelectorAll('item')).find(it=>{
       const link = it.querySelector('link');
       return link && /seferHamitzvos\.asp/.test(link.textContent);
     });
-    if(!item) return null;
+    if(!item){ console.warn('Sefer HaMitzvot: no matching <item> in RSS feed'); return null; }
     const link = item.querySelector('link').textContent.trim();
     const m = link.match(/tdate=(\d+\/\d+\/\d+)/);
-    if((m ? m[1] : null) !== toTdate(date)) return null; // feed hasn't rolled over yet
+    const itemTdate = m ? m[1] : null;
+    if(itemTdate !== toTdate(date)){
+      console.warn(`Sefer HaMitzvot: feed shows ${itemTdate}, requested ${toTdate(date)} - not rolled over yet (NY-time lag) or a real mismatch`);
+      return null;
+    }
     const description = (item.querySelector('description')||{}).textContent || '';
-    return description.replace(/^Today's Lesson:\s*/i,'').trim() || null;
+    const cleaned = description.replace(/^Today's Lesson:\s*/i,'').trim();
+    if(!cleaned) console.warn('Sefer HaMitzvot: item matched but description was empty. Raw description:', JSON.stringify(description));
+    return cleaned || null;
   }catch(e){
     console.warn('Sefer HaMitzvot RSS fetch failed:', e.message);
     return null;
   }
 }
 
-function buildDateText(date, cal){
-  const weekdayGreg = date.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  const tanyaItem = findCalItem((cal && cal.calendar_items) || [], 'Tanya Yomi');
-  const hebDate = tanyaItem ? tanyaItem.displayValue.he : null; // e.g. "כג תמוז" (no Hebrew year field available from this API)
-  return hebDate ? `${weekdayGreg} · ${hebDate}` : weekdayGreg;
+// Hebcal is the authoritative source for the Hebrew date (including the year, which
+// Sefaria's calendar API doesn't expose at all). Falls back to a Gregorian-only label if
+// Hebcal is unreachable, rather than leaving the header blank.
+async function buildDateText(date){
+  const weekday = date.toLocaleDateString('he-IL', { weekday:'long' });
+  const greg = date.toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' });
+  try{
+    const url = `https://www.hebcal.com/converter?cfg=json&gy=${date.getFullYear()}&gm=${date.getMonth()+1}&gd=${date.getDate()}&g2h=1`;
+    const res = await fetchWithRetry(url, { cache:'no-store' });
+    const data = await res.json();
+    return `${weekday}, ${greg} · ${data.hebrew}`;
+  }catch(e){
+    console.warn('Hebcal date fetch failed:', e.message);
+    return `${weekday}, ${greg}`;
+  }
 }
 
 /* רינדור למסך מתוך אובייקט payload מוכן */
@@ -420,7 +484,7 @@ async function buildPayload(date){
   const rambam = cal ? buildRambamTexts(cal) : { r1:null, r3:null };
 
   return {
-    dateText: buildDateText(date, cal),
+    dateText: await buildDateText(date),
     chumash:  cal ? buildChumashText(cal, date) : null,
     tehillim,
     tanya:    cal ? await buildTanyaText(cal, date) : null,
