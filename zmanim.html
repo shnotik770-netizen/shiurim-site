@@ -168,19 +168,21 @@ const APPS_SCRIPT_PROXY_URL = "https://script.google.com/macros/s/AKfycbz3wnB2VY
 async function fetchViaProxyChain(targetUrl){
   const attempts = [];
   if(APPS_SCRIPT_PROXY_URL){
-    attempts.push({ url: APPS_SCRIPT_PROXY_URL + '?url=' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+    attempts.push({ name:'Apps Script', url: APPS_SCRIPT_PROXY_URL + '?url=' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
   }
-  attempts.push({ url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), extract: async (res) => (await res.json()).contents });
-  attempts.push({ url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+  attempts.push({ name:'allorigins.win', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), extract: async (res) => (await res.json()).contents });
+  attempts.push({ name:'corsproxy.io', url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
 
   let lastError;
   for(const attempt of attempts){
     try{
       const res = await fetchWithRetry(attempt.url, { cache: 'no-store' }, 2, 1000);
-      return await attempt.extract(res);
+      const text = await attempt.extract(res);
+      console.info(`[proxy chain] succeeded via ${attempt.name} for ${targetUrl}`);
+      return text;
     }catch(e){
       lastError = e;
-      console.warn('Proxy attempt failed:', attempt.url, e.message);
+      console.warn(`[proxy chain] ${attempt.name} failed:`, e.message);
     }
   }
   throw lastError || new Error('All proxy attempts failed');
