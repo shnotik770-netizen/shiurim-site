@@ -206,6 +206,186 @@ function pickTodayRow(rows,col){ const tz='Asia/Jerusalem', todayKey=keyYMD(new 
     const k=keyYMD(d,tz); if(k===todayKey) return r; const dif=Math.abs((new Date(k)-new Date(todayKey))/86400000); if(dif<bestAbs){bestAbs=dif;best=r;} }
   return best; }
 
+/* ===================================================================
+ * Sefaria + chabad RSS data layer (replaces the sheet as the source for
+ * everything except Hayom Yom, and the optional second Tehillim line).
+ * Same logic already tested end-to-end in dailystudy-table.html.
+ * =================================================================== */
+const SEFARIA_CALENDARS_URL = 'https://www.sefaria.org/api/calendars';
+const RSS_FEED_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://he.chabad.org/tools/rss/dailystudy_rss.xml');
+
+const TEHILLIM_TABLE = {
+  1:[1,9],2:[10,17],3:[18,22],4:[23,28],5:[29,34],6:[35,38],7:[39,43],8:[44,48],9:[49,54],10:[55,59],
+  11:[60,65],12:[66,68],13:[69,71],14:[72,76],15:[77,78],16:[79,82],17:[83,87],18:[88,89],19:[90,96],20:[97,103],
+  21:[104,105],22:[106,107],23:[108,112],24:[113,118],27:[120,134],28:[135,139],29:[140,144],30:[145,150],
+};
+const TANYA_SECTION_HE = {
+  'Likutei Amarim':'ליקוטי אמרים', "Sha'ar HaYichud VehaEmunah":'שער היחוד והאמונה',
+  'Iggeret HaTeshuvah':'אגרת התשובה', 'Iggeret HaKodesh':'אגרת הקודש', 'Kuntres Acharon':'קונטרס אחרון',
+};
+const BOOK_HE = { Genesis:'בראשית', Exodus:'שמות', Leviticus:'ויקרא', Numbers:'במדבר', Deuteronomy:'דברים' };
+
+function toHebrewNumeral(num){
+  let n = Math.round(num);
+  if (!Number.isFinite(n) || n <= 0) return String(num);
+  const HUNDREDS=['','ק','ר','ש','ת'], TENS=['','י','כ','ל','מ','נ','ס','ע','פ','צ'], ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  let letters='';
+  while(n>=400){ letters+='ת'; n-=400; }
+  if(n>=100){ letters+=HUNDREDS[Math.floor(n/100)]; n%=100; }
+  if(n===15){ letters+='טו'; n=0; } else if(n===16){ letters+='טז'; n=0; }
+  else { letters += TENS[Math.floor(n/10)] + ONES[n%10]; }
+  if(!letters.length) return '';
+  if(letters.length===1) return letters+'׳';
+  return letters.slice(0,-1)+'״'+letters.slice(-1);
+}
+
+function findCalItem(items, titleEn){ return items.find(i=>i.title && i.title.en===titleEn); }
+function findCalItems(items, titleEn){ return items.filter(i=>i.title && i.title.en===titleEn); }
+
+function formatVerseRefHebrew(ref){
+  const m = ref && ref.match(/^([A-Za-z]+)\s+(\d+):(\d+)-(\d+):(\d+)$/);
+  if(!m) return ref;
+  const [, book, c1, v1, c2, v2] = m;
+  const bookHe = BOOK_HE[book] || book;
+  const c1he=toHebrewNumeral(+c1), v1he=toHebrewNumeral(+v1), v2he=toHebrewNumeral(+v2);
+  if(c1===c2) return `${bookHe}, פרק ${c1he} פסוק ${v1he} עד פסוק ${v2he}`;
+  return `${bookHe}, פרק ${c1he} פסוק ${v1he} עד פרק ${toHebrewNumeral(+c2)} פסוק ${v2he}`;
+}
+
+function formatTehillimRangeHebrew(hebrewDay){
+  if(hebrewDay===25) return 'תהלים קי״ט (חלק א׳, אות א׳-ל׳)';
+  if(hebrewDay===26) return 'תהלים קי״ט (חלק ב׳, אות ל׳-ת׳)';
+  const range = TEHILLIM_TABLE[hebrewDay];
+  if(!range) return null;
+  const [start,end] = range;
+  if(start===end) return `פרק ${toHebrewNumeral(start)}`;
+  return `פרק ${toHebrewNumeral(start)} עד פרק ${toHebrewNumeral(end)}`;
+}
+
+function parseTanyaRef(ref){
+  const m = ref && ref.match(/;\s*(.+?)\s+(\d+):(\d+)$/);
+  return m ? { section:m[1].trim(), chapter:+m[2], segment:+m[3] } : null;
+}
+
+async function fetchSefariaCalendar(date){
+  // diaspora=0 -> Israel reading schedule.
+  const url = `${SEFARIA_CALENDARS_URL}?year=${date.getFullYear()}&month=${date.getMonth()+1}&day=${date.getDate()}&diaspora=0`;
+  const res = await fetch(url, { cache:'no-store' });
+  if(!res.ok) throw new Error('Sefaria HTTP '+res.status);
+  return res.json();
+}
+
+function toTdate(date){ return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`; }
+function addDays(date, delta){ const d=new Date(date); d.setDate(d.getDate()+delta); return d; }
+
+function stripHtml(s){ return (s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim(); }
+function firstLastWords(text, n){
+  const words = stripHtml(text).split(' ').filter(Boolean);
+  if(!words.length) return null;
+  return { first: words.slice(0,n).join(' '), last: words.slice(-n).join(' ') };
+}
+async function fetchTanyaText(url){
+  const res = await fetch(`https://www.sefaria.org/api/texts/${url}?lang=he&context=0`, { cache:'no-store' });
+  if(!res.ok) throw new Error('Sefaria texts HTTP '+res.status);
+  const data = await res.json();
+  return Array.isArray(data.he) ? data.he : [data.he];
+}
+
+/* ---- per-track builders (all operate on an already-fetched calendar) ---- */
+
+function buildChumashText(cal, date){
+  const items = cal.calendar_items || [];
+  const parasha = findCalItem(items, 'Parashat Hashavua');
+  const aliyot = parasha && parasha.extraDetails && parasha.extraDetails.aliyot;
+  const aliyah = aliyot && aliyot[date.getDay()];
+  if(!parasha || !aliyah) return null;
+  return `פרשת ${parasha.displayValue.he}\n${formatVerseRefHebrew(aliyah)}`;
+}
+
+function buildTehillimSefariaText(cal){
+  const items = cal.calendar_items || [];
+  const tanyaItem = findCalItem(items, 'Tanya Yomi');
+  const m = tanyaItem && tanyaItem.displayValue.en.match(/^(\d+)/);
+  const hebDay = m ? +m[1] : null;
+  return hebDay ? formatTehillimRangeHebrew(hebDay) : null;
+}
+
+function buildRambamTexts(cal){
+  const items = cal.calendar_items || [];
+  const rambam1 = findCalItem(items, 'Daily Rambam');
+  const rambam3 = findCalItems(items, 'Daily Rambam (3 Chapters)');
+  return {
+    r1: rambam1 ? rambam1.displayValue.he : null,
+    r3: rambam3.length ? rambam3.map(i=>i.displayValue.he).join(', ') : null,
+  };
+}
+
+// Tomorrow's Tanya ref marks exactly where today's reading has to stop (Sefaria's calendar
+// API only gives a starting point, never an end) - fetch [today, tomorrow) as a range and
+// drop the last (tomorrow's) segment to get the real daily boundary.
+async function buildTanyaText(cal, date){
+  const items = cal.calendar_items || [];
+  const tanyaItem = findCalItem(items, 'Tanya Yomi');
+  if(!tanyaItem) return null;
+  const parsed = parseTanyaRef(tanyaItem.ref);
+  const header = parsed ? `${TANYA_SECTION_HE[parsed.section] || parsed.section}, פרק ${toHebrewNumeral(parsed.chapter)}` : tanyaItem.ref;
+
+  let snippet = null;
+  try{
+    const tomorrowCal = await fetchSefariaCalendar(addDays(date, 1));
+    const tomorrowItem = findCalItem(tomorrowCal.calendar_items || [], 'Tanya Yomi');
+    const tomorrowParsed = tomorrowItem && parseTanyaRef(tomorrowItem.ref);
+
+    let heSegments;
+    if(parsed && tomorrowParsed && parsed.section===tomorrowParsed.section){
+      const rangeUrl = `${tanyaItem.url}-${tomorrowParsed.chapter}.${tomorrowParsed.segment}`;
+      heSegments = await fetchTanyaText(rangeUrl);
+      if(heSegments.length>1) heSegments = heSegments.slice(0,-1);
+    } else {
+      heSegments = await fetchTanyaText(tanyaItem.url);
+    }
+    const words = firstLastWords(heSegments.flat(Infinity).join(' '), 2);
+    if(words) snippet = `'${words.first}' עד '${words.last}'`;
+  }catch(e){ console.warn('Tanya snippet fetch failed:', e.message); }
+
+  return snippet ? `${header}\n${snippet}` : header;
+}
+
+// ספר המצוות: not in Sefaria's calendar at all - only source is chabad's RSS feed, and
+// that feed runs on New York time so from roughly midnight to 7am Israel time it still
+// shows the previous Israeli day. Each item's own <link> embeds the tdate it's really for,
+// so this only returns text when that tdate matches the requested date - otherwise null
+// (left blank on screen, per instructions, rather than showing stale content).
+async function fetchMitzvosText(date){
+  try{
+    const res = await fetch(RSS_FEED_URL, { cache:'no-store' });
+    if(!res.ok) throw new Error('RSS HTTP '+res.status);
+    const xmlText = await res.text();
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if(doc.querySelector('parsererror')) throw new Error('XML לא תקין');
+    const item = Array.from(doc.querySelectorAll('item')).find(it=>{
+      const link = it.querySelector('link');
+      return link && /seferHamitzvos\.asp/.test(link.textContent);
+    });
+    if(!item) return null;
+    const link = item.querySelector('link').textContent.trim();
+    const m = link.match(/tdate=(\d+\/\d+\/\d+)/);
+    if((m ? m[1] : null) !== toTdate(date)) return null; // feed hasn't rolled over yet
+    const description = (item.querySelector('description')||{}).textContent || '';
+    return description.replace(/^Today's Lesson:\s*/i,'').trim() || null;
+  }catch(e){
+    console.warn('Sefer HaMitzvot RSS fetch failed:', e.message);
+    return null;
+  }
+}
+
+function buildDateText(date, cal){
+  const weekdayGreg = date.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const tanyaItem = findCalItem((cal && cal.calendar_items) || [], 'Tanya Yomi');
+  const hebDate = tanyaItem ? tanyaItem.displayValue.he : null; // e.g. "כג תמוז" (no Hebrew year field available from this API)
+  return hebDate ? `${weekdayGreg} · ${hebDate}` : weekdayGreg;
+}
+
 /* רינדור למסך מתוך אובייקט payload מוכן */
 function renderFromPayload(p){
   document.getElementById('date').textContent = p.dateText || "";
@@ -214,28 +394,40 @@ function renderFromPayload(p){
   document.getElementById('tanya').textContent    = p.tanya || "—";
   document.getElementById('r3').textContent       = p.r3 || "—";
   document.getElementById('r1').textContent       = p.r1 || "—";
-  document.getElementById('mitzvos').textContent  = p.mitzvos || "—";
+  // Sefer HaMitzvot is left visually blank (not "—") when unavailable/stale, per instructions.
+  document.getElementById('mitzvos').textContent  = p.mitzvos || "";
   document.getElementById('hayom').textContent    = p.hayom || "—";
 }
 
-/* בניית payload אחיד משורה שנבחרה */
-function buildPayloadFromRow(row, col){
-  const weekday = col.day ? (row[col.day]||"").toString().trim() : "";
-  const heb     = col.heb ? (row[col.heb]||"").toString().trim() : "";
-  const greg    = col.greg ? formatGreg(row[col.greg]) : "";
-  const dateText = [weekday,[heb,greg].filter(Boolean).join(" | ")].filter(Boolean).join(" · ");
+/* בניית payload משולב: Sefaria/RSS לרוב השדות, גיליון Google רק להיום-יום + שורה שנייה לתהילים */
+async function buildPayload(date){
+  let cal = null;
+  try{ cal = await fetchSefariaCalendar(date); }
+  catch(e){ console.warn('Sefaria calendar fetch failed:', e.message); }
 
-  const get = (k)=> { if(!k) return "—"; const v=(row[k]??"").toString().trim(); return v.length?v:"—"; };
+  let sheetRow = null, colKeys = null;
+  try{
+    const { rows, colKeys: ck } = await fetchRowsAndCols();
+    colKeys = ck;
+    sheetRow = pickTodayRow(rows, colKeys);
+  }catch(e){ console.warn('Sheet fetch failed:', e.message); }
+
+  const sheetGet = (k) => (sheetRow && k && sheetRow[k]!=null) ? String(sheetRow[k]).trim() : '';
+
+  const tehillimSefaria = cal ? buildTehillimSefariaText(cal) : null;
+  const tehillimSheet = colKeys ? sheetGet(colKeys.tehillim) : '';
+  const tehillim = [tehillimSefaria, tehillimSheet].filter(Boolean).join('\n') || null;
+  const rambam = cal ? buildRambamTexts(cal) : { r1:null, r3:null };
 
   return {
-    dateText,
-    chumash:  get(col.chumash),
-    tehillim: get(col.tehillim),
-    tanya:    get(col.tanya),
-    r3:       get(col.rambam3),
-    r1:       get(col.rambam1),
-    mitzvos:  get(col.mitzvos),
-    hayom:    get(col.hayom),
+    dateText: buildDateText(date, cal),
+    chumash:  cal ? buildChumashText(cal, date) : null,
+    tehillim,
+    tanya:    cal ? await buildTanyaText(cal, date) : null,
+    r3:       rambam.r3,
+    r1:       rambam.r1,
+    mitzvos:  await fetchMitzvosText(date),
+    hayom:    colKeys ? (sheetGet(colKeys.hayom) || null) : null,
   };
 }
 
@@ -274,22 +466,15 @@ function enableAutoScroll(selector, delayMs=5000){
       return;
     }
 
-    // 2) אין מטמון תקף -> טען מהגיליון, בנה payload, רנדר ושמור לשעה
-    const { rows, colKeys } = await fetchRowsAndCols();
-    const picked = pickTodayRow(rows, colKeys);
-    if (!picked){
-      document.getElementById('date').textContent = "לא נמצאה שורה להיום";
-      return;
-    }
-
-    const payload = buildPayloadFromRow(picked, colKeys);
+    // 2) אין מטמון תקף -> שלוף מ-Sefaria/RSS (+גיליון להיום-יום), רנדר ושמור לשעה
+    const payload = await buildPayload(new Date());
     renderFromPayload(payload);
     saveToCache(payload);
 
     enableAutoScroll('#card-hayom .content',5000);
   }catch(err){
     console.error(err);
-    document.getElementById('date').textContent = "שגיאה בטעינת נתונים מהגיליון";
+    document.getElementById('date').textContent = "שגיאה בטעינת נתונים";
   }
 })();
 </script>
