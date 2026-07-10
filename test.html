@@ -90,7 +90,7 @@
       position: relative; z-index: 1;
       height: 100dvh;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto 1fr auto auto;
       padding-top: 38px;
     }
 
@@ -142,9 +142,9 @@
       transition: grid-template-columns .55s cubic-bezier(.4,0,.2,1);
     }
 
-    /* ── All spotlight modes: spotlight LEFT 25% + regular cols ── */
+    /* ── All spotlight modes: spotlight LEFT 20% + regular cols ── */
     .grid-wrapper.spotlight-mode {
-      grid-template-columns: minmax(180px, 25%) repeat(var(--reg-cols, 3), 1fr);
+      grid-template-columns: minmax(180px, 20%) repeat(var(--reg-cols, 3), 1fr);
     }
 
     /* ─── Generic spotlight card ─── */
@@ -263,17 +263,17 @@
       gap: 3px; flex: 1; min-height: 0;
     }
 
-    /* Each item gets equal share of available height — no overflow ever */
+    /* Each item gets equal share of available height — no overflow ever.
+       All time boxes (including first/last prayer) share this one look - no per-box
+       color variants - and the time text is sized to dominate the box. */
     .time-item {
       background: linear-gradient(135deg, rgba(255,255,255,.72) 0%, rgba(255,255,255,.42) 100%);
       border: 1px solid rgba(200,150,42,.20);
       border-radius: 8px;
       text-align: center;
       font-family: 'Frank Ruhl Libre', serif;
-      /* Font scales with item height via container queries fallback:
-         use a smaller clamp — items shrink to fit */
-      font-size: clamp(12px, 1.55vw, 22px);
-      font-weight: 700; color: var(--ink-mid);
+      font-size: clamp(16px, 2.3vw, 32px);
+      font-weight: 900; color: var(--ink-mid);
       flex: 1; min-height: 0;
       display: flex; align-items: center; justify-content: center;
       transition: background .2s, border-color .2s;
@@ -302,32 +302,6 @@
       flex-shrink: 0;
     }
 
-    /* מנחה גדולה — first mincha */
-    .time-item.mincha-gedola {
-      background: linear-gradient(135deg, rgba(122,16,48,.07) 0%, rgba(200,150,42,.09) 100%);
-      border: 2px solid rgba(200,150,42,.48);
-      color: var(--crimson); font-weight: 900;
-    }
-    .time-item.mincha-gedola::before {
-      content: '★'; position: absolute; left: 7px;
-      color: var(--gold); font-size: 11px; opacity: .75;
-    }
-
-    /* מנחה — last "בזמן" item */
-    .time-item.mincha-last {
-      background: linear-gradient(135deg, rgba(100,10,30,.08) 0%, rgba(180,80,10,.10) 100%);
-      border: 2px solid rgba(200,120,42,.50);
-      color: var(--crimson-deep); font-weight: 900;
-    }
-
-    /* ערבית first (tzet) */
-    .time-item.tzet {
-      background: linear-gradient(135deg, rgba(20,0,50,.07) 0%, rgba(80,20,140,.08) 100%);
-      border: 2px solid rgba(100,40,180,.32);
-      color: #3a1060; font-weight: 900;
-    }
-    .time-item.tzet::before { content:'🌙'; position:absolute; left:6px; font-size:11px; }
-
     /* shimmer */
     .time-item.loading {
       background: linear-gradient(90deg, #e8e0d0 25%, #d8d0c0 50%, #e8e0d0 75%);
@@ -335,6 +309,38 @@
       animation: shimmer 1.3s infinite; color: transparent;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ═══ DAY ZMANIM ROW (below the columns, above the footer) ═══ */
+    .day-zmanim-row {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: clamp(5px, .8vw, 12px);
+      padding: clamp(4px,.6vh,10px) clamp(6px,1.2vw,20px);
+      flex-shrink: 0;
+    }
+    .day-zman-item {
+      background: linear-gradient(160deg, var(--cream) 0%, var(--parchment) 100%);
+      border: 1px solid rgba(200,150,42,.30);
+      border-radius: 8px;
+      text-align: center;
+      padding: 4px 3px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1px;
+    }
+    .day-zman-item .dz-label {
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(9px, .9vw, 12px);
+      color: var(--ink-mid);
+      font-weight: 600;
+      opacity: .82;
+      white-space: nowrap;
+    }
+    .day-zman-item .dz-time {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(14px, 1.6vw, 21px);
+      font-weight: 900;
+      color: var(--crimson);
+    }
 
     /* ═══ FOOTER ═══ */
     .site-footer {
@@ -396,6 +402,7 @@
   <main>
     <div class="grid-wrapper" id="grid"></div>
   </main>
+  <div class="day-zmanim-row" id="dayZmanimRow"></div>
   <footer class="site-footer">✦ &nbsp; אסור לדבר בשעת התפילה וקריאת התורה &nbsp; ✦</footer>
 </div>
 
@@ -549,7 +556,12 @@ async function fetchChabadZmanim() {
   }
 
   return {
+    alot:         findTime((t) => t.includes('עלות')),
+    misheyakir:   findTime((t) => t.includes('משיכיר')),
+    zriha:        findTime((t) => t.includes('זריחה')),
+    sofZmanShema: findTime((t) => t.includes('קריאת שמע')),
     minchaGedola: findTime((t) => t.includes('מנחה גדולה')),
+    chatzot:      findTime((t) => t.includes('חצות') && !t.includes('הלילה')),
     sunset:       findTime((t) => t.includes('שקיעה')),
     // "צאת הכוכבים" specifically, not other exit-time items that might appear on the feed
     tzet:         findTime((t) => t.includes('צאת') && t.includes('כוכבים'))
@@ -557,10 +569,12 @@ async function fetchChabadZmanim() {
   };
 }
 
+const ZMANIM_KEYS = ['alot','misheyakir','zriha','sofZmanShema','minchaGedola','chatzot','sunset','tzet'];
+
 async function getZmanim() {
   const now = getNow();
   const dateKey = keyYMD(now);
-  let base = { minchaGedola: null, sunset: null, tzet: null };
+  let base = Object.fromEntries(ZMANIM_KEYS.map((k) => [k, null]));
 
   if (zmanimCache && zmanimCache.dateKey === dateKey) {
     base = zmanimCache;
@@ -568,11 +582,8 @@ async function getZmanim() {
     try {
       const s = JSON.parse(localStorage.getItem('zmanim_cache') || 'null');
       if (s && s.dateKey === dateKey) {
-        base = { dateKey,
-          minchaGedola: s.minchaGedola ? new Date(s.minchaGedola) : null,
-          sunset:       s.sunset       ? new Date(s.sunset)       : null,
-          tzet:         s.tzet         ? new Date(s.tzet)         : null,
-        };
+        base = { dateKey };
+        ZMANIM_KEYS.forEach((k) => { base[k] = s[k] ? new Date(s[k]) : null; });
         zmanimCache = base;
       }
     } catch {}
@@ -581,14 +592,14 @@ async function getZmanim() {
     const f = await fetchChabadZmanim();
     base = { dateKey, ...f };
     zmanimCache = base;
-    try { localStorage.setItem('zmanim_cache', JSON.stringify({
-      dateKey,
-      minchaGedola: f.minchaGedola?.toISOString(),
-      sunset:       f.sunset?.toISOString(),
-      tzet:         f.tzet?.toISOString(),
-    })); } catch {}
+    try {
+      const toStore = { dateKey };
+      ZMANIM_KEYS.forEach((k) => { toStore[k] = f[k]?.toISOString(); });
+      localStorage.setItem('zmanim_cache', JSON.stringify(toStore));
+    } catch {}
   }
   return {
+    ...base,
     minchaGedola: simZmanim.minchaGedola ? hhmmToDate(simZmanim.minchaGedola, now) : base.minchaGedola,
     sunset:       simZmanim.sunset       ? hhmmToDate(simZmanim.sunset, now)       : base.sunset,
     tzet:         simZmanim.tzet         ? hhmmToDate(simZmanim.tzet, now)         : base.tzet,
@@ -761,9 +772,10 @@ function makeSpotlight(type, title, prayerTime, minsUntil) {
 /* ══════════════════════════════════════════════════════════
    DYNAMIC LAYOUT
    Logic:
-   1. Count shacharit rows (the "reference" — usually the most spread-out column)
-   2. Mincha & arvit get up to 2 extra rows via side-by-side pairing, capped at shacharit+2
-   3. Grid columns are spread proportionally so no column ever scrolls
+   1. Mincha & arvit are capped at a fixed MAX_ROWS_PER_COLUMN boxes each,
+      subsampling then pairing extra times side-by-side as needed.
+   2. Shacharit columns come straight from the sheet, one row per section item.
+   3. Grid columns are spread proportionally so no column ever scrolls.
 ══════════════════════════════════════════════════════════ */
 
 /**
@@ -794,6 +806,24 @@ function packItems(rawItems, maxRows) {
 }
 
 /**
+ * Evenly subsample an array down to at most maxCount items, keeping the
+ * first and last and spreading the rest across the original span - used so
+ * the side-by-side pairing below always has few enough items to actually
+ * respect the hard row cap (pairing alone can only halve the count, which
+ * isn't enough when there are many half-hour slots).
+ */
+function subsampleToFit(arr, maxCount) {
+  if (!arr || arr.length <= maxCount) return arr;
+  if (maxCount <= 0) return [];
+  if (maxCount === 1) return [arr[0]];
+  const result = [];
+  for (let i = 0; i < maxCount; i++) {
+    result.push(arr[Math.floor(i * (arr.length - 1) / (maxCount - 1))]);
+  }
+  return result;
+}
+
+/**
  * Build mincha items, then pack so rows ≤ maxRows
  */
 function buildMinchaFit(minchaGedola, sunset, maxRows) {
@@ -801,7 +831,7 @@ function buildMinchaFit(minchaGedola, sunset, maxRows) {
   const first      = floorTo5(minchaGedola);
   const lastMincha = floorTo5(addMin(sunset, -15));
 
-  const rawMid = [];
+  let rawMid = [];
   const seen   = new Set([fmt(first), fmt(lastMincha)]);
   let cur = nextHalf(addMin(first, 1));
   while (cur < lastMincha) {
@@ -810,8 +840,11 @@ function buildMinchaFit(minchaGedola, sunset, maxRows) {
     cur = addMin(cur, 30);
   }
 
+  const midMaxRowsCap = Math.max(0, maxRows - 2);
+  rawMid = subsampleToFit(rawMid, midMaxRowsCap * 2);
+
   const firstItem = { label: `מנחה גדולה — ${fmt(first)}`, cls: 'mincha-gedola' };
-  const lastItem  = { label: `${fmt(lastMincha)} — בזמן`,  cls: 'mincha-last' };
+  const lastItem  = { label: `בזמן — ${fmt(lastMincha)}`,  cls: 'mincha-last' };
 
   // How many rows left for middle?
   const midMaxRows = Math.max(0, maxRows - 2); // -2 for first and last
@@ -852,9 +885,9 @@ function buildMinchaFit(minchaGedola, sunset, maxRows) {
 function buildArvitFit(tzet, lastArvit, maxRows) {
   if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
   const first = tzet; // exact צאת הכוכבים time, not rounded (per instructions)
-  const firstItem = { label: `${fmt(first)} — בזמן`, cls: 'tzet' };
+  const firstItem = { label: `בזמן — ${fmt(first)}`, cls: 'tzet' };
 
-  const rawMid = [];
+  let rawMid = [];
   const seen   = new Set([fmt(first)]);
   let cur = nextHalf(addMin(first, 1));
   while (lastArvit && cur <= lastArvit) {
@@ -864,6 +897,7 @@ function buildArvitFit(tzet, lastArvit, maxRows) {
   }
 
   const midMaxRows = Math.max(0, maxRows - 1);
+  rawMid = subsampleToFit(rawMid, midMaxRows * 2);
   const midItems = [];
   let i = 0;
   while (i < rawMid.length) {
@@ -881,6 +915,32 @@ function buildArvitFit(tzet, lastArvit, maxRows) {
   return [firstItem, ...midItems];
 }
 
+// Fixed cap (not tied to how many shacharit rows the sheet happens to have) so mincha/arvit
+// never grow past this regardless of how many half-hour slots would otherwise fit - excess
+// slots get paired side-by-side instead, same as the existing packing already does.
+const MAX_ROWS_PER_COLUMN = 7;
+
+const DAY_ZMANIM_DEFS = [
+  { key: 'alot',         label: 'עלות השחר' },
+  { key: 'misheyakir',   label: 'טלית ותפילין' },
+  { key: 'zriha',        label: 'זריחה' },
+  { key: 'sofZmanShema', label: 'סוף ק״ש' },
+  { key: 'minchaGedola', label: 'מנחה גדולה' },
+  { key: 'chatzot',      label: 'חצות' },
+  { key: 'sunset',       label: 'שקיעת החמה' },
+  { key: 'tzet',         label: 'צאת הכוכבים' },
+];
+
+function renderDayZmanim(zmanim) {
+  const row = document.getElementById('dayZmanimRow');
+  row.innerHTML = DAY_ZMANIM_DEFS.map((def) => `
+    <div class="day-zman-item">
+      <div class="dz-label">${def.label}</div>
+      <div class="dz-time">${fmt(zmanim?.[def.key])}</div>
+    </div>
+  `).join('');
+}
+
 function render(zmanim, modeObj) {
   const { mode, minsUntil, prayerTime, title, type } = modeObj;
   const grid = document.getElementById('grid');
@@ -895,11 +955,8 @@ function render(zmanim, modeObj) {
     items: parseSheetItems(sec.items)
   }));
 
-  const shacharitRows = staticParsed.reduce((mx, s) => Math.max(mx, s.items.length), 3);
-  const maxRows = shacharitRows + 2;
-
-  const minchaItems = buildMinchaFit(zmanim?.minchaGedola, zmanim?.sunset, maxRows);
-  const arvitItems  = buildArvitFit(zmanim?.tzet, lastArvit, maxRows);
+  const minchaItems = buildMinchaFit(zmanim?.minchaGedola, zmanim?.sunset, MAX_ROWS_PER_COLUMN);
+  const arvitItems  = buildArvitFit(zmanim?.tzet, lastArvit, MAX_ROWS_PER_COLUMN);
 
   const staticCols = staticParsed.map(s => makeColumn(s.title, s.items));
   const minchaCol  = makeColumn('מנחה',  minchaItems);
@@ -911,7 +968,7 @@ function render(zmanim, modeObj) {
     // Always: spotlight LEFT, then regular columns
     grid.classList.add('spotlight-mode');
     grid.style.setProperty('--reg-cols', totalRegCols);
-    grid.style.gridTemplateColumns = `minmax(180px,25%) repeat(${totalRegCols}, 1fr)`;
+    grid.style.gridTemplateColumns = `minmax(180px,20%) repeat(${totalRegCols}, 1fr)`;
 
     const spot = makeSpotlight(type, title, prayerTime, minsUntil);
     grid.appendChild(spot);
@@ -925,6 +982,8 @@ function render(zmanim, modeObj) {
     grid.appendChild(minchaCol);
     grid.appendChild(arvitCol);
   }
+
+  renderDayZmanim(zmanim);
 }
 
 /* ══════════════════════════════════════════════════════════
