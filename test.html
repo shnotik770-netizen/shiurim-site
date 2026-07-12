@@ -46,57 +46,12 @@
       pointer-events: none; z-index: 0;
     }
 
-    /* ═══ SIMULATION PANEL ═══ */
-    .sim-panel {
-      position: fixed; top: 0; left: 0; right: 0;
-      background: rgba(12,2,6,0.96);
-      backdrop-filter: blur(10px);
-      border-bottom: 2px solid var(--gold);
-      padding: 7px 14px;
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      z-index: 1000;
-      font-family: 'Heebo', sans-serif;
-      font-size: 12px; color: #bbb;
-    }
-    .sim-badge {
-      background: var(--gold); color: var(--ink);
-      border-radius: 5px; padding: 2px 8px;
-      font-weight: 700; font-size: 11px;
-    }
-    .sim-group {
-      display: flex; align-items: center; gap: 6px;
-      border-right: 1px solid rgba(200,150,42,0.25);
-      padding-right: 10px; margin-right: 2px;
-    }
-    .sim-group:last-of-type { border-right: none; }
-    .sim-group label { color: #999; white-space: nowrap; }
-    .sim-panel input[type="date"],
-    .sim-panel input[type="time"] {
-      background: #1a0510; border: 1px solid rgba(200,150,42,0.5);
-      color: var(--gold-light); padding: 2px 6px; border-radius: 4px;
-      font-family: 'Heebo', sans-serif; font-size: 12px; cursor: pointer;
-      width: 120px;
-    }
-    .sim-panel input[type="time"].zman-override { width: 70px; }
-    .sim-btn {
-      background: var(--crimson); border: 1px solid rgba(200,150,42,0.6);
-      color: var(--gold-light); padding: 3px 10px; border-radius: 6px;
-      cursor: pointer; font-size: 11px; font-family: 'Heebo', sans-serif;
-      font-weight: 700; transition: background .2s; white-space: nowrap;
-    }
-    .sim-btn:hover { background: #9a1840; }
-    .sim-status { margin-right: auto; color: #888; font-size: 11px; }
-    .sim-status .ok { color: #5d5; }
-    .sim-status .err { color: #d55; }
-    .sim-status .loading { color: #aa8; }
-
     /* ═══ POSTER ═══ */
     .poster {
       position: relative; z-index: 1;
       height: 100dvh;
       display: grid;
       grid-template-rows: auto 1fr auto auto;
-      padding-top: 38px;
     }
 
     /* ═══ HEADER ═══ */
@@ -376,37 +331,12 @@
     }
 
     @media print {
-      .sim-panel { display: none; }
-      .poster { padding-top: 0; height: auto; }
+      .poster { height: auto; }
       .site-header, .site-footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
-
-<!-- ══ SIMULATION PANEL ══ -->
-<div class="sim-panel">
-  <span class="sim-badge">🧪 סימולציה</span>
-  <div class="sim-group">
-    <label>תאריך:</label>
-    <input type="date" id="simDate" />
-    <label>שעה:</label>
-    <input type="time" id="simTime" />
-  </div>
-  <div class="sim-group">
-    <label>מנחה גד':</label>
-    <input type="time" id="ovMinchaGedola" class="zman-override" title="עקוף מנחה גדולה" />
-    <label>שקיעה:</label>
-    <input type="time" id="ovSunset" class="zman-override" title="עקוף שקיעה" />
-    <label>צאת:</label>
-    <input type="time" id="ovTzet" class="zman-override" title="עקוף צאת הכוכבים" />
-  </div>
-  <div class="sim-group">
-    <button class="sim-btn" onclick="applySimulation()">עדכן</button>
-    <button class="sim-btn" onclick="resetAll()">אפס הכל</button>
-  </div>
-  <span class="sim-status" id="simStatus"><span class="loading">טוען...</span></span>
-</div>
 
 <div class="poster">
   <header class="site-header">
@@ -439,6 +369,11 @@ const GVIZ_TIMES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?t
 
 /* ══════════════════════════════════════════════════════════
    SIMULATION STATE
+   No on-screen UI for this anymore - to test, use the browser console:
+     simDateTime = new Date('2026-07-12T20:15');  // override "now"
+     simZmanim = { minchaGedola: '13:00', sunset: '19:50', tzet: '20:20' };  // override zmanim
+     zmanimCache = null; await fullRefresh(getNow(), keyYMD(getNow()));      // re-render
+   Set simDateTime/simZmanim back to null/{} and reload the page to return to real data.
 ══════════════════════════════════════════════════════════ */
 let simDateTime = null;
 let simZmanim   = {};
@@ -576,9 +511,9 @@ async function fetchViaProxyChain(targetUrl) {
 /* ══════════════════════════════════════════════════════════
    CHABAD.ORG ZMANIM RSS (replaces the previous Hebcal zmanim API - per instructions, the
    day's prayer times come exclusively from chabad.org's own feed now). Note: unlike Hebcal's
-   API, this feed only ever reflects "today" - the simulation panel's date picker can no
-   longer pull live data for an arbitrary date, only the manual zman-override inputs still work
-   for testing other dates.
+   API, this feed only ever reflects "today" - there's no on-screen simulation UI anymore
+   (removed deliberately, see simDateTime below), but simDateTime/simZmanim can still be set
+   from the browser console for testing other dates/values.
 ══════════════════════════════════════════════════════════ */
 let zmanimCache = null;
 const CHABAD_ZMANIM_RSS_URL = 'https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30';
@@ -914,10 +849,19 @@ function buildMinchaFit(minchaGedola, sunset, maxRows) {
   let rawMid = [];
   const seen   = new Set([fmt(first), fmt(lastMincha)]);
   let cur = nextHalf(addMin(first, 1));
+  let lastRawDate = null;
   while (cur < lastMincha) {
     const f = fmt(cur);
-    if (!seen.has(f)) { seen.add(f); rawMid.push(f); }
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); lastRawDate = cur; }
     cur = addMin(cur, 30);
+  }
+
+  // A mincha service takes ~10 minutes; if the slot right before the final "on time" mincha
+  // is closer than that, that earlier minyan would still be running when the last one starts
+  // - drop it rather than show a prayer time that can't actually happen.
+  const MIN_GAP_MIN = 10;
+  if (lastRawDate && (lastMincha - lastRawDate) / 60000 <= MIN_GAP_MIN) {
+    rawMid.pop();
   }
 
   const midMaxRowsCap = Math.max(0, maxRows - 2);
@@ -970,10 +914,18 @@ function buildArvitFit(tzet, lastArvit, maxRows) {
   let rawMid = [];
   const seen   = new Set([fmt(first)]);
   let cur = nextHalf(addMin(first, 1));
+  let firstRawDate = null;
   while (lastArvit && cur <= lastArvit) {
     const f = fmt(cur);
-    if (!seen.has(f)) { seen.add(f); rawMid.push(f); }
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); if (firstRawDate === null) firstRawDate = cur; }
     cur = addMin(cur, 30);
+  }
+
+  // An arvit service takes ~10 minutes; if the next slot after the first "on time" arvit is
+  // closer than that, it would clash with the service still in progress - drop it.
+  const MIN_GAP_MIN = 10;
+  if (firstRawDate && (firstRawDate - first) / 60000 <= MIN_GAP_MIN) {
+    rawMid.shift();
   }
 
   const midMaxRows = Math.max(0, maxRows - 1);
@@ -995,21 +947,51 @@ function buildArvitFit(tzet, lastArvit, maxRows) {
   return [firstItem, ...midItems];
 }
 
-// Fixed cap (not tied to how many shacharit rows the sheet happens to have) so mincha/arvit
-// never grow past this regardless of how many half-hour slots would otherwise fit - excess
-// slots get paired side-by-side instead, same as the existing packing already does.
-const MAX_ROWS_PER_COLUMN = 7;
+// Fixed cap (not tied to how many shacharit rows the sheet happens to have) so no column -
+// shacharit included - ever grows past this, regardless of how many slots would otherwise
+// fit; excess slots get paired side-by-side instead.
+const MAX_ROWS_PER_COLUMN = 8;
 
 const DAY_ZMANIM_DEFS = [
   { key: 'alot',         label: 'עלות השחר' },
-  { key: 'misheyakir',   label: 'טלית ותפילין' },
+  { key: 'misheyakir',   label: 'זמן טלית ותפילין' },
   { key: 'zriha',        label: 'זריחה' },
-  { key: 'sofZmanShema', label: 'סוף ק״ש' },
+  { key: 'sofZmanShema', label: 'סוף זמן ק״ש' },
   { key: 'minchaGedola', label: 'מנחה גדולה' },
   { key: 'chatzot',      label: 'חצות' },
   { key: 'sunset',       label: 'שקיעת החמה' },
   { key: 'tzet',         label: 'צאת הכוכבים' },
 ];
+
+/**
+ * Generic packer for sheet-sourced columns (shacharit) - unlike buildMinchaFit/buildArvitFit's
+ * synthetic half-hour grid, these are real distinct entries from the sheet, so items are never
+ * dropped, only paired side-by-side once the count exceeds maxRows. An item that's already a
+ * pre-paired sheet cell (has .left/.right, e.g. "8:00, 8:30" typed into one cell) can't be
+ * split further, so it's only combined with a neighboring plain single-time item, never with
+ * another pre-paired one.
+ */
+function packGeneric(items, maxRows) {
+  if (!items || items.length <= maxRows) return items;
+  const packed = [];
+  let i = 0;
+  while (i < items.length) {
+    const cur  = items[i];
+    const next = items[i + 1];
+    const curAtomic  = cur.left !== undefined;
+    const nextAtomic = next && next.left !== undefined;
+    const remaining = items.length - i;
+    const rowsLeft  = maxRows - packed.length;
+    if (!curAtomic && !nextAtomic && remaining > rowsLeft && i + 1 < items.length) {
+      packed.push({ left: cur.label, right: next.label, cls: 'side-by-side' });
+      i += 2;
+    } else {
+      packed.push(cur);
+      i++;
+    }
+  }
+  return packed;
+}
 
 function renderDayZmanim(zmanim) {
   const row = document.getElementById('dayZmanimRow');
@@ -1032,7 +1014,7 @@ function render(zmanim, modeObj) {
 
   const staticParsed = (sheetSections || []).map(sec => ({
     title: sec.title,
-    items: parseSheetItems(sec.items)
+    items: packGeneric(parseSheetItems(sec.items), MAX_ROWS_PER_COLUMN)
   }));
 
   const minchaItems = buildMinchaFit(zmanim?.minchaGedola, zmanim?.sunset, MAX_ROWS_PER_COLUMN);
@@ -1156,8 +1138,6 @@ function tick() {
 }
 
 async function fullRefresh(now, dateKey) {
-  setStatus('loading', 'טוען זמנים...');
-
   try {
     const dateStr = await fetchHebrewDate(dateKey);
     document.getElementById('dateDisplay').textContent = dateStr;
@@ -1177,11 +1157,10 @@ async function fullRefresh(now, dateKey) {
       // and keep retrying a real fetch every 5 minutes until it succeeds.
       staleEl.textContent = `⚠ הנתונים המוצגים הם מתאריך ${formatDateKeyDMY(currentZmanim.staleDateKey)} (לא עודכנו היום) - מנסה שוב...`;
       staleEl.hidden = false;
-      setStatus('err', `נתונים ישנים (${currentZmanim.staleDateKey}) - ינסה שוב בעוד 5 דקות`);
       setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
     } else {
       staleEl.hidden = true;
-      setStatus('ok',
+      console.info('[zmanim] סטטוס תקין:',
         `שקיעה: ${fmt(currentZmanim.sunset)} | ` +
         `מנחה: ${fmt(currentZmanim.minchaGedola)} | ` +
         `צאת: ${fmt(currentZmanim.tzet)} | ` +
@@ -1193,7 +1172,6 @@ async function fullRefresh(now, dateKey) {
     // instead of waiting for the next calendar day.
     console.error('[zmanim] שליפת זמנים נכשלה, ינסה שוב בעוד 5 דקות:', e);
     staleEl.hidden = true;
-    setStatus('err', 'שגיאה: ' + e.message);
     currentZmanim = null;
     setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
   }
@@ -1201,41 +1179,6 @@ async function fullRefresh(now, dateKey) {
   lastMinute  = -1;
   lastModeKey = null;
   tick();
-}
-
-function setStatus(type, msg) {
-  document.getElementById('simStatus').innerHTML = `<span class="${type}">${msg}</span>`;
-}
-
-
-/* ══════════════════════════════════════════════════════════
-   SIMULATION CONTROLS
-══════════════════════════════════════════════════════════ */
-function applySimulation() {
-  const d = document.getElementById('simDate').value;
-  const t = document.getElementById('simTime').value;
-  simZmanim = {
-    minchaGedola: document.getElementById('ovMinchaGedola').value || null,
-    sunset:       document.getElementById('ovSunset').value       || null,
-    tzet:         document.getElementById('ovTzet').value         || null,
-  };
-  if (d && t) simDateTime = new Date(`${d}T${t}`);
-  zmanimCache   = null;
-  loadedDateKey = null;
-  lastMinute    = -1;
-  fullRefresh(getNow(), keyYMD(getNow()));
-}
-
-function resetAll() {
-  simDateTime = null; simZmanim = {}; zmanimCache = null;
-  loadedDateKey = null; lastMinute = -1;
-  const now = new Date();
-  document.getElementById('simDate').value = keyYMD(now);
-  document.getElementById('simTime').value =
-    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-  ['ovMinchaGedola','ovSunset','ovTzet'].forEach(id =>
-    document.getElementById(id).value = '');
-  fullRefresh(now, keyYMD(now));
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1263,9 +1206,6 @@ function resetAll() {
      </ul></div></section>`.repeat(3);
 
   const now = new Date();
-  document.getElementById('simDate').value = keyYMD(now);
-  document.getElementById('simTime').value =
-    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 
   try { await loadSheetTimes(); }
   catch (e) {
