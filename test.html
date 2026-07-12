@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Discourage a kiosk browser from serving a stale cached copy of this whole file; the
+       scheduled self-reload in the script below (with a cache-busting ?v= param) is the
+       real guarantee, this is just a hint some browsers/proxies also respect. -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
   <title>זמני תפילות - יום חול</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
@@ -124,6 +129,19 @@
       letter-spacing: .06em; opacity: .88;
       position: relative;
     }
+    .stale-warning {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 12px;
+      background: rgba(220,60,40,.18);
+      border: 1px solid rgba(255,120,90,.55);
+      border-radius: 20px;
+      color: #ffb3a0;
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(10px, 1.1vw, 14px);
+      font-weight: 700;
+    }
+    .stale-warning[hidden] { display: none; }
 
     /* ═══ MAIN ═══ */
     main {
@@ -398,6 +416,7 @@
       <span class="header-star">✦</span>
     </h1>
     <div class="header-sub" id="dateDisplay">טוען תאריך...</div>
+    <div class="stale-warning" id="staleWarning" hidden></div>
   </header>
   <main>
     <div class="grid-wrapper" id="grid"></div>
@@ -410,6 +429,7 @@
 /* ══════════════════════════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════════════════════════ */
+const APP_VERSION = '2026-07-12-tz-fix';
 const LAT  = 32.6078;
 const LNG  = 35.2897;
 const TZID = 'Asia/Jerusalem';
@@ -429,15 +449,32 @@ function getNow() { return simDateTime ? new Date(simDateTime) : new Date(); }
 ══════════════════════════════════════════════════════════ */
 function fmt(date) {
   if (!date || isNaN(date)) return '--:--';
-  return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZID });
+}
+// Builds the UTC instant for hh:mm on the given y/mo/d *in the tzid timezone* - not the
+// device's own configured timezone. A kiosk/signage screen can be set to any system
+// timezone (UTC is common on cheap Android boxes); if we used Date.setHours() (device-local)
+// here, the exact same "19:52" from the RSS feed would land on a different real-world instant
+// on that screen than on a correctly-configured computer, showing wrong times with no error.
+// Standard round-trip technique: guess the instant assuming UTC, see what the target
+// timezone displays for that instant, then correct by the difference (handles DST too).
+function zonedYMDHMToDate(y, mo, d, hh, mm, tzid) {
+  const guess = Date.UTC(y, mo - 1, d, hh, mm, 0, 0);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tzid, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(new Date(guess)).reduce((a, x) => (a[x.type] = x.value, a), {});
+  const shownAsUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day,
+    parts.hour === '24' ? 0 : +parts.hour, +parts.minute, +parts.second);
+  return new Date(guess + (guess - shownAsUTC));
 }
 function hhmmToDate(str, refDate) {
   if (!str) return null;
   const m = str.match(/(\d{1,2}):(\d{2})/);
   if (!m) return null;
-  const d = new Date(refDate || getNow());
-  d.setHours(+m[1], +m[2], 0, 0);
-  return d;
+  const [y, mo, d] = keyYMD(refDate || getNow()).split('-').map(Number);
+  return zonedYMDHMToDate(y, mo, d, +m[1], +m[2], TZID);
 }
 function isoToDate(str) { return str ? new Date(str) : null; }
 function keyYMD(d) {
@@ -445,6 +482,11 @@ function keyYMD(d) {
     timeZone: TZID, year:'numeric', month:'2-digit', day:'2-digit'
   }).formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a), {});
   return `${p.year}-${p.month}-${p.day}`;
+}
+function formatDateKeyDMY(dateKey) {
+  if (!dateKey) return '';
+  const [y, m, d] = dateKey.split('-');
+  return `${+d}.${+m}.${y}`;
 }
 function addMin(d, m) { return new Date(d.getTime() + m * 60000); }
 function floorTo5(d) {
@@ -547,6 +589,8 @@ async function fetchChabadZmanim() {
   const channel = doc.querySelector('channel');
   if (!channel) throw new Error('מבנה XML לא תקין');
   const items = Array.from(channel.querySelectorAll('item'));
+  console.info('[zmanim] RSS גולמי מהפיד:', items.map((it) =>
+    `${it.querySelector('title')?.textContent} = ${it.querySelector('category')?.textContent}`));
 
   function findTime(predicate) {
     const item = items.find((it) => predicate(it.querySelector('title')?.textContent || ''));
@@ -555,7 +599,7 @@ async function fetchChabadZmanim() {
     return hhmmToDate(timeStr, getNow());
   }
 
-  return {
+  const result = {
     alot:         findTime((t) => t.includes('עלות')),
     misheyakir:   findTime((t) => t.includes('משיכיר')),
     zriha:        findTime((t) => t.includes('זריחה')),
@@ -567,6 +611,9 @@ async function fetchChabadZmanim() {
     tzet:         findTime((t) => t.includes('צאת') && t.includes('כוכבים'))
                   || findTime((t) => t.includes('צאת') || t.includes('יציאת')),
   };
+  console.info('[zmanim] זמנים מפוענחים (שעון ישראל, אחרי תיקון אזור-זמן):',
+    ZMANIM_KEYS.map((k) => `${k}=${fmt(result[k])}`).join(', '));
+  return result;
 }
 
 const ZMANIM_KEYS = ['alot','misheyakir','zriha','sofZmanShema','minchaGedola','chatzot','sunset','tzet'];
@@ -578,6 +625,7 @@ async function getZmanim() {
 
   if (zmanimCache && zmanimCache.dateKey === dateKey) {
     base = zmanimCache;
+    console.info(`[zmanim] cache-hit בזיכרון (dateKey=${dateKey})`);
   } else {
     try {
       const s = JSON.parse(localStorage.getItem('zmanim_cache') || 'null');
@@ -585,21 +633,53 @@ async function getZmanim() {
         base = { dateKey };
         ZMANIM_KEYS.forEach((k) => { base[k] = s[k] ? new Date(s[k]) : null; });
         zmanimCache = base;
+        console.info(`[zmanim] cache-hit ב-localStorage (dateKey=${dateKey}):`,
+          ZMANIM_KEYS.map((k) => `${k}=${fmt(base[k])}`).join(', '));
+      } else if (s) {
+        console.info(`[zmanim] cache ב-localStorage מיום אחר (${s.dateKey}) ≠ היום (${dateKey}) - מתעלם, שולף מחדש`);
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[zmanim] קריאת cache מ-localStorage נכשלה:', e);
+    }
   }
+  let stale = false;
+  let staleDateKey = null;
+
   if (!zmanimCache || zmanimCache.dateKey !== dateKey) {
-    const f = await fetchChabadZmanim();
-    base = { dateKey, ...f };
-    zmanimCache = base;
+    console.info(`[zmanim] שולף RSS מחדש (dateKey=${dateKey}) - אין cache תקף`);
     try {
-      const toStore = { dateKey };
-      ZMANIM_KEYS.forEach((k) => { toStore[k] = f[k]?.toISOString(); });
-      localStorage.setItem('zmanim_cache', JSON.stringify(toStore));
-    } catch {}
+      const f = await fetchChabadZmanim();
+      base = { dateKey, ...f };
+      zmanimCache = base;
+      try {
+        const toStore = { dateKey };
+        ZMANIM_KEYS.forEach((k) => { toStore[k] = f[k]?.toISOString(); });
+        localStorage.setItem('zmanim_cache', JSON.stringify(toStore));
+      } catch (e) {
+        console.warn('[zmanim] כתיבת cache ל-localStorage נכשלה:', e);
+      }
+    } catch (fetchErr) {
+      // Fresh fetch for today failed - fall back to whatever's saved in localStorage, even
+      // from an older day, rather than showing nothing on screen. Deliberately does NOT set
+      // zmanimCache here, so the next call still retries a real fetch instead of treating
+      // this fallback as "done for today".
+      let fallback = null;
+      try { fallback = JSON.parse(localStorage.getItem('zmanim_cache') || 'null'); } catch {}
+      if (fallback && ZMANIM_KEYS.some((k) => fallback[k])) {
+        base = { dateKey: fallback.dateKey };
+        ZMANIM_KEYS.forEach((k) => { base[k] = fallback[k] ? new Date(fallback[k]) : null; });
+        stale = true;
+        staleDateKey = fallback.dateKey;
+        console.warn(`[zmanim] השליפה הטרייה נכשלה - מציג נתונים ישנים מ-${staleDateKey} כגיבוי זמני:`, fetchErr);
+      } else {
+        console.error('[zmanim] השליפה נכשלה ואין אפילו cache ישן ליפול עליו:', fetchErr);
+        throw fetchErr;
+      }
+    }
   }
   return {
     ...base,
+    stale, staleDateKey,
     minchaGedola: simZmanim.minchaGedola ? hhmmToDate(simZmanim.minchaGedola, now) : base.minchaGedola,
     sunset:       simZmanim.sunset       ? hhmmToDate(simZmanim.sunset, now)       : base.sunset,
     tzet:         simZmanim.tzet         ? hhmmToDate(simZmanim.tzet, now)         : base.tzet,
@@ -1084,21 +1164,38 @@ async function fullRefresh(now, dateKey) {
   } catch (e) {
     console.warn('HebCal date fail', e);
     document.getElementById('dateDisplay').textContent =
-      now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric', timeZone: TZID });
   }
+
+  const staleEl = document.getElementById('staleWarning');
 
   try {
     currentZmanim = await getZmanim();
-    setStatus('ok',
-      `שקיעה: ${fmt(currentZmanim.sunset)} | ` +
-      `מנחה: ${fmt(currentZmanim.minchaGedola)} | ` +
-      `צאת: ${fmt(currentZmanim.tzet)} | ` +
-      `ערבית אחרונה: ${lastArvitFromSheet || '—'}`
-    );
+    if (currentZmanim.stale) {
+      // getZmanim() already fell back to an older cached day rather than showing nothing -
+      // surface that clearly next to the date so nobody mistakes it for today's real times,
+      // and keep retrying a real fetch every 5 minutes until it succeeds.
+      staleEl.textContent = `⚠ הנתונים המוצגים הם מתאריך ${formatDateKeyDMY(currentZmanim.staleDateKey)} (לא עודכנו היום) - מנסה שוב...`;
+      staleEl.hidden = false;
+      setStatus('err', `נתונים ישנים (${currentZmanim.staleDateKey}) - ינסה שוב בעוד 5 דקות`);
+      setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
+    } else {
+      staleEl.hidden = true;
+      setStatus('ok',
+        `שקיעה: ${fmt(currentZmanim.sunset)} | ` +
+        `מנחה: ${fmt(currentZmanim.minchaGedola)} | ` +
+        `צאת: ${fmt(currentZmanim.tzet)} | ` +
+        `ערבית אחרונה: ${lastArvitFromSheet || '—'}`
+      );
+    }
   } catch (e) {
-    console.error('Zmanim fetch fail', e);
+    // No data at all (not even an old cached day to fall back on) - retry on a short timer
+    // instead of waiting for the next calendar day.
+    console.error('[zmanim] שליפת זמנים נכשלה, ינסה שוב בעוד 5 דקות:', e);
+    staleEl.hidden = true;
     setStatus('err', 'שגיאה: ' + e.message);
     currentZmanim = null;
+    setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
   }
 
   lastMinute  = -1;
@@ -1109,6 +1206,7 @@ async function fullRefresh(now, dateKey) {
 function setStatus(type, msg) {
   document.getElementById('simStatus').innerHTML = `<span class="${type}">${msg}</span>`;
 }
+
 
 /* ══════════════════════════════════════════════════════════
    SIMULATION CONTROLS
@@ -1144,6 +1242,20 @@ function resetAll() {
    INIT
 ══════════════════════════════════════════════════════════ */
 (async function init() {
+  // Diagnostic: on a kiosk/signage screen the system timezone may not be Asia/Jerusalem
+  // (common on cheap Android boxes defaulting to UTC), which used to silently shift every
+  // displayed time by the offset between the device's zone and Israel's. Log both here so a
+  // mismatch is visible immediately in that screen's own console, without needing to guess.
+  // APP_VERSION lets a stuck kiosk browser (serving an old cached copy of this file instead
+  // of the latest one) be told apart from a real data bug - compare the logged value against
+  // the date of the last file you sent.
+  console.info('[zmanim] אבחון בעת טעינה:',
+    `גרסת קובץ=${APP_VERSION}`,
+    `| אזור-זמן מכשיר=${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+    `| שעון מכשיר (מקומי)=${new Date().toString()}`,
+    `| תאריך ישראל מחושב=${keyYMD(new Date())}`,
+    `| שעה ישראל מחושבת=${fmt(new Date())}`);
+
   document.getElementById('grid').innerHTML =
     `<section class="column"><div class="col-header"><h2 class="col-title">טוען...</h2></div>
      <div class="col-body"><ul class="times">
