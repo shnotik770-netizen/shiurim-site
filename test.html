@@ -595,6 +595,25 @@ async function buildPayload(date){
   };
 }
 
+/* הקטנת פונט אוטומטית ל'תוכן שיעור' שלא נכנס בריבוע (חוץ מהיום יום, שגולל ולא מקטין) */
+const FIT_TEXT_MIN_PX = 11;
+function fitTextToBox(el){
+  if(!el) return;
+  const container = el.parentElement; // .col-body
+  if(!container) return;
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  let guard = 200; // safety cap so a layout quirk can never spin this forever
+  while(guard-- > 0 && size > FIT_TEXT_MIN_PX &&
+        (el.scrollHeight > container.clientHeight || el.scrollWidth > container.clientWidth)){
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+function fitAllLessonCards(){
+  document.querySelectorAll('.column:not(#card-hayom) .lesson-text').forEach(fitTextToBox);
+}
+
 /* גלילה רק מטה עם השהיות (ל’היום יום’) */
 function enableAutoScroll(selector, delayMs=5000){
   const el = document.querySelector(selector);
@@ -626,6 +645,8 @@ function enableAutoScroll(selector, delayMs=5000){
     const cached = loadFromCache();
     if (cached){
       renderFromPayload(cached);
+      await document.fonts.ready; // measure only after the real webfont has swapped in
+      fitAllLessonCards();
       enableAutoScroll('#card-hayom .lesson-text',5000);
       return;
     }
@@ -635,12 +656,16 @@ function enableAutoScroll(selector, delayMs=5000){
     renderFromPayload(payload);
     saveToCache(payload);
 
+    await document.fonts.ready;
+    fitAllLessonCards();
     enableAutoScroll('#card-hayom .lesson-text',5000);
   }catch(err){
     console.error(err);
     document.getElementById('date').textContent = "שגיאה בטעינת נתונים";
   }
 })();
+
+window.addEventListener('resize', () => fitAllLessonCards());
 </script>
 </body>
 </html>
