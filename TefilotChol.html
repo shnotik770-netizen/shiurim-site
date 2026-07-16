@@ -3,218 +3,1219 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Discourage a kiosk browser from serving a stale cached copy of this whole file; the
+       scheduled self-reload in the script below (with a cache-busting ?v= param) is the
+       real guarantee, this is just a hint some browsers/proxies also respect. -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
   <title>זמני תפילות - יום חול</title>
-
-  <!-- פונט מודרני ונקי -->
-  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
-    :root{
-      --brand:#8b1538; --brand-2:#d2691e;
-      --bg-1:#f5f1e8; --bg-2:#f8f4eb; --panel:#f7f2eb;
-      --ink:#251a1a; --ink-2:#7b1f3a; --radius:16px;
-      --shadow-lg:0 6px 16px rgba(0,0,0,.16);
-      --shadow-sm:0 3px 12px rgba(0,0,0,.08);
-    }
-    *,*::before,*::after{box-sizing:border-box}
-    body{
-      margin:0; color:var(--ink);
-      font-family:'Assistant',system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans";
-      background:linear-gradient(135deg,var(--bg-1),var(--bg-2));
-    }
-    .h1{
-      font-weight:800;color:#fff;letter-spacing:.02em;
-      font-size:clamp(22px,4.6vw,50px);
+    :root {
+      --crimson: #7a1030;
+      --crimson-deep: #4e0a1f;
+      --gold: #c8962a;
+      --gold-light: #e8b84b;
+      --cream: #fdf6e8;
+      --parchment: #f5ead0;
+      --parchment-2: #ede0c0;
+      --ink: #1e1209;
+      --ink-mid: #5a3a1a;
+      --shadow: rgba(78,10,31,0.18);
+      --r: 18px;
     }
 
-    .poster{
-      min-height:100dvh; display:grid;
-      grid-template-rows:auto 1fr auto; gap:16px;
-      padding:2vh 3vw; background:#fffdf9;
-    }
-    header.site-header{
-      display:grid; place-items:center; text-align:center;
-      background:var(--brand); border:3px solid var(--brand-2);
-      border-radius:16px; padding:1rem 1.2rem; box-shadow:var(--shadow-lg);
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Heebo', 'Frank Ruhl Libre', serif;
+      background: var(--crimson-deep);
+      color: var(--ink);
+      height: 100dvh;
+      overflow: hidden;
     }
 
-    .grid-wrapper{
-      display:grid; gap:clamp(12px,2vw,28px); align-content:start;
-    }
-    /* עמודות רספונסיביות: 1/2/3 */
-    @media (max-width:640px){ .grid-wrapper{ grid-template-columns:1fr; } }
-    @media (min-width:641px) and (max-width:1024px){ .grid-wrapper{ grid-template-columns:repeat(2,1fr); } }
-    @media (min-width:1025px){ .grid-wrapper{ grid-template-columns:repeat(3,1fr); } }
-
-    .column{
-      background:var(--panel); padding:clamp(12px,2vh,24px);
-      border-radius:16px; border:2px solid #e3c5ad; box-shadow:var(--shadow-sm);
-      display:grid; grid-template-rows:auto 1fr; align-items:start;
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(200,150,42,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(122,16,48,0.22) 0%, transparent 60%),
+        repeating-linear-gradient(45deg, transparent, transparent 40px,
+          rgba(255,255,255,0.012) 40px, rgba(255,255,255,0.012) 41px);
+      pointer-events: none; z-index: 0;
     }
 
-    /* כותרת עמודה – ממורכזת וגדולה */
-    .h2{
-      font-weight:800; color:var(--ink-2);
-      text-align:center; margin:0 0 .6rem;
-      font-size:clamp(22px,2.8vw,32px);
+    /* ═══ POSTER ═══ */
+    .poster {
+      position: relative; z-index: 1;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
     }
 
-    .times{
-      list-style:none; width:100%;
-      display:grid; grid-auto-rows:minmax(38px,auto);
-      gap:8px; margin:0; padding:0; height:100%;
-      align-content:space-between;
+    /* ═══ HEADER ═══ */
+    .site-header {
+      background: linear-gradient(135deg, var(--crimson-deep) 0%, var(--crimson) 50%, #9a1a40 100%);
+      border-bottom: 3px solid var(--gold);
+      padding: clamp(6px,1vh,16px) 2rem;
+      text-align: center;
+      position: relative; overflow: hidden;
     }
-    .time-item{
-      display:grid; place-items:center;
-      border-radius:12px; padding:.55rem .7rem;
-      background:#ffffffa6; border:1px dashed #e7d7c7;
-      font-size: clamp(23px,2.4vw,30px);font-weight: 600;
-      color:var(--ink-2);
+    .site-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(90deg, transparent, transparent 60px,
+        rgba(200,150,42,0.055) 60px, rgba(200,150,42,0.055) 61px);
+    }
+    .site-header h1 {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900; color: #fff;
+      font-size: clamp(16px, 3vw, 38px);
+      letter-spacing: .04em;
+      text-shadow: 0 2px 12px rgba(0,0,0,.5);
+      position: relative;
+    }
+    .header-star { color: var(--gold); opacity: .7; margin: 0 10px; }
+    .header-sub {
+      color: var(--gold-light);
+      font-size: clamp(10px, 1.2vw, 15px);
+      font-weight: 400; margin-top: 2px;
+      letter-spacing: .06em; opacity: .88;
+      position: relative;
+    }
+    .stale-warning {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 12px;
+      background: rgba(220,60,40,.18);
+      border: 1px solid rgba(255,120,90,.55);
+      border-radius: 20px;
+      color: #ffb3a0;
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(10px, 1.1vw, 14px);
+      font-weight: 700;
+    }
+    .stale-warning[hidden] { display: none; }
+
+    /* ═══ MAIN ═══ */
+    main {
+      padding: clamp(6px,1vh,16px) clamp(6px,1.2vw,20px);
+      overflow: hidden;
+      display: flex; flex-direction: column;
     }
 
-    footer.site-footer{
-      text-align:center; background:var(--brand); color:#fff;
-      border:3px solid var(--brand-2); border-radius:16px;
-      padding:.9rem; box-shadow:var(--shadow-lg); font-weight:800;
-      font-size:clamp(14px,1.8vw,22px);
+    /* ── Normal: 3 equal columns ── */
+    .grid-wrapper {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(7px, 1vw, 18px);
+      flex: 1;
+      min-height: 0;
+      transition: grid-template-columns .55s cubic-bezier(.4,0,.2,1);
     }
 
-    /* מצב כהה */
-    @media (prefers-color-scheme: dark){
-      :root{ --bg-1:#2a2321; --bg-2:#3a312f; --panel:#2f2a29; --ink:#f9f7f4; }
-      body{ background:linear-gradient(135deg,var(--bg-1),var(--bg-2)); }
-      .column{ border-color:#5a3a2a; }
-      .time-item{ background:#00000022; border-color:#ffffff22; }
+    /* ── All spotlight modes: spotlight LEFT 20% + regular cols ── */
+    .grid-wrapper.spotlight-mode {
+      grid-template-columns: minmax(180px, 20%) repeat(var(--reg-cols, 3), 1fr);
     }
 
-    /* הדפסה A4 */
-    @media print{
-      @page{ size:A4 portrait; margin:10mm }
-      body{ background:#fff }
-      .poster{ background:#fff; min-height:auto; gap:8px; padding:0 }
-      header.site-header, footer.site-footer{ box-shadow:none; -webkit-print-color-adjust:exact; print-color-adjust:exact }
+    /* ─── Generic spotlight card ─── */
+    .prayer-spotlight {
+      display: none;
+      border: 3px solid var(--gold);
+      border-radius: var(--r);
+      box-shadow: 0 0 50px rgba(200,150,42,0.38), inset 0 0 40px rgba(0,0,0,.45);
+      align-items: center; justify-content: center;
+      text-align: center; flex-direction: column; gap: 8px;
+      position: relative; overflow: hidden;
+      padding: 12px;
+    }
+    .prayer-spotlight::before { content:'✦'; position:absolute; top:10px; right:14px; color:var(--gold); opacity:.35; font-size:18px; }
+    .prayer-spotlight::after  { content:'✦'; position:absolute; bottom:10px; left:14px; color:var(--gold); opacity:.35; font-size:18px; }
+
+    /* Spotlight visible when parent has spotlight-mode */
+    .spotlight-mode .prayer-spotlight { display: flex; }
+
+    /* arvit — dark purple */
+    .arvit-spotlight {
+      background: linear-gradient(155deg, #1a0030 0%, var(--crimson-deep) 60%, #0d001a 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    /* mincha — warm crimson */
+    .mincha-spotlight {
+      background: linear-gradient(155deg, var(--crimson-deep) 0%, #6a0020 60%, #3a000e 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    /* shacharit — deep navy-gold */
+    .shacharit-spotlight {
+      background: linear-gradient(155deg, #0a1830 0%, #1a3060 60%, #0a0e20 100%);
+      animation: spotlightIn .5s cubic-bezier(.4,0,.2,1) forwards;
+    }
+
+    @keyframes spotlightIn {
+      from { opacity:0; transform:scale(.9); }
+      to   { opacity:1; transform:scale(1); }
+    }
+
+    .sp-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(15px, 2vw, 27px);
+      color: var(--gold-light); font-weight: 900;
+      letter-spacing: .05em;
+      text-shadow: 0 0 18px rgba(200,150,42,0.55);
+      line-height: 1.2;
+    }
+    .sp-time {
+      font-size: clamp(36px, 5vw, 70px);
+      font-weight: 900;
+      font-family: 'Frank Ruhl Libre', serif;
+      color: #fff;
+      text-shadow: 0 0 28px rgba(200,150,42,0.65), 0 4px 18px rgba(0,0,0,.55);
+      line-height: 1;
+    }
+    .sp-countdown {
+      font-size: clamp(12px, 1.3vw, 18px);
+      color: var(--gold-light);
+      font-weight: 600;
+      opacity: .85;
+      letter-spacing: .04em;
+    }
+    .sp-pulse {
+      width: 11px; height: 11px; background: var(--gold); border-radius: 50%;
+      animation: ring 1.5s ease-in-out infinite;
+    }
+    @keyframes ring {
+      0%   { box-shadow: 0 0 0 0   rgba(200,150,42,.65); }
+      70%  { box-shadow: 0 0 0 14px rgba(200,150,42,0); }
+      100% { box-shadow: 0 0 0 0   rgba(200,150,42,0); }
+    }
+
+    /* ═══ COLUMN CARD ═══ */
+    .column {
+      background: linear-gradient(160deg, var(--cream) 0%, var(--parchment) 60%, var(--parchment-2) 100%);
+      border-radius: var(--r);
+      border: 2px solid rgba(200,150,42,0.32);
+      box-shadow: 0 4px 18px var(--shadow), inset 0 1px 0 rgba(255,255,255,.65);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transition: transform .4s ease, opacity .4s ease;
+      min-height: 0;
+    }
+    .arvit-mode .column,
+    .mincha-mode .column { transform: scale(.97); opacity: .9; }
+
+    .col-header {
+      background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-deep) 100%);
+      padding: clamp(6px,1.1vh,14px) clamp(8px,1vw,18px);
+      text-align: center;
+      border-bottom: 2px solid var(--gold);
+      position: relative; flex-shrink: 0;
+    }
+    .col-header::after {
+      content: ''; position: absolute; bottom:-1px; left:20%; right:20%; height:2px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+    }
+    .col-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900; color: #fff;
+      font-size: clamp(15px, 1.9vw, 25px);
+      letter-spacing: .03em;
+      text-shadow: 0 2px 8px rgba(0,0,0,.4);
+    }
+
+    .col-body {
+      padding: clamp(5px,.9vh,12px) clamp(5px,.7vw,10px);
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; min-height: 0;
+    }
+
+    .times {
+      list-style: none;
+      display: flex; flex-direction: column;
+      gap: 3px; flex: 1; min-height: 0;
+    }
+
+    /* Each item gets equal share of available height — no overflow ever.
+       All time boxes (including first/last prayer) share this one look - no per-box
+       color variants - and the time text is sized to dominate the box. */
+    .time-item {
+      background: linear-gradient(135deg, rgba(255,255,255,.72) 0%, rgba(255,255,255,.42) 100%);
+      border: 1px solid rgba(200,150,42,.20);
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(16px, 2.3vw, 32px);
+      font-weight: 900; color: var(--ink-mid);
+      flex: 1; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, border-color .2s;
+      position: relative;
+      padding: 2px 6px;
+      overflow: hidden;
+    }
+    .time-item:hover { background: rgba(200,150,42,.11); border-color: var(--gold); }
+
+    /* Side-by-side item: two times in one row */
+    .time-item.side-by-side {
+      flex-direction: row;
+      gap: 0;
+      padding: 2px 4px;
+    }
+    .time-item.side-by-side .sbs-left,
+    .time-item.side-by-side .sbs-right {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .time-item.side-by-side .sbs-divider {
+      width: 1px;
+      align-self: stretch;
+      margin: 6px 0;
+      background: rgba(200,150,42,0.35);
+      flex-shrink: 0;
+    }
+
+    /* shimmer */
+    .time-item.loading {
+      background: linear-gradient(90deg, #e8e0d0 25%, #d8d0c0 50%, #e8e0d0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.3s infinite; color: transparent;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ═══ DAY ZMANIM ROW (below the columns, above the footer) ═══ */
+    .day-zmanim-row {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: clamp(5px, .8vw, 12px);
+      padding: clamp(4px,.6vh,10px) clamp(6px,1.2vw,20px);
+      flex-shrink: 0;
+    }
+    .day-zman-item {
+      background: linear-gradient(160deg, var(--cream) 0%, var(--parchment) 100%);
+      border: 1px solid rgba(200,150,42,.30);
+      border-radius: 8px;
+      text-align: center;
+      padding: 4px 3px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1px;
+    }
+    .day-zman-item .dz-label {
+      font-family: 'Heebo', sans-serif;
+      font-size: clamp(9px, .9vw, 12px);
+      color: var(--ink-mid);
+      font-weight: 600;
+      opacity: .82;
+      white-space: nowrap;
+    }
+    .day-zman-item .dz-time {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(14px, 1.6vw, 21px);
+      font-weight: 900;
+      color: var(--crimson);
+    }
+
+    /* ═══ FOOTER ═══ */
+    .site-footer {
+      background: linear-gradient(135deg, var(--crimson-deep) 0%, var(--crimson) 100%);
+      border-top: 3px solid var(--gold);
+      text-align: center;
+      padding: clamp(7px,.9vh,14px);
+      color: var(--gold-light);
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 700;
+      font-size: clamp(12px, 1.5vw, 19px);
+      letter-spacing: .05em;
+      text-shadow: 0 1px 6px rgba(0,0,0,.4);
+      flex-shrink: 0;
+    }
+
+    @media print {
+      .poster { height: auto; }
+      .site-header, .site-footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
-  <div class="poster" role="document">
-    <header class="site-header" role="banner" aria-label="כותרת ראשית">
-      <h1 class="h1">בית הכנסת חב״ד — זמני התפילות יום חול</h1>
-    </header>
 
-    <main role="main">
-      <div class="grid-wrapper" id="grid"><!-- נטען דינמית --></div>
-    </main>
+<div class="poster">
+  <header class="site-header">
+    <h1>
+      <span class="header-star">✦</span>
+      בית הכנסת חב״ד — זמני התפילות יום חול
+      <span class="header-star">✦</span>
+    </h1>
+    <div class="header-sub" id="dateDisplay">טוען תאריך...</div>
+    <div class="stale-warning" id="staleWarning" hidden></div>
+  </header>
+  <main>
+    <div class="grid-wrapper" id="grid"></div>
+  </main>
+  <div class="day-zmanim-row" id="dayZmanimRow"></div>
+  <footer class="site-footer">✦ &nbsp; אסור לדבר בשעת התפילה וקריאת התורה &nbsp; ✦</footer>
+</div>
 
-    <footer class="site-footer" role="contentinfo">
-      אסור לדבר בשעת התפילה וקריאת התורה
-    </footer>
-  </div>
+<script>
+/* ══════════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════════ */
+const APP_VERSION = '2026-07-12-tz-fix';
+const LAT  = 32.6078;
+const LNG  = 35.2897;
+const TZID = 'Asia/Jerusalem';
+const SHEET_ID  = "1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8";
+const GID_TIMES = 350737418;
+const GVIZ_TIMES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID_TIMES}`;
 
-  <script>
-    /* מזהים של הגיליון */
-    const SHEET_ID = "1utQ6ndVedwFHoSua02o0w8sGUrsH5ztNL_EzfcqiiK8";
-    const GID      = 350737418;
-    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+/* ══════════════════════════════════════════════════════════
+   SIMULATION STATE
+   No on-screen UI for this anymore - to test, use the browser console:
+     simDateTime = new Date('2026-07-12T20:15');  // override "now"
+     simZmanim = { minchaGedola: '13:00', sunset: '19:50', tzet: '20:20' };  // override zmanim
+     zmanimCache = null; await fullRefresh(getNow(), keyYMD(getNow()));      // re-render
+   Set simDateTime/simZmanim back to null/{} and reload the page to return to real data.
+══════════════════════════════════════════════════════════ */
+let simDateTime = null;
+let simZmanim   = {};
+function getNow() { return simDateTime ? new Date(simDateTime) : new Date(); }
 
-    /* טעינת GViz כ-<script> (JSONP) */
-    function loadGvizTable(url){
-      return new Promise((resolve, reject) => {
-        const tsUrl = url + "&t=" + Date.now();
-        const prev = (window.google && window.google.visualization &&
-                      window.google.visualization.Query &&
-                      window.google.visualization.Query.setResponse)
-                   ? window.google.visualization.Query.setResponse : null;
+/* ══════════════════════════════════════════════════════════
+   TIME UTILITIES
+══════════════════════════════════════════════════════════ */
+function fmt(date) {
+  if (!date || isNaN(date)) return '--:--';
+  return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZID });
+}
+// Builds the UTC instant for hh:mm on the given y/mo/d *in the tzid timezone* - not the
+// device's own configured timezone. A kiosk/signage screen can be set to any system
+// timezone (UTC is common on cheap Android boxes); if we used Date.setHours() (device-local)
+// here, the exact same "19:52" from the RSS feed would land on a different real-world instant
+// on that screen than on a correctly-configured computer, showing wrong times with no error.
+// Standard round-trip technique: guess the instant assuming UTC, see what the target
+// timezone displays for that instant, then correct by the difference (handles DST too).
+function zonedYMDHMToDate(y, mo, d, hh, mm, tzid) {
+  const guess = Date.UTC(y, mo - 1, d, hh, mm, 0, 0);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tzid, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(new Date(guess)).reduce((a, x) => (a[x.type] = x.value, a), {});
+  const shownAsUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day,
+    parts.hour === '24' ? 0 : +parts.hour, +parts.minute, +parts.second);
+  return new Date(guess + (guess - shownAsUTC));
+}
+function hhmmToDate(str, refDate) {
+  if (!str) return null;
+  const m = str.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const [y, mo, d] = keyYMD(refDate || getNow()).split('-').map(Number);
+  return zonedYMDHMToDate(y, mo, d, +m[1], +m[2], TZID);
+}
+function isoToDate(str) { return str ? new Date(str) : null; }
+function keyYMD(d) {
+  const p = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZID, year:'numeric', month:'2-digit', day:'2-digit'
+  }).formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a), {});
+  return `${p.year}-${p.month}-${p.day}`;
+}
+function formatDateKeyDMY(dateKey) {
+  if (!dateKey) return '';
+  const [y, m, d] = dateKey.split('-');
+  return `${+d}.${+m}.${y}`;
+}
+function addMin(d, m) { return new Date(d.getTime() + m * 60000); }
+function floorTo5(d) {
+  const r = new Date(d); r.setSeconds(0,0);
+  r.setMinutes(Math.floor(r.getMinutes()/5)*5);
+  return r;
+}
+function nextHalf(d) {
+  const r = new Date(d); r.setSeconds(0,0);
+  const m = r.getMinutes();
+  if (m === 0 || m === 30) return r;
+  if (m < 30) { r.setMinutes(30); return r; }
+  r.setHours(r.getHours()+1); r.setMinutes(0); return r;
+}
 
-        window.google = window.google || {};
-        window.google.visualization = window.google.visualization || {};
-        window.google.visualization.Query = window.google.visualization.Query || {};
-        window.google.visualization.Query.setResponse = (resp) => {
-          try{
-            if (!resp || resp.status !== 'ok') { reject(new Error('GViz response error')); return; }
-            resolve(resp.table);
-          } finally {
-            if (prev) window.google.visualization.Query.setResponse = prev;
-            script.remove();
-          }
-        };
-
-        const script = document.createElement('script');
-        script.src = tsUrl;
-        script.onerror = () => { if (prev) window.google.visualization.Query.setResponse = prev;
-          reject(new Error('GViz script load error')); };
-        document.body.appendChild(script);
-      });
+/* ══════════════════════════════════════════════════════════
+   SHEET: pack multiple times in one cell → side-by-side item
+══════════════════════════════════════════════════════════ */
+function parseSheetItems(rawItems) {
+  const result = [];
+  rawItems.forEach(txt => {
+    const times = txt.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
+    if (times.length >= 2) {
+      result.push({ left: times[0], right: times[1], cls: 'side-by-side' });
+    } else {
+      result.push({ label: txt, cls: '' });
     }
+  });
+  return result;
+}
 
-    /* עזר */
-    function cellValue(c){ return (!c) ? "" : (c.f!=null ? c.f : (c.v==null ? "" : c.v)); }
+/* Count "visual rows" an item array occupies (side-by-side = 1 row) */
+function countRows(items) { return items.length; }
 
-    /* בניית כרטיס עמודה */
-    function createColumn(section){
-      const wrap = document.createElement('section');
-      wrap.className = 'column';
+/* ══════════════════════════════════════════════════════════
+   PROXY CHAIN (same approach as dailystudy-table.html / dailystudy-dashboard.html / zmanim.html:
+   he.chabad.org sends no Access-Control-Allow-Origin, so a direct browser fetch() is blocked
+   by CORS even though the URL loads fine in a normal tab. Every proxy here, and chabad.org's
+   own bot protection, fail intermittently rather than consistently - trying each in turn
+   (2 retries apiece) smooths over transient blips without pretending any one is fully reliable.
+══════════════════════════════════════════════════════════ */
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 
-      const h2 = document.createElement('h2');
-      h2.className = 'h2';
-      h2.textContent = section.title;
-
-      const ul = document.createElement('ul');
-      ul.className = 'times';
-
-      (section.items || []).forEach(txt => {
-        const li = document.createElement('li');
-        li.className = 'time-item';
-        li.textContent = txt;
-        ul.appendChild(li);
-      });
-
-      wrap.append(h2, ul);
-      return wrap;
+async function fetchWithRetry(url, options, attempts = 3, delayMs = 1200) {
+  let lastError;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res;
+    } catch (e) {
+      lastError = e;
+      if (i < attempts - 1) await sleep(delayMs);
     }
+  }
+  throw lastError;
+}
 
-    function render(sections){
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      (sections || []).forEach(sec => grid.appendChild(createColumn(sec)));
+// Deploy google-apps-script/chabad-rss-proxy.gs and paste its /exec URL here to try it
+// first - Google's own servers may have a different bot-protection reputation than free
+// public proxies. Left empty, skips straight to the public proxies below.
+const APPS_SCRIPT_PROXY_URL = 'https://script.google.com/macros/s/AKfycbz3wnB2VY7KfFlE_b75Gw8T_gpHPyGLR5_xtNETcc6nN74Rywh2bn2tljewDqRrzfk_/exec';
+
+async function fetchViaProxyChain(targetUrl) {
+  const attempts = [];
+  if (APPS_SCRIPT_PROXY_URL) {
+    attempts.push({ name: 'Apps Script', url: APPS_SCRIPT_PROXY_URL + '?url=' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+  }
+  attempts.push({ name: 'allorigins.win', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl), extract: async (res) => (await res.json()).contents });
+  attempts.push({ name: 'corsproxy.io', url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl), extract: (res) => res.text() });
+
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      const res = await fetchWithRetry(attempt.url, { cache: 'no-store' }, 2, 1000);
+      const text = await attempt.extract(res);
+      console.info(`[proxy chain] succeeded via ${attempt.name} for ${targetUrl}`);
+      return text;
+    } catch (e) {
+      lastError = e;
+      console.warn(`[proxy chain] ${attempt.name} failed:`, e.message);
     }
+  }
+  throw lastError || new Error('All proxy attempts failed');
+}
 
-    /* המרה לפי מבנה: A=שם קבוצה, B..N=שעות */
-    function tableToSections(table){
-      const rows = table.rows || [];
-      const sections = [];
+/* ══════════════════════════════════════════════════════════
+   CHABAD.ORG ZMANIM RSS (replaces the previous Hebcal zmanim API - per instructions, the
+   day's prayer times come exclusively from chabad.org's own feed now). Note: unlike Hebcal's
+   API, this feed only ever reflects "today" - there's no on-screen simulation UI anymore
+   (removed deliberately, see simDateTime below), but simDateTime/simZmanim can still be set
+   from the browser console for testing other dates/values.
+══════════════════════════════════════════════════════════ */
+let zmanimCache = null;
+const CHABAD_ZMANIM_RSS_URL = 'https://he.chabad.org/tools/rss/zmanim.xml?locationId=803&locationType=1&bDef=0&before=30';
 
-      rows.forEach(r => {
-        const cells = r.c || [];
-        const rawTitle = cellValue(cells[0]).toString().trim();
-        const title = rawTitle;
-        // דילוג על שורת כותרות/Section
-        if (!title || title.toLowerCase() === 'section') return;
+async function fetchChabadZmanim() {
+  const xmlText = await fetchViaProxyChain(CHABAD_ZMANIM_RSS_URL);
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  const channel = doc.querySelector('channel');
+  if (!channel) throw new Error('מבנה XML לא תקין');
+  const items = Array.from(channel.querySelectorAll('item'));
+  console.info('[zmanim] RSS גולמי מהפיד:', items.map((it) =>
+    `${it.querySelector('title')?.textContent} = ${it.querySelector('category')?.textContent}`));
 
-        const items = [];
-        for (let i = 1; i < cells.length; i++){
-          const txt = cellValue(cells[i]).toString().trim();
-          if (txt) items.push(txt);
-        }
-        sections.push({ title, items });
-      });
+  function findTime(predicate) {
+    const item = items.find((it) => predicate(it.querySelector('title')?.textContent || ''));
+    if (!item) return null;
+    const timeStr = item.querySelector('category')?.textContent || '';
+    return hhmmToDate(timeStr, getNow());
+  }
 
-      return sections;
-    }
+  const result = {
+    alot:         findTime((t) => t.includes('עלות')),
+    misheyakir:   findTime((t) => t.includes('משיכיר')),
+    zriha:        findTime((t) => t.includes('זריחה')),
+    sofZmanShema: findTime((t) => t.includes('קריאת שמע')),
+    minchaGedola: findTime((t) => t.includes('מנחה גדולה')),
+    chatzot:      findTime((t) => t.includes('חצות') && !t.includes('הלילה')),
+    sunset:       findTime((t) => t.includes('שקיעה')),
+    // "צאת הכוכבים" specifically, not other exit-time items that might appear on the feed
+    tzet:         findTime((t) => t.includes('צאת') && t.includes('כוכבים'))
+                  || findTime((t) => t.includes('צאת') || t.includes('יציאת')),
+  };
+  console.info('[zmanim] זמנים מפוענחים (שעון ישראל, אחרי תיקון אזור-זמן):',
+    ZMANIM_KEYS.map((k) => `${k}=${fmt(result[k])}`).join(', '));
+  return result;
+}
 
-    /* START */
-    (async function init(){
-      try{
-        const table = await loadGvizTable(GVIZ_URL);
-        const sections = tableToSections(table);
-        render(sections);
-      }catch(err){
-        console.error(err);
-        document.getElementById('grid').innerHTML =
-          `<div style="text-align:center;color:#b00;font-weight:700">שגיאה בטעינת הנתונים</div>`;
+const ZMANIM_KEYS = ['alot','misheyakir','zriha','sofZmanShema','minchaGedola','chatzot','sunset','tzet'];
+
+async function getZmanim() {
+  const now = getNow();
+  const dateKey = keyYMD(now);
+  let base = Object.fromEntries(ZMANIM_KEYS.map((k) => [k, null]));
+
+  if (zmanimCache && zmanimCache.dateKey === dateKey) {
+    base = zmanimCache;
+    console.info(`[zmanim] cache-hit בזיכרון (dateKey=${dateKey})`);
+  } else {
+    try {
+      const s = JSON.parse(localStorage.getItem('zmanim_cache') || 'null');
+      if (s && s.dateKey === dateKey) {
+        base = { dateKey };
+        ZMANIM_KEYS.forEach((k) => { base[k] = s[k] ? new Date(s[k]) : null; });
+        zmanimCache = base;
+        console.info(`[zmanim] cache-hit ב-localStorage (dateKey=${dateKey}):`,
+          ZMANIM_KEYS.map((k) => `${k}=${fmt(base[k])}`).join(', '));
+      } else if (s) {
+        console.info(`[zmanim] cache ב-localStorage מיום אחר (${s.dateKey}) ≠ היום (${dateKey}) - מתעלם, שולף מחדש`);
       }
-    })();
-  </script>
+    } catch (e) {
+      console.warn('[zmanim] קריאת cache מ-localStorage נכשלה:', e);
+    }
+  }
+  let stale = false;
+  let staleDateKey = null;
+
+  if (!zmanimCache || zmanimCache.dateKey !== dateKey) {
+    console.info(`[zmanim] שולף RSS מחדש (dateKey=${dateKey}) - אין cache תקף`);
+    try {
+      const f = await fetchChabadZmanim();
+      base = { dateKey, ...f };
+      zmanimCache = base;
+      try {
+        const toStore = { dateKey };
+        ZMANIM_KEYS.forEach((k) => { toStore[k] = f[k]?.toISOString(); });
+        localStorage.setItem('zmanim_cache', JSON.stringify(toStore));
+      } catch (e) {
+        console.warn('[zmanim] כתיבת cache ל-localStorage נכשלה:', e);
+      }
+    } catch (fetchErr) {
+      // Fresh fetch for today failed - fall back to whatever's saved in localStorage, even
+      // from an older day, rather than showing nothing on screen. Deliberately does NOT set
+      // zmanimCache here, so the next call still retries a real fetch instead of treating
+      // this fallback as "done for today".
+      let fallback = null;
+      try { fallback = JSON.parse(localStorage.getItem('zmanim_cache') || 'null'); } catch {}
+      if (fallback && ZMANIM_KEYS.some((k) => fallback[k])) {
+        base = { dateKey: fallback.dateKey };
+        ZMANIM_KEYS.forEach((k) => { base[k] = fallback[k] ? new Date(fallback[k]) : null; });
+        stale = true;
+        staleDateKey = fallback.dateKey;
+        console.warn(`[zmanim] השליפה הטרייה נכשלה - מציג נתונים ישנים מ-${staleDateKey} כגיבוי זמני:`, fetchErr);
+      } else {
+        console.error('[zmanim] השליפה נכשלה ואין אפילו cache ישן ליפול עליו:', fetchErr);
+        throw fetchErr;
+      }
+    }
+  }
+  return {
+    ...base,
+    stale, staleDateKey,
+    minchaGedola: simZmanim.minchaGedola ? hhmmToDate(simZmanim.minchaGedola, now) : base.minchaGedola,
+    sunset:       simZmanim.sunset       ? hhmmToDate(simZmanim.sunset, now)       : base.sunset,
+    tzet:         simZmanim.tzet         ? hhmmToDate(simZmanim.tzet, now)         : base.tzet,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEBCAL DATE
+══════════════════════════════════════════════════════════ */
+let hebrewDateCache = {};
+async function fetchHebrewDate(dateKey) {
+  if (hebrewDateCache[dateKey]) return hebrewDateCache[dateKey];
+  const [y,m,d] = dateKey.split('-');
+  const url = `https://www.hebcal.com/converter?cfg=json&gy=${+y}&gm=${+m}&gd=${+d}&g2h=1`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HebCal ${resp.status}`);
+  const json = await resp.json();
+  const dayMap = {
+    Sunday:'יום ראשון', Monday:'יום שני', Tuesday:'יום שלישי',
+    Wednesday:'יום רביעי', Thursday:'יום חמישי', Friday:'יום שישי', Saturday:'שבת קודש'
+  };
+  const dowHe = dayMap[json.dayOfWeek] || json.dayOfWeek || '';
+  const result = `${dowHe} · ${json.hebrew || ''} | ${+d}.${+m}.${y}`;
+  hebrewDateCache[dateKey] = result;
+  return result;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GVIZ SHEET LOADER
+══════════════════════════════════════════════════════════ */
+let sheetSections    = null;
+let lastArvitFromSheet = null;
+
+function loadGviz(url) {
+  return new Promise((resolve, reject) => {
+    const tsUrl = url + '&t=' + Date.now();
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    const prev = window.google.visualization.Query.setResponse;
+    window.google.visualization.Query.setResponse = (resp) => {
+      try {
+        if (!resp || resp.status !== 'ok') { reject(new Error('GViz error')); return; }
+        resolve(resp.table);
+      } finally {
+        if (prev) window.google.visualization.Query.setResponse = prev;
+        script.remove();
+      }
+    };
+    const script = document.createElement('script');
+    script.src = tsUrl;
+    script.onerror = () => reject(new Error('GViz network error'));
+    document.body.appendChild(script);
+  });
+}
+function gvizCell(c) {
+  if (!c) return '';
+  if (c.f != null) return c.f;
+  if (c.v == null) return '';
+  return String(c.v);
+}
+function isArvitSection(t) {
+  const s = t.replace(/[\u0591-\u05C7]/g,'').trim();
+  return ['ערבית','מעריב','לילה','ליל','ערב'].some(w => s.includes(w));
+}
+function isMinchaSection(t) {
+  const s = t.replace(/[\u0591-\u05C7]/g,'').trim();
+  return ['מנחה','מנחות'].some(w => s.includes(w));
+}
+
+async function loadSheetTimes() {
+  const table = await loadGviz(GVIZ_TIMES);
+  const rows  = table.rows || [];
+  const sections = [];
+  let lastArvit = null;
+  rows.forEach(r => {
+    const cells = r.c || [];
+    const rawTitle = String(gvizCell(cells[0])).trim();
+    if (!rawTitle || rawTitle.toLowerCase() === 'section') return;
+    const items = [];
+    for (let i = 1; i < cells.length; i++) {
+      const txt = String(gvizCell(cells[i])).trim();
+      if (txt) items.push(txt);
+    }
+    if (isMinchaSection(rawTitle)) {
+      /* skip */
+    } else if (isArvitSection(rawTitle)) {
+      if (items.length) lastArvit = items[items.length - 1];
+    } else {
+      sections.push({ title: rawTitle, items });
+    }
+  });
+  sheetSections    = sections;
+  lastArvitFromSheet = lastArvit;
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════════ */
+function makeColumn(title, itemDefs) {
+  const sec = document.createElement('section');
+  sec.className = 'column';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'col-header';
+  const h2 = document.createElement('h2');
+  h2.className = 'col-title';
+  h2.textContent = title;
+  hdr.appendChild(h2);
+
+  const body = document.createElement('div');
+  body.className = 'col-body';
+  const ul = document.createElement('ul');
+  ul.className = 'times';
+
+  (itemDefs || []).forEach(def => {
+    const li = document.createElement('li');
+    const item = typeof def === 'string' ? { label: def, cls: '' } : def;
+    li.className = 'time-item' + (item.cls ? ' ' + item.cls : '');
+
+    if (item.cls === 'side-by-side') {
+      const lSpan = document.createElement('span');
+      lSpan.className = 'sbs-left';
+      lSpan.textContent = item.left;
+      const div = document.createElement('span');
+      div.className = 'sbs-divider';
+      const rSpan = document.createElement('span');
+      rSpan.className = 'sbs-right';
+      rSpan.textContent = item.right;
+      li.appendChild(lSpan);
+      li.appendChild(div);
+      li.appendChild(rSpan);
+    } else {
+      li.textContent = item.label;
+    }
+    ul.appendChild(li);
+  });
+
+  body.appendChild(ul);
+  sec.append(hdr, body);
+  return sec;
+}
+
+function makeSpotlight(type, title, prayerTime, minsUntil) {
+  const div = document.createElement('div');
+  div.className = `prayer-spotlight ${type}-spotlight`;
+
+  // countdown text
+  let countdownHtml = '';
+  if (minsUntil > 0) {
+    const h = Math.floor(minsUntil / 60);
+    const m = minsUntil % 60;
+    const parts = [];
+    if (h > 0) parts.push(`${h} שעות`);
+    if (m > 0 || h === 0) parts.push(`${m} דקות`);
+    countdownHtml = `<div class="sp-countdown">בעוד ${parts.join(' ו')}</div>`;
+  } else {
+    countdownHtml = `<div class="sp-countdown">עכשיו!</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="sp-title">${title}</div>
+    <div class="sp-time">${prayerTime}</div>
+    ${countdownHtml}
+    <div class="sp-pulse"></div>
+  `;
+  return div;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DYNAMIC LAYOUT
+   Logic:
+   1. Mincha & arvit are capped at a fixed MAX_ROWS_PER_COLUMN boxes each,
+      subsampling then pairing extra times side-by-side as needed.
+   2. Shacharit columns come straight from the sheet, one row per section item.
+   3. Grid columns are spread proportionally so no column ever scrolls.
+══════════════════════════════════════════════════════════ */
+
+/**
+ * Pack a flat list of time-strings into items,
+ * pairing into side-by-side so total rows ≤ maxRows.
+ * first/last items are always kept solo (special styling).
+ */
+function packItems(rawItems, maxRows) {
+  if (!rawItems || !rawItems.length) return rawItems;
+  if (rawItems.length <= maxRows) return rawItems; // already fits, no pairing needed
+
+  // First & last must stay solo
+  const first = rawItems[0];
+  const last  = rawItems[rawItems.length - 1];
+  const mid   = rawItems.slice(1, -1);
+
+  const paired = [];
+  for (let i = 0; i < mid.length; i += 2) {
+    if (i + 1 < mid.length && paired.length + 2 + (mid.length - i - 2) > (maxRows - 2)) {
+      // Need to pair
+      paired.push({ left: mid[i].label || mid[i], right: mid[i+1].label || mid[i+1], cls: 'side-by-side' });
+    } else {
+      paired.push(mid[i]);
+      if (i + 1 < mid.length) paired.push(mid[i+1]);
+    }
+  }
+  return [first, ...paired, last];
+}
+
+/**
+ * Evenly subsample an array down to at most maxCount items, keeping the
+ * first and last and spreading the rest across the original span - used so
+ * the side-by-side pairing below always has few enough items to actually
+ * respect the hard row cap (pairing alone can only halve the count, which
+ * isn't enough when there are many half-hour slots).
+ */
+function subsampleToFit(arr, maxCount) {
+  if (!arr || arr.length <= maxCount) return arr;
+  if (maxCount <= 0) return [];
+  if (maxCount === 1) return [arr[0]];
+  const result = [];
+  for (let i = 0; i < maxCount; i++) {
+    result.push(arr[Math.floor(i * (arr.length - 1) / (maxCount - 1))]);
+  }
+  return result;
+}
+
+/**
+ * Build mincha items, then pack so rows ≤ maxRows
+ */
+function buildMinchaFit(minchaGedola, sunset, maxRows) {
+  if (!minchaGedola || !sunset) return [{label:'ממתין לנתונים...', cls:'loading'}];
+  const first      = floorTo5(minchaGedola);
+  const lastMincha = floorTo5(addMin(sunset, -15));
+
+  let rawMid = [];
+  const seen   = new Set([fmt(first), fmt(lastMincha)]);
+  let cur = nextHalf(addMin(first, 1));
+  let lastRawDate = null;
+  while (cur < lastMincha) {
+    const f = fmt(cur);
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); lastRawDate = cur; }
+    cur = addMin(cur, 30);
+  }
+
+  // A mincha service takes ~10 minutes; if the slot right before the final "on time" mincha
+  // is closer than that, that earlier minyan would still be running when the last one starts
+  // - drop it rather than show a prayer time that can't actually happen.
+  const MIN_GAP_MIN = 10;
+  if (lastRawDate && (lastMincha - lastRawDate) / 60000 <= MIN_GAP_MIN) {
+    rawMid.pop();
+  }
+
+  const midMaxRowsCap = Math.max(0, maxRows - 2);
+  rawMid = subsampleToFit(rawMid, midMaxRowsCap * 2);
+
+  const firstItem = { label: `מנחה גדולה — ${fmt(first)}`, cls: 'mincha-gedola' };
+  const lastItem  = { label: `בזמן — ${fmt(lastMincha)}`,  cls: 'mincha-last' };
+
+  // How many rows left for middle?
+  const midMaxRows = Math.max(0, maxRows - 2); // -2 for first and last
+  const midItems = [];
+  // Pair until we fit
+  let i = 0;
+  while (i < rawMid.length) {
+    if (midItems.length < midMaxRows - 1 || i + 1 >= rawMid.length) {
+      // Can still add without pairing — but check if we'll overflow
+      const remaining = rawMid.length - i;
+      const rowsLeft  = midMaxRows - midItems.length;
+      if (remaining > rowsLeft && i + 1 < rawMid.length) {
+        // Force pair
+        midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+        i += 2;
+      } else {
+        midItems.push({ label: rawMid[i], cls: '' });
+        i++;
+      }
+    } else {
+      // Pair
+      if (i + 1 < rawMid.length) {
+        midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+        i += 2;
+      } else {
+        midItems.push({ label: rawMid[i], cls: '' });
+        i++;
+      }
+    }
+  }
+
+  return [firstItem, ...midItems, lastItem];
+}
+
+/**
+ * Build arvit items, packed so rows ≤ maxRows
+ */
+function buildArvitFit(tzet, lastArvit, maxRows) {
+  if (!tzet) return [{label:'ממתין לנתונים...', cls:'loading'}];
+  const first = tzet; // exact צאת הכוכבים time, not rounded (per instructions)
+  const firstItem = { label: `בזמן — ${fmt(first)}`, cls: 'tzet' };
+
+  let rawMid = [];
+  const seen   = new Set([fmt(first)]);
+  let cur = nextHalf(addMin(first, 1));
+  let firstRawDate = null;
+  while (lastArvit && cur <= lastArvit) {
+    const f = fmt(cur);
+    if (!seen.has(f)) { seen.add(f); rawMid.push(f); if (firstRawDate === null) firstRawDate = cur; }
+    cur = addMin(cur, 30);
+  }
+
+  // An arvit service takes ~10 minutes; if the next slot after the first "on time" arvit is
+  // closer than that, it would clash with the service still in progress - drop it.
+  const MIN_GAP_MIN = 10;
+  if (firstRawDate && (firstRawDate - first) / 60000 <= MIN_GAP_MIN) {
+    rawMid.shift();
+  }
+
+  const midMaxRows = Math.max(0, maxRows - 1);
+  rawMid = subsampleToFit(rawMid, midMaxRows * 2);
+  const midItems = [];
+  let i = 0;
+  while (i < rawMid.length) {
+    const remaining = rawMid.length - i;
+    const rowsLeft  = midMaxRows - midItems.length;
+    if (remaining > rowsLeft && i + 1 < rawMid.length) {
+      midItems.push({ left: rawMid[i], right: rawMid[i+1], cls: 'side-by-side' });
+      i += 2;
+    } else {
+      midItems.push({ label: rawMid[i], cls: '' });
+      i++;
+    }
+  }
+
+  return [firstItem, ...midItems];
+}
+
+// Fixed cap (not tied to how many shacharit rows the sheet happens to have) so no column -
+// shacharit included - ever grows past this, regardless of how many slots would otherwise
+// fit; excess slots get paired side-by-side instead.
+const MAX_ROWS_PER_COLUMN = 8;
+
+const DAY_ZMANIM_DEFS = [
+  { key: 'alot',         label: 'עלות השחר' },
+  { key: 'misheyakir',   label: 'זמן טלית ותפילין' },
+  { key: 'zriha',        label: 'זריחה' },
+  { key: 'sofZmanShema', label: 'סוף זמן ק״ש' },
+  { key: 'minchaGedola', label: 'מנחה גדולה' },
+  { key: 'chatzot',      label: 'חצות' },
+  { key: 'sunset',       label: 'שקיעת החמה' },
+  { key: 'tzet',         label: 'צאת הכוכבים' },
+];
+
+/**
+ * Generic packer for sheet-sourced columns (shacharit) - unlike buildMinchaFit/buildArvitFit's
+ * synthetic half-hour grid, these are real distinct entries from the sheet, so items are never
+ * dropped, only paired side-by-side once the count exceeds maxRows. An item that's already a
+ * pre-paired sheet cell (has .left/.right, e.g. "8:00, 8:30" typed into one cell) can't be
+ * split further, so it's only combined with a neighboring plain single-time item, never with
+ * another pre-paired one.
+ */
+function packGeneric(items, maxRows) {
+  if (!items || items.length <= maxRows) return items;
+  const packed = [];
+  let i = 0;
+  while (i < items.length) {
+    const cur  = items[i];
+    const next = items[i + 1];
+    const curAtomic  = cur.left !== undefined;
+    const nextAtomic = next && next.left !== undefined;
+    const remaining = items.length - i;
+    const rowsLeft  = maxRows - packed.length;
+    if (!curAtomic && !nextAtomic && remaining > rowsLeft && i + 1 < items.length) {
+      packed.push({ left: cur.label, right: next.label, cls: 'side-by-side' });
+      i += 2;
+    } else {
+      packed.push(cur);
+      i++;
+    }
+  }
+  return packed;
+}
+
+function renderDayZmanim(zmanim) {
+  const row = document.getElementById('dayZmanimRow');
+  row.innerHTML = DAY_ZMANIM_DEFS.map((def) => `
+    <div class="day-zman-item">
+      <div class="dz-label">${def.label}</div>
+      <div class="dz-time">${fmt(zmanim?.[def.key])}</div>
+    </div>
+  `).join('');
+}
+
+function render(zmanim, modeObj) {
+  const { mode, minsUntil, prayerTime, title, type } = modeObj;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  grid.className = 'grid-wrapper';
+
+  const now = getNow();
+  const lastArvit = lastArvitFromSheet ? hhmmToDate(lastArvitFromSheet, now) : null;
+
+  const staticParsed = (sheetSections || []).map(sec => ({
+    title: sec.title,
+    items: packGeneric(parseSheetItems(sec.items), MAX_ROWS_PER_COLUMN)
+  }));
+
+  const minchaItems = buildMinchaFit(zmanim?.minchaGedola, zmanim?.sunset, MAX_ROWS_PER_COLUMN);
+  const arvitItems  = buildArvitFit(zmanim?.tzet, lastArvit, MAX_ROWS_PER_COLUMN);
+
+  const staticCols = staticParsed.map(s => makeColumn(s.title, s.items));
+  const minchaCol  = makeColumn('מנחה',  minchaItems);
+  const arvitCol   = makeColumn('ערבית', arvitItems);
+
+  const totalRegCols = staticCols.length + 2; // mincha + arvit
+
+  if (mode !== 'normal') {
+    // Always: spotlight LEFT, then regular columns
+    grid.classList.add('spotlight-mode');
+    grid.style.setProperty('--reg-cols', totalRegCols);
+    grid.style.gridTemplateColumns = `minmax(180px,20%) repeat(${totalRegCols}, 1fr)`;
+
+    const spot = makeSpotlight(type, title, prayerTime, minsUntil);
+    grid.appendChild(spot);
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
+
+  } else {
+    grid.style.gridTemplateColumns = `repeat(${totalRegCols}, 1fr)`;
+    staticCols.forEach(c => grid.appendChild(c));
+    grid.appendChild(minchaCol);
+    grid.appendChild(arvitCol);
+  }
+
+  renderDayZmanim(zmanim);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODE DETECTION
+   Returns: { mode, minsUntil, prayerTime, title, type }
+   mode: 'normal' | 'shacharit' | 'mincha-first' | 'mincha-last' | 'arvit'
+══════════════════════════════════════════════════════════ */
+function detectMode(zmanim) {
+  if (!zmanim) return { mode: 'normal' };
+  const now = getNow();
+
+  // Shacharit: first time from sheet sections
+  let shacharitFirst = null;
+  if (sheetSections && sheetSections.length) {
+    // Find the earliest time across all static sections
+    sheetSections.forEach(sec => {
+      (sec.items || []).forEach(txt => {
+        // Each cell may have comma-separated times — take the first
+        const t = txt.split(/[,،\n]/)[0].trim();
+        const d = hhmmToDate(t, now);
+        if (d && (!shacharitFirst || d < shacharitFirst)) shacharitFirst = d;
+      });
+    });
+  }
+
+  const minchaFirst = zmanim.minchaGedola ? floorTo5(zmanim.minchaGedola) : null;
+  const minchaLast  = zmanim.sunset       ? floorTo5(addMin(zmanim.sunset, -15)) : null;
+  const tzet        = zmanim.tzet;
+
+  // Check each event: show spotlight 10 min before until the event passes (or 10 min after for mincha)
+  // Priority: arvit > mincha-last > mincha-first > shacharit
+
+  // Arvit and first-Mincha notices disappear the moment their prayer's minute passes
+  // (mins >= 0), rather than lingering afterward, per instructions.
+  if (tzet) {
+    const mins = (tzet - now) / 60000;
+    if (mins <= 10 && mins >= 0)
+      return { mode: 'arvit', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(tzet), title: 'תפילת ערבית ראשונה', type: 'arvit' };
+  }
+  if (minchaLast) {
+    const mins = (minchaLast - now) / 60000;
+    if (mins <= 10 && mins >= -10)
+      return { mode: 'mincha-last', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(minchaLast), title: 'מנחה אחרונה', type: 'mincha' };
+  }
+  if (minchaFirst) {
+    const mins = (minchaFirst - now) / 60000;
+    if (mins <= 10 && mins >= 0)
+      return { mode: 'mincha-first', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(minchaFirst), title: 'מנחה גדולה', type: 'mincha' };
+  }
+  if (shacharitFirst) {
+    const mins = (shacharitFirst - now) / 60000;
+    if (mins <= 10 && mins >= -10)
+      return { mode: 'shacharit', minsUntil: Math.max(0, Math.round(mins)),
+               prayerTime: fmt(shacharitFirst), title: 'שחרית ראשונה', type: 'shacharit' };
+  }
+
+  return { mode: 'normal' };
+}
+
+/* ══════════════════════════════════════════════════════════
+   TICK LOOP
+══════════════════════════════════════════════════════════ */
+let lastMinute    = -1;
+let lastModeKey   = null;
+let currentZmanim = null;
+let loadedDateKey = null;
+
+function tick() {
+  const now     = getNow();
+  const curMin  = now.getHours() * 60 + now.getMinutes();
+  const dateKey = keyYMD(now);
+
+  if (dateKey !== loadedDateKey) {
+    loadedDateKey = dateKey;
+    fullRefresh(now, dateKey);
+    return;
+  }
+
+  const modeObj = detectMode(currentZmanim);
+  const modeKey = modeObj.mode + ':' + (modeObj.minsUntil ?? '');
+
+  if (curMin !== lastMinute || modeKey !== lastModeKey) {
+    lastMinute  = curMin;
+    lastModeKey = modeKey;
+    render(currentZmanim, modeObj);
+  }
+}
+
+async function fullRefresh(now, dateKey) {
+  try {
+    const dateStr = await fetchHebrewDate(dateKey);
+    document.getElementById('dateDisplay').textContent = dateStr;
+  } catch (e) {
+    console.warn('HebCal date fail', e);
+    document.getElementById('dateDisplay').textContent =
+      now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric', timeZone: TZID });
+  }
+
+  const staleEl = document.getElementById('staleWarning');
+
+  try {
+    currentZmanim = await getZmanim();
+    if (currentZmanim.stale) {
+      // getZmanim() already fell back to an older cached day rather than showing nothing -
+      // surface that clearly next to the date so nobody mistakes it for today's real times,
+      // and keep retrying a real fetch every 5 minutes until it succeeds.
+      staleEl.textContent = `⚠ הנתונים המוצגים הם מתאריך ${formatDateKeyDMY(currentZmanim.staleDateKey)} (לא עודכנו היום) - מנסה שוב...`;
+      staleEl.hidden = false;
+      setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
+    } else {
+      staleEl.hidden = true;
+      console.info('[zmanim] סטטוס תקין:',
+        `שקיעה: ${fmt(currentZmanim.sunset)} | ` +
+        `מנחה: ${fmt(currentZmanim.minchaGedola)} | ` +
+        `צאת: ${fmt(currentZmanim.tzet)} | ` +
+        `ערבית אחרונה: ${lastArvitFromSheet || '—'}`
+      );
+    }
+  } catch (e) {
+    // No data at all (not even an old cached day to fall back on) - retry on a short timer
+    // instead of waiting for the next calendar day.
+    console.error('[zmanim] שליפת זמנים נכשלה, ינסה שוב בעוד 5 דקות:', e);
+    staleEl.hidden = true;
+    currentZmanim = null;
+    setTimeout(() => fullRefresh(getNow(), keyYMD(getNow())), 5 * 60 * 1000);
+  }
+
+  lastMinute  = -1;
+  lastModeKey = null;
+  tick();
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+(async function init() {
+  // Diagnostic: on a kiosk/signage screen the system timezone may not be Asia/Jerusalem
+  // (common on cheap Android boxes defaulting to UTC), which used to silently shift every
+  // displayed time by the offset between the device's zone and Israel's. Log both here so a
+  // mismatch is visible immediately in that screen's own console, without needing to guess.
+  // APP_VERSION lets a stuck kiosk browser (serving an old cached copy of this file instead
+  // of the latest one) be told apart from a real data bug - compare the logged value against
+  // the date of the last file you sent.
+  console.info('[zmanim] אבחון בעת טעינה:',
+    `גרסת קובץ=${APP_VERSION}`,
+    `| אזור-זמן מכשיר=${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+    `| שעון מכשיר (מקומי)=${new Date().toString()}`,
+    `| תאריך ישראל מחושב=${keyYMD(new Date())}`,
+    `| שעה ישראל מחושבת=${fmt(new Date())}`);
+
+  document.getElementById('grid').innerHTML =
+    `<section class="column"><div class="col-header"><h2 class="col-title">טוען...</h2></div>
+     <div class="col-body"><ul class="times">
+       ${Array(5).fill('<li class="time-item loading">--:--</li>').join('')}
+     </ul></div></section>`.repeat(3);
+
+  const now = new Date();
+
+  try { await loadSheetTimes(); }
+  catch (e) {
+    console.warn('Sheet load fail', e);
+    sheetSections = []; lastArvitFromSheet = '22:00';
+  }
+
+  await fullRefresh(now, keyYMD(now));
+  setInterval(tick, 1000);
+})();
+</script>
 </body>
 </html>
