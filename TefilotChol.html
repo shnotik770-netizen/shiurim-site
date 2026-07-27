@@ -553,23 +553,39 @@ async function fetchChabadZmanim() {
 
 const ZMANIM_KEYS = ['alot','misheyakir','zriha','sofZmanShema','minchaGedola','chatzot','sunset','tzet'];
 
+// A same-calendar-day cache used to be trusted indefinitely once written - but if a single
+// fetch happens to land on a stale/cached response from one of the proxies (seen in practice:
+// a value off by exactly the previous day's amount, e.g. tzet 20:09 instead of 20:08), that
+// wrong value then gets treated as "today's real data" and never re-checked for the rest of
+// the day. Bounding same-day trust to this TTL forces periodic revalidation against the live
+// feed, so a one-time bad fetch self-corrects within an hour instead of persisting all day.
+const ZMANIM_CACHE_TTL_MS = 60 * 60 * 1000;
+
+function isFreshEntry(entry, dateKey, nowMs) {
+  return !!entry && entry.dateKey === dateKey &&
+    typeof entry.fetchedAt === 'number' && (nowMs - entry.fetchedAt) < ZMANIM_CACHE_TTL_MS;
+}
+
 async function getZmanim() {
   const now = getNow();
   const dateKey = keyYMD(now);
+  const nowMs = now.getTime();
   let base = Object.fromEntries(ZMANIM_KEYS.map((k) => [k, null]));
 
-  if (zmanimCache && zmanimCache.dateKey === dateKey) {
+  if (isFreshEntry(zmanimCache, dateKey, nowMs)) {
     base = zmanimCache;
-    console.info(`[zmanim] cache-hit בזיכרון (dateKey=${dateKey})`);
+    console.info(`[zmanim] cache-hit בזיכרון (dateKey=${dateKey}, גיל=${Math.round((nowMs - zmanimCache.fetchedAt) / 60000)} דק')`);
   } else {
     try {
       const s = JSON.parse(localStorage.getItem('zmanim_cache') || 'null');
-      if (s && s.dateKey === dateKey) {
-        base = { dateKey };
+      if (isFreshEntry(s, dateKey, nowMs)) {
+        base = { dateKey, fetchedAt: s.fetchedAt };
         ZMANIM_KEYS.forEach((k) => { base[k] = s[k] ? new Date(s[k]) : null; });
         zmanimCache = base;
-        console.info(`[zmanim] cache-hit ב-localStorage (dateKey=${dateKey}):`,
+        console.info(`[zmanim] cache-hit ב-localStorage (dateKey=${dateKey}, גיל=${Math.round((nowMs - s.fetchedAt) / 60000)} דק'):`,
           ZMANIM_KEYS.map((k) => `${k}=${fmt(base[k])}`).join(', '));
+      } else if (s && s.dateKey === dateKey) {
+        console.info(`[zmanim] cache ב-localStorage מהיום אבל תוקפו פג (גיל=${Math.round((nowMs - (s.fetchedAt || 0)) / 60000)} דק') - שולף מחדש כדי לוודא שזה לא תקוע על תקלה חד-פעמית`);
       } else if (s) {
         console.info(`[zmanim] cache ב-localStorage מיום אחר (${s.dateKey}) ≠ היום (${dateKey}) - מתעלם, שולף מחדש`);
       }
@@ -580,32 +596,36 @@ async function getZmanim() {
   let stale = false;
   let staleDateKey = null;
 
-  if (!zmanimCache || zmanimCache.dateKey !== dateKey) {
+  if (!isFreshEntry(zmanimCache, dateKey, nowMs)) {
     console.info(`[zmanim] שולף RSS מחדש (dateKey=${dateKey}) - אין cache תקף`);
     try {
       const f = await fetchChabadZmanim();
-      base = { dateKey, ...f };
+      const fetchedAt = Date.now();
+      base = { dateKey, fetchedAt, ...f };
       zmanimCache = base;
       try {
-        const toStore = { dateKey };
+        const toStore = { dateKey, fetchedAt };
         ZMANIM_KEYS.forEach((k) => { toStore[k] = f[k]?.toISOString(); });
         localStorage.setItem('zmanim_cache', JSON.stringify(toStore));
       } catch (e) {
         console.warn('[zmanim] כתיבת cache ל-localStorage נכשלה:', e);
       }
     } catch (fetchErr) {
-      // Fresh fetch for today failed - fall back to whatever's saved in localStorage, even
-      // from an older day, rather than showing nothing on screen. Deliberately does NOT set
-      // zmanimCache here, so the next call still retries a real fetch instead of treating
-      // this fallback as "done for today".
+      // Fresh fetch failed - fall back to whatever's saved in localStorage (even an aged
+      // same-day entry, or an older day's) rather than showing nothing on screen. Deliberately
+      // does NOT set zmanimCache here, so the next call still retries a real fetch instead of
+      // treating this fallback as settled. Only shown as a visible "stale" warning when it's
+      // actually from a different calendar day - an aged-but-still-today entry isn't alarming.
       let fallback = null;
       try { fallback = JSON.parse(localStorage.getItem('zmanim_cache') || 'null'); } catch {}
       if (fallback && ZMANIM_KEYS.some((k) => fallback[k])) {
         base = { dateKey: fallback.dateKey };
         ZMANIM_KEYS.forEach((k) => { base[k] = fallback[k] ? new Date(fallback[k]) : null; });
-        stale = true;
-        staleDateKey = fallback.dateKey;
-        console.warn(`[zmanim] השליפה הטרייה נכשלה - מציג נתונים ישנים מ-${staleDateKey} כגיבוי זמני:`, fetchErr);
+        if (fallback.dateKey !== dateKey) {
+          stale = true;
+          staleDateKey = fallback.dateKey;
+        }
+        console.warn(`[zmanim] השליפה הטרייה נכשלה - מציג נתונים שמורים מ-${fallback.dateKey} כגיבוי זמני:`, fetchErr);
       } else {
         console.error('[zmanim] השליפה נכשלה ואין אפילו cache ישן ליפול עליו:', fetchErr);
         throw fetchErr;
@@ -1111,18 +1131,27 @@ function detectMode(zmanim) {
 /* ══════════════════════════════════════════════════════════
    TICK LOOP
 ══════════════════════════════════════════════════════════ */
-let lastMinute    = -1;
-let lastModeKey   = null;
-let currentZmanim = null;
-let loadedDateKey = null;
+let lastMinute      = -1;
+let lastModeKey     = null;
+let currentZmanim   = null;
+let loadedDateKey   = null;
+let lastRevalidateAt = 0; // epoch ms of the last time fullRefresh actually ran
 
 function tick() {
   const now     = getNow();
   const curMin  = now.getHours() * 60 + now.getMinutes();
   const dateKey = keyYMD(now);
+  const nowMs   = Date.now();
 
-  if (dateKey !== loadedDateKey) {
-    loadedDateKey = dateKey;
+  const dayChanged      = dateKey !== loadedDateKey;
+  // Even without a day change, periodically re-check the feed (mirrors getZmanim's own TTL) -
+  // this is what actually makes that TTL kick in on a screen that's just left running, rather
+  // than only ever re-fetching once every calendar day.
+  const needsRevalidate = !dayChanged && (nowMs - lastRevalidateAt) >= ZMANIM_CACHE_TTL_MS;
+
+  if (dayChanged || needsRevalidate) {
+    loadedDateKey    = dateKey;
+    lastRevalidateAt = nowMs;
     fullRefresh(now, dateKey);
     return;
   }
