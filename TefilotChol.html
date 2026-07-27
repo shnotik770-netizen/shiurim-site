@@ -523,6 +523,31 @@ async function fetchChabadZmanim() {
   const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
   const channel = doc.querySelector('channel');
   if (!channel) throw new Error('מבנה XML לא תקין');
+
+  // A "successful" fetch (200 OK, valid XML) can still be a stale/cached copy from a proxy
+  // or the feed itself - unlike an outright network failure, nothing else here would catch
+  // that. Cross-check the feed's own channel-level date (RSS 2.0's lastBuildDate/pubDate;
+  // this feed has no per-item date the way dailystudy_rss.xml's <link> tdate does) against
+  // today - throwing here routes it through getZmanim()'s existing stale-fallback/retry flow,
+  // exactly like a real fetch failure would.
+  const feedDateRaw = channel.querySelector('lastBuildDate')?.textContent
+                    || channel.querySelector('pubDate')?.textContent;
+  if (feedDateRaw) {
+    const feedDate = new Date(feedDateRaw);
+    if (isNaN(feedDate)) {
+      console.warn('[zmanim] לא הצלחתי לפענח את תאריך הפיד (lastBuildDate/pubDate):', feedDateRaw, '- מדלג על בדיקת התאריך');
+    } else {
+      const feedDateKey = keyYMD(feedDate);
+      const todayKey = keyYMD(getNow());
+      if (feedDateKey !== todayKey) {
+        throw new Error(`הפיד מחזיר תאריך ${feedDateKey} במקום היום (${todayKey}) - כנראה תוכן ישן/שמור מהפרוקסי`);
+      }
+      console.info(`[zmanim] תאריך הפיד עצמו (lastBuildDate/pubDate) נבדק ותואם להיום (${feedDateKey})`);
+    }
+  } else {
+    console.warn('[zmanim] הפיד לא כולל lastBuildDate/pubDate - אין אפשרות לוודא שהתוכן אכן של היום, מדלג על הבדיקה');
+  }
+
   const items = Array.from(channel.querySelectorAll('item'));
   console.info('[zmanim] RSS גולמי מהפיד:', items.map((it) =>
     `${it.querySelector('title')?.textContent} = ${it.querySelector('category')?.textContent}`));
