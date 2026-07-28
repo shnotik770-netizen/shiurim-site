@@ -888,7 +888,7 @@ function subsampleToFit(arr, maxCount) {
  */
 function buildMinchaFit(minchaGedola, sunset, maxRows) {
   if (!minchaGedola || !sunset) return [{label:'ממתין לנתונים...', cls:'loading'}];
-  const first      = floorTo5(minchaGedola);
+  const first      = minchaGedola; // exact מנחה גדולה time, not rounded (per instructions)
   const lastMincha = floorTo5(addMin(sunset, -15));
 
   let rawMid = [];
@@ -1116,7 +1116,7 @@ function detectMode(zmanim) {
     });
   }
 
-  const minchaFirst = zmanim.minchaGedola ? floorTo5(zmanim.minchaGedola) : null;
+  const minchaFirst = zmanim.minchaGedola || null; // exact time, not rounded - matches buildMinchaFit
   const minchaLast  = zmanim.sunset       ? floorTo5(addMin(zmanim.sunset, -15)) : null;
   const tzet        = zmanim.tzet;
 
