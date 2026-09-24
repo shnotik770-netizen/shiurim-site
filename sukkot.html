@@ -225,8 +225,14 @@
   }
   /* שיעור חסידות בבוקר – בימי חול המועד (ראשון עד שישי) */
   function hasShiur(d){ return d>=0 && d<=5; }
-  /* מספר היום בחג לפי יום בשבוע: שבת (כולל מוצאי שבת) = יום א׳ ... שישי (הושענא רבה) = יום ז׳ */
-  var SUKKOT_DAY = {6:'א׳',0:'ב׳',1:'ג׳',2:'ד׳',3:'ה׳',4:'ו׳',5:'ז׳'};
+  /* שם היום בחג לפי יום בשבוע */
+  var DAY_TITLE = {6:'יום א׳ דחג הסוכות', 0:'יום א׳ דחול המועד', 1:'יום ב׳ דחול המועד', 2:'יום ג׳ דחול המועד',
+                   3:'יום ד׳ דחול המועד', 4:'יום ה׳ דחול המועד', 5:'הושענא רבה'};
+  function dayTitle(now, P){
+    /* יום חמישי מ־18:00 (וגם אחרי חצות עד 04:00) – ליל הושענא רבה */
+    if(P.eve === 4 && (P.late || now.getHours() >= 18)) return 'ליל הושענא רבה';
+    return DAY_TITLE[P.eve];
+  }
 
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
@@ -295,7 +301,7 @@
       el.classList.toggle('show', hasShiur(P.morn) && !P.late);
     });
 
-    var html = '<div class="daytitle">תוכנית היום – <em>יום ' + SUKKOT_DAY[P.eve] + ' דחג הסוכות</em></div>';
+    var html = '<div class="daytitle">תוכנית היום – <em>' + dayTitle(now, P) + '</em></div>';
     if(P.hero){
       var h = P.hero.hero;
       html += '<div class="hero ' + h.cls + '"><span class="live"><i></i>עכשיו</span>' +
