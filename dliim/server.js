@@ -27,11 +27,11 @@ const DEFAULT_CONFIG = {
     "ויינר", "דהאן", "פרידמן", "נוטיק אור יהודה", "לויק",
   ],
   activities: [
-    { id: "dance",   name: "רבע שעה של ריקודים",            icon: "💃", unit: "",       value: 1 },
+    { id: "dance",   name: "רבע שעה של ריקודים בבית",       icon: "💃", unit: "",       value: 1 },
     { id: "nophone", name: "זמן משפחתי בלי פלאפונים",       icon: "📵", unit: "חצי שעה", value: 2 },
     { id: "lulav",   name: "מבצע ארבעת המינים",             icon: "🌿", unit: "חצי שעה", value: 1 },
     { id: "visit",   name: "משמחים משפחה אחרת בביקור משמח", icon: "🏠", unit: "",       value: 2 },
-    { id: "shoeva",  name: "שמחת בית השואבה עם הילדים",     icon: "🎶", unit: "שעה",    value: 2 },
+    { id: "shoeva",  name: "יוצאים עם הילדים לשמחת בית השואבה בחוץ", icon: "🎶", unit: "שעה",    value: 2 },
   ],
 };
 const CONFIG_FILE = path.join(DATA_DIR, "config.json");
@@ -59,6 +59,11 @@ function loadJson(file, fallback) {
 }
 let rows = loadJson(DATA_FILE, []);
 let config = loadJson(CONFIG_FILE, DEFAULT_CONFIG);
+// שם הקטגוריה בדיווחים תמיד לפי ההגדרות העדכניות
+for (const r of rows) {
+  const act = config.activities.find((a) => a.id === r.activity);
+  if (act) r.activityName = act.name;
+}
 
 let saving = Promise.resolve();
 function writeJson(file, obj) {
