@@ -115,7 +115,7 @@
   .row .when{display:block; line-height:1.3; font-size:13px; color:var(--muted); font-weight:600}
   .empty{color:var(--muted); text-align:center; padding:8px}
 
-  .demo{margin-top:14px; background:#fff4d6; border:1px solid #f3d98a; color:#7a5a00; border-radius:14px; padding:10px 14px; font-size:14px; font-weight:600; display:none}
+  .export{display:block; text-align:center; margin-top:12px; color:var(--muted); font-weight:700; font-size:14px}
   footer{text-align:center; margin-top:22px; color:var(--pink); font-weight:800}
 
   /* ---------- חגיגה ---------- */
@@ -158,7 +158,6 @@
         <div class="deadline" id="deadline">עד ז' חשון</div>
       </div>
     </div>
-    <div class="demo" id="demo">⚠️ מצב הדגמה: עדיין לא חובר גוגל שיטס, והדיווחים לא יישמרו לאורך זמן.</div>
   </section>
 
   <section class="card">
@@ -189,6 +188,7 @@
   <section class="card">
     <h2>👨‍👩‍👧‍👦 המשפחות</h2>
     <div class="rows" id="board"><div class="empty">טוען...</div></div>
+    <a class="export" href="/api/export.csv" download>⬇️ הורדת כל הדיווחים לאקסל</a>
   </section>
 
   <section class="card">
@@ -266,7 +266,6 @@
     $("bar").style.width = pct + "%";
     $("waterRect").setAttribute("y", String(126 - (92 * pct) / 100));
     $("left").textContent = s.total >= goal ? "🎉 הגענו ליעד! ממשיכים לשמוח!" : `עוד ${goal - s.total} דליים ליעד`;
-    $("demo").style.display = s.demo ? "block" : "none";
 
     const me = $("family").value;
     const medals = ["🥇","🥈","🥉"];

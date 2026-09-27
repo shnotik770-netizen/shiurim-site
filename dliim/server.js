@@ -1,10 +1,10 @@
 // 770 דליים של שמחה – שרת קטן בלי תלויות.
-// מגיש את האתר מתיקיית public ומעביר דיווחים לגוגל שיטס (Apps Script).
+// מגיש את האתר מתיקיית public ושומר את הדיווחים בקובץ JSON על Volume של Railway.
 // משתני סביבה:
-//   APPS_SCRIPT_URL   – כתובת ה-Web App של Apps Script (חובה לשמירה קבועה)
-//   APPS_SCRIPT_TOKEN – אותו TOKEN שמוגדר בקוד Apps Script (רשות)
-//   GOAL              – יעד הדליים (ברירת מחדל 770)
-//   PORT              – מוגדר אוטומטית ב-Railway
+//   RAILWAY_VOLUME_MOUNT_PATH – מוגדר אוטומטית כשמחברים Volume בשירות
+//   DATA_DIR                  – תיקיית נתונים חלופית (ברירת מחדל ./data)
+//   GOAL                      – יעד הדליים (ברירת מחדל 770)
+//   PORT                      – מוגדר אוטומטית ב-Railway
 
 const http = require("http");
 const fs = require("fs");
@@ -12,9 +12,9 @@ const path = require("path");
 const crypto = require("crypto");
 
 const PORT = process.env.PORT || 3000;
-const APPS_SCRIPT_URL = (process.env.APPS_SCRIPT_URL || "").trim();
-const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || "";
 const GOAL = Number(process.env.GOAL) || 770;
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || path.join(__dirname, "data");
+const DATA_FILE = path.join(DATA_DIR, "reports.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 // הקטגוריות מהמודעה. rule = ההנחיה כמה דליים מגיעים (לתצוגה בלבד; המשפחה מדווחת כמה דליים).
@@ -43,50 +43,49 @@ const FAMILIES = [
 const ACT_BY_ID = Object.fromEntries(ACTIVITIES.map((a) => [a.id, a]));
 
 // ---------- אחסון ----------
-// כשאין APPS_SCRIPT_URL – נשמר בזיכרון בלבד (מצב הדגמה, נמחק בכל הפעלה מחדש).
-const demoRows = [];
-
-async function callSheet(payload) {
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ ...payload, token: APPS_SCRIPT_TOKEN }),
-    redirect: "follow",
-  });
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { throw new Error("תשובה לא תקינה מגוגל שיטס"); }
-  if (!data.ok) throw new Error(data.error || "שגיאה בגוגל שיטס");
-  return data;
+// כל הדיווחים בזיכרון, ונשמרים לקובץ אחרי כל שינוי (כתיבה לקובץ זמני ואז החלפה).
+fs.mkdirSync(DATA_DIR, { recursive: true });
+let rows = [];
+try {
+  rows = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+} catch (err) {
+  if (err.code !== "ENOENT") { console.error("לא ניתן לקרוא את", DATA_FILE, err); process.exit(1); }
 }
 
-let cache = { at: 0, rows: null };
-async function getRows() {
-  if (!APPS_SCRIPT_URL) return demoRows;
-  if (cache.rows && Date.now() - cache.at < 5000) return cache.rows;
-  const data = await callSheet({ action: "list" });
-  cache = { at: Date.now(), rows: data.rows || [] };
-  return cache.rows;
+let saving = Promise.resolve();
+function save() {
+  const snapshot = JSON.stringify(rows);
+  saving = saving.then(async () => {
+    const tmp = DATA_FILE + ".tmp";
+    await fs.promises.writeFile(tmp, snapshot);
+    await fs.promises.rename(tmp, DATA_FILE);
+  });
+  return saving;
 }
 
 async function addRow(row) {
-  if (!APPS_SCRIPT_URL) { demoRows.push(row); return; }
-  await callSheet({ action: "add", row });
-  cache.at = 0;
+  rows.push(row);
+  await save();
 }
 
 async function removeRow(id, family) {
-  if (!APPS_SCRIPT_URL) {
-    const i = demoRows.findIndex((r) => r.id === id && r.family === family);
-    if (i < 0) throw new Error("הדיווח לא נמצא");
-    demoRows.splice(i, 1);
-    return;
-  }
-  await callSheet({ action: "remove", id, family });
-  cache.at = 0;
+  const i = rows.findIndex((r) => r.id === id && r.family === family);
+  if (i < 0) throw new Error("הדיווח לא נמצא");
+  rows.splice(i, 1);
+  await save();
 }
 
-function summarize(rows) {
+function toCsv() {
+  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const lines = [["תאריך", "משפחה", "קטגוריה", "דליים"].map(q).join(",")];
+  for (const r of rows) {
+    const t = new Date(r.time).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
+    lines.push([t, r.family, r.activityName, r.buckets].map(q).join(","));
+  }
+  return "\ufeff" + lines.join("\r\n");
+}
+
+function summarize() {
   const families = Object.fromEntries(FAMILIES.map((f) => [f, 0]));
   let total = 0;
   for (const r of rows) {
@@ -101,7 +100,7 @@ function summarize(rows) {
     .slice()
     .sort((a, b) => String(b.time).localeCompare(String(a.time)))
     .slice(0, 12);
-  return { goal: GOAL, total, families: board, recent, demo: !APPS_SCRIPT_URL };
+  return { goal: GOAL, total, families: board, recent };
 }
 
 // ---------- HTTP ----------
@@ -168,7 +167,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === "/api/summary" && req.method === "GET") {
-      return sendJson(res, 200, { ok: true, ...summarize(await getRows()) });
+      return sendJson(res, 200, { ok: true, ...summarize() });
     }
 
     if (pathname === "/api/report" && req.method === "POST") {
@@ -197,6 +196,15 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true });
     }
 
+    if (pathname === "/api/export.csv" && req.method === "GET") {
+      res.writeHead(200, {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="dliim-reports.csv"',
+        "Cache-Control": "no-store",
+      });
+      return res.end(toCsv());
+    }
+
     if (pathname.startsWith("/api/")) return sendJson(res, 404, { ok: false, error: "לא נמצא" });
 
     serveStatic(req, res);
@@ -207,5 +215,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`דליים של שמחה פועל על פורט ${PORT}` + (APPS_SCRIPT_URL ? "" : " (מצב הדגמה – אין APPS_SCRIPT_URL)"));
+  console.log(`דליים של שמחה פועל על פורט ${PORT} · נתונים: ${DATA_FILE} · ${rows.length} דיווחים`);
 });
