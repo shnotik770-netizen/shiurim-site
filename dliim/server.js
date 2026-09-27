@@ -194,7 +194,7 @@ const MIME = {
 
 function serveStatic(req, res) {
   const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
-  const rel = urlPath === "/" ? "index.html" : urlPath === "/admin" ? "admin.html" : urlPath;
+  const rel = urlPath === "/" ? "index.html" : urlPath === "/admin" ? "admin.html" : /^\/tsfia\/?$/i.test(urlPath) ? "index.html" : urlPath;
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR)) { res.writeHead(403); res.end(); return; }
   fs.readFile(file, (err, data) => {
