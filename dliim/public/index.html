@@ -193,6 +193,9 @@
     100%{transform:none; opacity:1}
   }
 
+  .mini-bucket{position:fixed; z-index:60; pointer-events:none; width:64px; height:64px; transform-origin:50% 60%; filter:drop-shadow(0 6px 10px rgba(60,20,40,.25))}
+  .pour-smile{position:fixed; z-index:61; pointer-events:none; font-size:22px; line-height:1; margin:-11px 0 0 -11px}
+
   /* ---------- חגיגה ---------- */
   .splash{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50}
   .splash i{position:absolute; top:-40px; font-style:normal; font-size:26px; animation:fall 1.8s ease-in forwards}
@@ -412,6 +415,72 @@
   }
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // ---------- אנימציית שפיכה אחרי דיווח ----------
+  const MINI_BUCKET = `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+    <path d="M14 20 Q32 0 50 20" fill="none" stroke="#6d2d5c" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M10 20 H54 L48 58 Q32 62 16 58 Z" fill="#3d8fe0" stroke="#6d2d5c" stroke-width="3.5" stroke-linejoin="round"/>
+    <ellipse cx="32" cy="20" rx="22" ry="4" fill="#9fd0ff" stroke="#6d2d5c" stroke-width="3.5"/>
+    <circle cx="25" cy="36" r="2.6" fill="#fff"/><circle cx="39" cy="36" r="2.6" fill="#fff"/>
+    <path d="M24 44 Q32 51 40 44" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function pourInto(buckets) {
+    if (reduceMotion || !Element.prototype.animate) return;
+    const card = $("progressCard");
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    await wait(450);
+    const target = card.querySelector(".bucket").getBoundingClientRect();
+
+    // הדלי הקטן: מתחיל מתחת למסך ועולה עד מעל השפה של הדלי הגדול (קצת משמאל לו)
+    const mini = document.createElement("div");
+    mini.className = "mini-bucket";
+    mini.innerHTML = MINI_BUCKET;
+    document.body.appendChild(mini);
+    const endX = target.left + target.width * 0.5 - 32 - 34;   // מרכז הדלי הקטן משמאל למרכז הגדול
+    const endY = target.top - 58;
+    const startY = window.innerHeight + 20;
+    mini.style.left = endX + "px";
+    mini.style.top = "0px";
+    await mini.animate([
+      { transform: `translateY(${startY}px) rotate(0deg) scale(.8)` },
+      { transform: `translateY(${endY - 18}px) rotate(-6deg) scale(1)`, offset: .8 },
+      { transform: `translateY(${endY}px) rotate(0deg) scale(1)` },
+    ], { duration: 1100, easing: "cubic-bezier(.2,.8,.3,1)", fill: "forwards" }).finished;
+
+    // הטיה ימינה – שפיכה לתוך הדלי הגדול
+    await mini.animate([
+      { transform: `translateY(${endY}px) rotate(0deg)` },
+      { transform: `translateY(${endY}px) rotate(105deg)` },
+    ], { duration: 380, easing: "ease-in-out", fill: "forwards" }).finished;
+
+    // חיוכים נופלים מפי הדלי הקטן לדלי הגדול
+    const n = Math.min(Math.max(buckets, 1), 6);
+    const mouthX = endX + 58, mouthY = endY + 30;
+    const landX = target.left + target.width / 2, landY = target.top + target.height * 0.55;
+    const falls = [];
+    for (let i = 0; i < n; i++) {
+      const f = document.createElement("div");
+      f.className = "pour-smile";
+      f.textContent = FACES[i % FACES.length];
+      f.style.left = mouthX + "px"; f.style.top = mouthY + "px";
+      document.body.appendChild(f);
+      const dx = landX - mouthX + (i % 3 - 1) * 12, dy = landY - mouthY;
+      falls.push(f.animate([
+        { transform: "translate(0,0) scale(.6)", opacity: 0 },
+        { transform: `translate(${dx * 0.35}px, ${-14}px) scale(1)`, opacity: 1, offset: .35 },
+        { transform: `translate(${dx}px, ${dy}px) scale(.9)`, opacity: 1 },
+      ], { duration: 650, delay: i * 140, easing: "ease-in", fill: "forwards" }).finished.then(() => f.remove()));
+    }
+    await Promise.all(falls);
+
+    // הדלי הקטן חוזר למטה ונעלם
+    mini.animate([
+      { transform: `translateY(${endY}px) rotate(105deg)`, opacity: 1 },
+      { transform: `translateY(${endY + 40}px) rotate(0deg)`, opacity: 0 },
+    ], { duration: 450, easing: "ease-in", fill: "forwards" }).finished.then(() => mini.remove());
+  }
+
   // ---------- פירוט ----------
   const dayKey = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
   const meterRow = (lead, name, sub, value, max, cls = "") => `
@@ -569,12 +638,13 @@
       const { row } = await api("/api/report", { family: $("family").value, activity: chosen.id, buckets: amount });
       lastRow = row;
       $("dlg").close();
-      celebrate(row.buckets);
-      dropNext = true;
       const to = plainFamilies.includes(row.family) ? `ל${esc(row.family)}` : `למשפחת ${esc(row.family)}`;
       showToast(`<span>🎉 ${row.buckets === 1 ? "נוסף דלי אחד" : `נוספו ${row.buckets} דליים`} של שמחה ${to}!</span><button type="button" id="undo">ביטול</button>`);
       $("undo").addEventListener("click", undo);
       amount = 1;
+      await pourInto(row.buckets);   // דלי קטן עולה מלמטה ושופך חיוכים לדלי הגדול
+      celebrate(row.buckets);
+      dropNext = true;
       await refresh();
     } catch (err) {
       showMsg("err", "אופס — " + esc(err.message) + ". נסו שוב.");
