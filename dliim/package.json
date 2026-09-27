@@ -1,0 +1,13 @@
+{
+  "name": "dliim-simcha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "770 דליים של שמחה – דיווח משפחתי (סניף נוטיק)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
