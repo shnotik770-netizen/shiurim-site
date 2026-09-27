@@ -570,7 +570,8 @@
       $("dlg").close();
       celebrate(row.buckets);
       dropNext = true;
-      showToast(`<span>🎉 נוספו ${row.buckets === 1 ? "דלי אחד" : row.buckets + " דליים"} של שמחה!</span><button type="button" id="undo">ביטול</button>`);
+      const to = row.family === "אמא" ? "לאמא" : `למשפחת ${esc(row.family)}`;
+      showToast(`<span>🎉 נוספו ${row.buckets === 1 ? "דלי אחד" : row.buckets + " דליים"} של שמחה ${to}!</span><button type="button" id="undo">ביטול</button>`);
       $("undo").addEventListener("click", undo);
       amount = 1;
       await refresh();
