@@ -281,6 +281,17 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { ok: true });
       }
 
+      if (pathname === "/api/admin/update-report" && req.method === "POST") {
+        const body = await readBody(req);
+        const row = rows.find((r) => r.id === String(body.id || ""));
+        if (!row) return sendJson(res, 404, { ok: false, error: "הדיווח לא נמצא" });
+        const buckets = Math.floor(Number(body.buckets));
+        if (!(buckets >= 1 && buckets <= 1000)) return sendJson(res, 400, { ok: false, error: "מספר דליים לא תקין" });
+        row.buckets = buckets;
+        await save();
+        return sendJson(res, 200, { ok: true, row });
+      }
+
       if (pathname === "/api/admin/config" && req.method === "POST") {
         let next;
         try { next = validateConfig(await readBody(req)); }
