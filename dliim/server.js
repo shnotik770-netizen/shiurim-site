@@ -26,6 +26,8 @@ const DEFAULT_CONFIG = {
     "אמא", "נוטיק קריית גת", "נוטיק חריש", "סקולניק", "נוטיק עפולה", "נוטיק תל ציון",
     "ויינר", "דהאן", "פרידמן", "נוטיק אור יהודה", "לויק",
   ],
+  // משפחות שנכתבות בלי המילה "משפחת" (למשל "נוספו דליים לאמא")
+  plain: ["אמא", "לויק"],
   activities: [
     { id: "dance",   name: "רבע שעה של ריקודים בבית",       icon: "💃", unit: "",       value: 1 },
     { id: "nophone", name: "זמן משפחתי בלי פלאפונים",       icon: "📵", unit: "חצי שעה", value: 2 },
@@ -42,6 +44,7 @@ const ruleOf = (a) => (a.unit ? `על כל ${a.unit} — ${bucketsText(a.value)}
 const publicConfig = () => ({
   goal: config.goal,
   families: config.families,
+  plain: config.plain,
   activities: config.activities.map((a) => ({ ...a, rule: ruleOf(a) })),
 });
 
@@ -59,6 +62,7 @@ function loadJson(file, fallback) {
 }
 let rows = loadJson(DATA_FILE, []);
 let config = loadJson(CONFIG_FILE, DEFAULT_CONFIG);
+if (!Array.isArray(config.plain)) config.plain = DEFAULT_CONFIG.plain.filter((f) => config.families.includes(f));
 // שם הקטגוריה בדיווחים תמיד לפי ההגדרות העדכניות
 for (const r of rows) {
   const act = config.activities.find((a) => a.id === r.activity);
@@ -174,12 +178,14 @@ function validateConfig(body) {
   if (!activities.length) throw new Error("צריך לפחות קטגוריה אחת");
   if (new Set(activities.map((a) => a.id)).size !== activities.length) throw new Error("מזהה קטגוריה כפול");
 
+  const plain = (Array.isArray(body.plain) ? body.plain : []).map((f) => cleanFamily(f)).filter((f) => families.includes(f));
+
   // renames: [[שם ישן, שם חדש], ...] – מעדכן גם דיווחים קיימים
   const renames = (Array.isArray(body.renames) ? body.renames : [])
     .map(([from, to]) => [cleanFamily(from), cleanFamily(to)])
     .filter(([from, to]) => from && to && from !== to && families.includes(to));
 
-  return { goal, families, activities, renames };
+  return { goal, families, plain, activities, renames };
 }
 
 const MIME = {

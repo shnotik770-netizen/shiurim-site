@@ -324,6 +324,7 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   let activities = [], goal = 770, chosen = null, amount = 1, busy = false, lastRow = null;
+  let plainFamilies = [];
   let reports = [], families = [], shown = 30, toastTimer = null;
   const PAGE = 30;
 
@@ -570,8 +571,8 @@
       $("dlg").close();
       celebrate(row.buckets);
       dropNext = true;
-      const to = row.family === "אמא" ? "לאמא" : `למשפחת ${esc(row.family)}`;
-      showToast(`<span>🎉 נוספו ${row.buckets === 1 ? "דלי אחד" : row.buckets + " דליים"} של שמחה ${to}!</span><button type="button" id="undo">ביטול</button>`);
+      const to = plainFamilies.includes(row.family) ? `ל${esc(row.family)}` : `למשפחת ${esc(row.family)}`;
+      showToast(`<span>🎉 ${row.buckets === 1 ? "נוסף דלי אחד" : `נוספו ${row.buckets} דליים`} של שמחה ${to}!</span><button type="button" id="undo">ביטול</button>`);
       $("undo").addEventListener("click", undo);
       amount = 1;
       await refresh();
@@ -601,6 +602,7 @@
     try {
       const cfg = await api("/api/config");
       activities = cfg.activities;
+      plainFamilies = cfg.plain || [];
       const saved = store.get("dliim-family");
       $("family").insertAdjacentHTML("beforeend",
         cfg.families.map((f) => `<option${f === saved ? " selected" : ""}>${esc(f)}</option>`).join(""));

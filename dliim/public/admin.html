@@ -59,6 +59,9 @@
 
   .edit-row{display:flex; gap:6px; align-items:center; padding:6px; background:var(--soft); border-radius:12px}
   .edit-row input.grow{flex:1}
+  #families .edit-row{flex-wrap:wrap}
+  #families .edit-row input.grow{flex:1 1 0; min-width:0}
+  .plain{order:1; flex-basis:100%; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; padding:0 4px}
   .cat{background:var(--soft); border-radius:14px; padding:10px; display:grid; gap:8px}
   .cat .line{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
   .cat .line label{font-size:13px; font-weight:700; color:var(--muted)}
@@ -126,7 +129,8 @@
     <!-- משפחות -->
     <section class="card" data-panel="families" hidden>
       <h2>רשימת המשפחות</h2>
-      <p class="hint">שינוי שם מעדכן גם את הדיווחים הקיימים של המשפחה. מחיקת משפחה לא מוחקת את הדיווחים שלה.</p>
+      <p class="hint">שינוי שם מעדכן גם את הדיווחים הקיימים של המשפחה. מחיקת משפחה לא מוחקת את הדיווחים שלה.
+        סמנו <b>בלי "משפחת"</b> למי שייכתב בלי המילה, למשל "נוספו דליים לאמא".</p>
       <div class="list" id="families"></div>
       <div class="edit-row" style="margin-top:8px">
         <input class="grow" id="newFamily" placeholder="שם משפחה חדשה" maxlength="40" />
@@ -172,6 +176,10 @@
   let data = null;      // { config, rows } מהשרת
   let draft = null;     // עותק לעריכה של config
   let famOrig = [];     // לכל שורה ברשימת המשפחות: השם המקורי שלה (null = משפחה חדשה)
+  let famPlain = [];    // לכל שורה: האם נכתבת בלי "משפחת"
+  const resetFamilies = () => { famOrig = [...draft.families]; famPlain = draft.families.map((f) => (draft.plain || []).includes(f)); };
+  // draft.plain תמיד לפי השמות והסימונים הנוכחיים
+  const syncPlain = () => { draft.plain = draft.families.filter((f, i) => famPlain[i]).map((f) => f.trim()); };
   let busy = false;
 
   async function api(path, body) {
@@ -199,7 +207,8 @@
   async function load() {
     data = await api("/api/admin/data");
     draft = structuredClone(data.config);
-    famOrig = [...draft.families];
+    if (!draft.plain) draft.plain = [];
+    resetFamilies();
     $("loginView").hidden = true;
     $("adminView").hidden = false;
     renderAll();
@@ -245,6 +254,7 @@
     $("families").innerHTML = draft.families.map((f, i) => `
       <div class="edit-row">
         <input class="grow" value="${esc(f)}" data-fam="${i}" maxlength="40" />
+        <label class="plain" title="בהודעה אחרי דיווח ייכתב &quot;ל${esc(f)}&quot; במקום &quot;למשפחת ${esc(f)}&quot;"><input type="checkbox" data-plain="${i}"${famPlain[i] ? " checked" : ""} /> בלי "משפחת"</label>
         <button class="icon-btn" data-up="${i}" title="למעלה" aria-label="הזזה למעלה"${i === 0 ? " disabled" : ""}>▲</button>
         <button class="icon-btn del" data-delfam="${i}" title="מחיקה" aria-label="מחיקת משפחה">🗑️</button>
       </div>`).join("");
@@ -319,6 +329,7 @@
     const i = e.target.dataset.fam;
     if (i === undefined) return;
     draft.families[i] = e.target.value;
+    syncPlain();
     markDirty();
   });
   $("families").addEventListener("click", (e) => {
@@ -328,20 +339,28 @@
       const i = +up;
       [draft.families[i - 1], draft.families[i]] = [draft.families[i], draft.families[i - 1]];
       [famOrig[i - 1], famOrig[i]] = [famOrig[i], famOrig[i - 1]];
+      [famPlain[i - 1], famPlain[i]] = [famPlain[i], famPlain[i - 1]];
     } else if (del !== undefined) {
       const name = draft.families[+del];
       const n = data.rows.filter((r) => r.family === name).length;
       if (!confirm(`להסיר את "${name}" מהרשימה?` + (n ? `\nל${name} יש ${n} דיווחים — הם יישארו וימשיכו להיספר.` : ""))) return;
       draft.families.splice(+del, 1);
       famOrig.splice(+del, 1);
+      famPlain.splice(+del, 1);
     } else return;
-    renderFamilies(); markDirty();
+    syncPlain(); renderFamilies(); markDirty();
+  });
+  $("families").addEventListener("change", (e) => {
+    const i = e.target.dataset.plain;
+    if (i === undefined) return;
+    famPlain[+i] = e.target.checked;
+    syncPlain(); markDirty();
   });
   $("addFamily").addEventListener("click", () => {
     const v = $("newFamily").value.trim();
     if (!v) return;
     if (draft.families.includes(v)) { toast("המשפחה כבר ברשימה"); return; }
-    draft.families.push(v); famOrig.push(null); $("newFamily").value = "";
+    draft.families.push(v); famOrig.push(null); famPlain.push(false); $("newFamily").value = "";
     renderFamilies(); markDirty();
   });
   $("newFamily").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("addFamily").click(); } });
@@ -372,7 +391,7 @@
 
   $("goal").addEventListener("input", (e) => { draft.goal = Number(e.target.value); markDirty(); });
 
-  $("discard").addEventListener("click", () => { draft = structuredClone(data.config); famOrig = [...draft.families]; renderAll(); });
+  $("discard").addEventListener("click", () => { draft = structuredClone(data.config); if (!draft.plain) draft.plain = []; resetFamilies(); renderAll(); });
 
   $("save").addEventListener("click", async () => {
     if (busy) return;
