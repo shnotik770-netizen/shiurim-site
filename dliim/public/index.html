@@ -317,10 +317,6 @@
   const DEADLINE = new Date("2026-10-18T23:59:59+03:00");
 
   const $ = (id) => document.getElementById(id);
-  const store = {
-    get(k){ try { return localStorage.getItem(k); } catch { return null; } },
-    set(k,v){ try { localStorage.setItem(k,v); } catch {} },
-  };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   let activities = [], goal = 770, chosen = null, amount = 1, busy = false, lastRow = null;
@@ -531,7 +527,11 @@
   }
 
   function openDialog() {
-    showMsg("", ""); amount = 1; update();
+    // כל דיווח מתחיל נקי: בלי משפחה ובלי קטגוריה בחורות
+    showMsg("", ""); amount = 1; chosen = null;
+    $("family").value = "";
+    $("acts").querySelectorAll(".act").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    update();
     $("dlg").showModal();
   }
   $("open").addEventListener("click", openDialog);
@@ -558,7 +558,7 @@
 
   $("plus").addEventListener("click", () => { if (amount < 100) { amount++; update(); } });
   $("minus").addEventListener("click", () => { if (amount > 1) { amount--; update(); } });
-  $("family").addEventListener("change", () => { store.set("dliim-family", $("family").value); update(); refresh(); });
+  $("family").addEventListener("change", update);
 
   $("form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -603,9 +603,8 @@
       const cfg = await api("/api/config");
       activities = cfg.activities;
       plainFamilies = cfg.plain || [];
-      const saved = store.get("dliim-family");
       $("family").insertAdjacentHTML("beforeend",
-        cfg.families.map((f) => `<option${f === saved ? " selected" : ""}>${esc(f)}</option>`).join(""));
+        cfg.families.map((f) => `<option>${esc(f)}</option>`).join(""));
       renderActs();
       update();
     } catch (e) {
