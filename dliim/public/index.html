@@ -425,11 +425,12 @@
   </svg>`;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  // משך כולל: כ-5 שניות (גלילה 0.5 · עלייה 1.7 · הטיה 0.6 · שפיכה 1.6 · ירידה 0.6)
   async function pourInto(buckets) {
     if (reduceMotion || !Element.prototype.animate) return;
     const card = $("progressCard");
     card.scrollIntoView({ behavior: "smooth", block: "center" });
-    await wait(450);
+    await wait(500);
     const target = card.querySelector(".bucket").getBoundingClientRect();
 
     // הדלי הקטן: מתחיל מתחת למסך ועולה עד מעל השפה של הדלי הגדול (קצת משמאל לו)
@@ -446,19 +447,19 @@
       { transform: `translateY(${startY}px) rotate(0deg) scale(.8)` },
       { transform: `translateY(${endY - 18}px) rotate(-6deg) scale(1)`, offset: .8 },
       { transform: `translateY(${endY}px) rotate(0deg) scale(1)` },
-    ], { duration: 1100, easing: "cubic-bezier(.2,.8,.3,1)", fill: "forwards" }).finished;
+    ], { duration: 1700, easing: "cubic-bezier(.2,.8,.3,1)", fill: "forwards" }).finished;
 
     // הטיה ימינה – שפיכה לתוך הדלי הגדול
     await mini.animate([
       { transform: `translateY(${endY}px) rotate(0deg)` },
       { transform: `translateY(${endY}px) rotate(105deg)` },
-    ], { duration: 380, easing: "ease-in-out", fill: "forwards" }).finished;
+    ], { duration: 600, easing: "ease-in-out", fill: "forwards" }).finished;
 
     // חיוכים נופלים מפי הדלי הקטן לדלי הגדול
     const n = Math.min(Math.max(buckets, 1), 6);
     const mouthX = endX + 58, mouthY = endY + 30;
     const landX = target.left + target.width / 2, landY = target.top + target.height * 0.55;
-    const falls = [];
+    const falls = [], step = n > 1 ? 700 / (n - 1) : 0;   // השפיכה כולה נמשכת 1.6 שניות
     for (let i = 0; i < n; i++) {
       const f = document.createElement("div");
       f.className = "pour-smile";
@@ -470,15 +471,16 @@
         { transform: "translate(0,0) scale(.6)", opacity: 0 },
         { transform: `translate(${dx * 0.35}px, ${-14}px) scale(1)`, opacity: 1, offset: .35 },
         { transform: `translate(${dx}px, ${dy}px) scale(.9)`, opacity: 1 },
-      ], { duration: 650, delay: i * 140, easing: "ease-in", fill: "forwards" }).finished.then(() => f.remove()));
+      ], { duration: 900, delay: i * step, easing: "ease-in", fill: "forwards" }).finished.then(() => f.remove()));
     }
     await Promise.all(falls);
 
     // הדלי הקטן חוזר למטה ונעלם
-    mini.animate([
+    await mini.animate([
       { transform: `translateY(${endY}px) rotate(105deg)`, opacity: 1 },
       { transform: `translateY(${endY + 40}px) rotate(0deg)`, opacity: 0 },
-    ], { duration: 450, easing: "ease-in", fill: "forwards" }).finished.then(() => mini.remove());
+    ], { duration: 600, easing: "ease-in", fill: "forwards" }).finished;
+    mini.remove();
   }
 
   // ---------- פירוט ----------
