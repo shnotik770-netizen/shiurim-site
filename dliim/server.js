@@ -106,11 +106,8 @@ function summarize() {
   const board = Object.entries(families)
     .map(([family, buckets]) => ({ family, buckets }))
     .sort((a, b) => b.buckets - a.buckets);
-  const recent = rows
-    .slice()
-    .sort((a, b) => String(b.time).localeCompare(String(a.time)))
-    .slice(0, 12);
-  return { goal: config.goal, total, families: board, recent };
+  const reports = rows.slice().sort((a, b) => String(b.time).localeCompare(String(a.time)));
+  return { goal: config.goal, total, families: board, reports };
 }
 
 // ---------- HTTP ----------

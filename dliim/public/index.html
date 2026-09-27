@@ -26,9 +26,22 @@
     background-attachment:fixed;
     color:var(--ink); font-family:"Assistant",system-ui,sans-serif; font-size:17px; line-height:1.5;
   }
-  .wrap{max-width:560px; margin:0 auto; padding:18px 16px 40px}
+  .wrap{max-width:560px; margin:0 auto; padding:18px 16px 110px}
 
   header{text-align:center; padding:8px 0 4px}
+  .hero{display:flex; align-items:center; justify-content:center; gap:14px}
+  .abba{
+    width:118px; flex:0 0 118px; aspect-ratio:294/420; object-fit:cover; border-radius:18px;
+    border:4px solid #fff; box-shadow:0 8px 20px rgba(80,40,20,.22); transform:rotate(2deg); background:#eee;
+  }
+  .hero .titles{min-width:0}
+  .dedic{
+    margin:14px auto 0; max-width:440px; padding:10px 14px; border-radius:16px;
+    background:#fff; border:1px solid var(--line); box-shadow:var(--shadow); color:var(--plum);
+  }
+  .dedic small{display:block; font-weight:700; color:var(--muted); font-size:14px}
+  .dedic b{display:block; font-size:21px; font-weight:800; line-height:1.25}
+  .dedic span{display:block; font-size:14px; font-weight:700; color:var(--coral)}
   header h1{
     margin:0; font-family:"Secular One","Assistant",sans-serif; font-weight:400;
     font-size:clamp(30px,8vw,42px); line-height:1.05; color:var(--blue);
@@ -118,6 +131,45 @@
   .export{display:block; text-align:center; margin-top:12px; color:var(--muted); font-weight:700; font-size:14px}
   footer{text-align:center; margin-top:22px; color:var(--pink); font-weight:800}
 
+  /* ---------- חלון דיווח ---------- */
+  .fab{
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:20;
+    border:none; border-radius:99px; padding:14px 28px; cursor:pointer;
+    font:inherit; font-size:20px; font-weight:800; color:#fff; white-space:nowrap;
+    background:linear-gradient(135deg,var(--coral),var(--pink)); box-shadow:0 8px 22px #c9502f66;
+  }
+  .fab:active{transform:translateX(-50%) scale(.97)}
+  dialog.report{
+    width:min(520px, calc(100% - 24px)); max-height:calc(100dvh - 24px); overflow:auto;
+    border:none; border-radius:22px; padding:18px; background:var(--card); color:var(--ink);
+    box-shadow:0 20px 50px rgba(60,20,40,.3);
+  }
+  dialog.report::backdrop{background:rgba(59,42,63,.5)}
+  .dlg-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+  .dlg-head h2{margin:0; font-size:21px; font-weight:800; color:var(--plum)}
+  .x{border:none; background:#f3e6d2; color:var(--plum); width:38px; height:38px; border-radius:50%; font-size:20px; font-weight:800; cursor:pointer}
+
+  /* ---------- חיפוש וסינון ---------- */
+  .filters{display:grid; gap:8px; margin-bottom:10px}
+  .filters .two{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .search{
+    width:100%; font:inherit; font-size:16px; padding:10px 14px 10px 38px; border-radius:14px;
+    border:2px solid var(--line); background:#fff url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238a7a86' stroke-width='2.5'><circle cx='11' cy='11' r='7'/><path d='M20 20l-4-4'/></svg>") no-repeat left 12px center;
+  }
+  .search:focus{outline:none; border-color:var(--coral)}
+  select.fsel{font-size:15px; padding:9px 12px; background-position:left 10px center}
+  .count{font-size:14px; color:var(--muted); font-weight:700; margin-bottom:6px}
+  .more{display:block; margin:10px auto 0; font:inherit; font-weight:700; color:var(--plum); background:#f3e6d2; border:none; border-radius:12px; padding:8px 16px; cursor:pointer}
+
+  .toast{
+    position:fixed; bottom:84px; left:50%; transform:translateX(-50%); z-index:30;
+    width:min(460px, calc(100% - 32px)); display:none; align-items:center; justify-content:space-between; gap:10px;
+    background:#e5f6e8; color:#23733a; border:1px solid #bfe5c6; border-radius:14px; padding:12px 14px; font-weight:700;
+    box-shadow:var(--shadow);
+  }
+  .toast.show{display:flex}
+  .toast button{font:inherit; font-size:14px; font-weight:700; background:#fff; color:#23733a; border:1px solid #bfe5c6; border-radius:10px; padding:5px 10px; cursor:pointer; white-space:nowrap}
+
   /* ---------- חגיגה ---------- */
   .splash{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50}
   .splash i{position:absolute; top:-40px; font-style:normal; font-size:26px; animation:fall 1.8s ease-in forwards}
@@ -128,7 +180,15 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>משפחה חסידית <span>ושמחה</span></h1>
+    <div class="hero">
+      <img class="abba" src="/abba.jpg" alt="זלמן ניסן פנחס בן יעקב ע&quot;ה" />
+      <div class="titles"><h1>משפחה חסידית <span>ושמחה</span></h1></div>
+    </div>
+    <div class="dedic">
+      <small>לעילוי נשמת</small>
+      <b>זלמן ניסן פנחס בן יעקב ע"ה</b>
+      <span>הכנה ליום היארצייט</span>
+    </div>
     <div class="quote">אדרבא להראות בעצמו תמיד תנועות משמחות, כאילו הוא מלא שמחה בליבו... וסופו להיות כן.</div>
   </header>
 
@@ -160,8 +220,11 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>🪣 דיווח חדש</h2>
+  <dialog class="report" id="dlg" aria-labelledby="dlgTitle">
+    <div class="dlg-head">
+      <h2 id="dlgTitle">🪣 דיווח חדש</h2>
+      <button type="button" class="x" id="close" aria-label="סגירה">✕</button>
+    </div>
     <form id="form" novalidate>
       <label class="lbl" for="family">המשפחה שלנו</label>
       <select id="family" required>
@@ -183,7 +246,7 @@
       <button class="send" id="send" type="submit" disabled>הוסיפו לנו דליים!</button>
       <div class="msg" id="msg"></div>
     </form>
-  </section>
+  </dialog>
 
   <section class="card">
     <h2>👨‍👩‍👧‍👦 המשפחות</h2>
@@ -192,12 +255,23 @@
   </section>
 
   <section class="card">
-    <h2>✨ דיווחים אחרונים</h2>
+    <h2>✨ דיווחים</h2>
+    <div class="filters">
+      <input type="search" class="search" id="q" placeholder="חיפוש…" aria-label="חיפוש בדיווחים" />
+      <div class="two">
+        <select class="fsel" id="fFamily" aria-label="סינון לפי משפחה"><option value="">כל המשפחות</option></select>
+        <select class="fsel" id="fCat" aria-label="סינון לפי סוג דלי"><option value="">כל סוגי הדליים</option></select>
+      </div>
+    </div>
+    <div class="count" id="count"></div>
     <div class="rows" id="recent"><div class="empty">טוען...</div></div>
+    <button type="button" class="more" id="more" hidden>הצג עוד</button>
   </section>
 
   <footer>יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד!</footer>
 </div>
+<button type="button" class="fab" id="open">🪣 דיווח חדש</button>
+<div class="toast" id="toast" role="status"></div>
 <div class="splash" id="splash"></div>
 
 <script>
@@ -220,6 +294,8 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   let activities = [], goal = 770, chosen = null, amount = 1, busy = false, lastRow = null;
+  let reports = [], shown = 30, toastTimer = null;
+  const PAGE = 30;
 
   async function api(path, body) {
     const res = await fetch(path, body ? {
@@ -276,14 +352,42 @@
         <span class="val">${f.buckets} 🪣</span>
       </div>`).join("");
 
-    $("recent").innerHTML = s.recent.length ? s.recent.map((r) => {
+    reports = s.reports;
+    fillFilters(s.families.map((f) => f.family));
+    renderReports();
+  }
+
+  // אפשרויות הסינון: המשפחות מהטבלה, והקטגוריות מההגדרות (וגם מדיווחים ישנים)
+  function fillFilters(families) {
+    const keep = (sel, html) => { const v = sel.value; sel.innerHTML = html; sel.value = v; if (sel.value !== v) sel.value = ""; };
+    keep($("fFamily"), `<option value="">כל המשפחות</option>` +
+      families.slice().sort((a, b) => a.localeCompare(b, "he")).map((f) => `<option>${esc(f)}</option>`).join(""));
+    const cats = new Map(activities.map((a) => [a.id, a.name]));
+    reports.forEach((r) => { if (!cats.has(r.activity)) cats.set(r.activity, r.activityName); });
+    keep($("fCat"), `<option value="">כל סוגי הדליים</option>` +
+      [...cats].map(([id, name]) => `<option value="${esc(id)}">${esc(name)}</option>`).join(""));
+  }
+
+  function renderReports() {
+    const q = $("q").value.trim().toLowerCase();
+    const fam = $("fFamily").value, cat = $("fCat").value;
+    const list = reports.filter((r) =>
+      (!fam || r.family === fam) &&
+      (!cat || r.activity === cat) &&
+      (!q || `${r.family} ${r.activityName}`.toLowerCase().includes(q)));
+    const filtered = q || fam || cat;
+    const sum = list.reduce((t, r) => t + (Number(r.buckets) || 0), 0);
+    const found = list.length === 1 ? "נמצא דיווח אחד" : `נמצאו ${list.length} דיווחים`;
+    $("count").textContent = filtered ? `${found} · ${sum === 1 ? "דלי אחד" : sum + " דליים"}` : "";
+    $("recent").innerHTML = list.length ? list.slice(0, shown).map((r) => {
       const a = activities.find((x) => x.id === r.activity);
       return `<div class="row">
         <span class="rk">${a ? a.icon : "🪣"}</span>
         <span class="nm2"><b>${esc(r.family)}</b><span class="when">${esc(r.activityName)} · ${ago(r.time)}</span></span>
         <span class="val" dir="ltr">+${r.buckets}</span>
       </div>`;
-    }).join("") : `<div class="empty">עוד אין דיווחים — היו הראשונים! 💃</div>`;
+    }).join("") : `<div class="empty">${filtered ? "לא נמצאו דיווחים" : "עוד אין דיווחים — היו הראשונים! 💃"}</div>`;
+    $("more").hidden = list.length <= shown;
   }
 
   function ago(t) {
@@ -303,6 +407,24 @@
   }
 
   function showMsg(kind, html) { const m = $("msg"); m.className = "msg " + kind; m.innerHTML = html; }
+
+  function showToast(html, ms = 8000) {
+    const t = $("toast"); t.innerHTML = html; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+  }
+
+  function openDialog() {
+    showMsg("", ""); amount = 1; update();
+    $("dlg").showModal();
+  }
+  $("open").addEventListener("click", openDialog);
+  $("close").addEventListener("click", () => $("dlg").close());
+  $("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlg").close(); }); // לחיצה על הרקע
+
+  $("q").addEventListener("input", () => { shown = PAGE; renderReports(); });
+  $("fFamily").addEventListener("change", () => { shown = PAGE; renderReports(); });
+  $("fCat").addEventListener("change", () => { shown = PAGE; renderReports(); });
+  $("more").addEventListener("click", () => { shown += PAGE; renderReports(); });
 
   function celebrate(n) {
     const sp = $("splash");
@@ -329,8 +451,9 @@
     try {
       const { row } = await api("/api/report", { family: $("family").value, activity: chosen.id, buckets: amount });
       lastRow = row;
+      $("dlg").close();
       celebrate(row.buckets);
-      showMsg("ok", `<span>🎉 נוספו ${row.buckets === 1 ? "דלי אחד" : row.buckets + " דליים"} של שמחה!</span><button type="button" id="undo">ביטול</button>`);
+      showToast(`<span>🎉 נוספו ${row.buckets === 1 ? "דלי אחד" : row.buckets + " דליים"} של שמחה!</span><button type="button" id="undo">ביטול</button>`);
       $("undo").addEventListener("click", undo);
       amount = 1;
       await refresh();
@@ -348,10 +471,10 @@
     try {
       await api("/api/undo", { id: lastRow.id, family: lastRow.family });
       lastRow = null;
-      showMsg("ok", "<span>הדיווח בוטל.</span>");
+      showToast("<span>הדיווח בוטל.</span>", 3000);
       await refresh();
     } catch (err) {
-      showMsg("err", "הביטול לא הצליח — " + esc(err.message));
+      showToast("<span>הביטול לא הצליח — " + esc(err.message) + "</span>");
     } finally { busy = false; update(); }
   }
 
@@ -366,7 +489,7 @@
       renderActs();
       update();
     } catch (e) {
-      showMsg("err", "לא הצלחנו לטעון את האתר — רעננו את הדף.");
+      showToast("<span>לא הצלחנו לטעון את האתר — רעננו את הדף.</span>", 60000);
     }
     refresh();
     setInterval(refresh, 30000);
