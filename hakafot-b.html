@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הקפות שניות – חב"ד עפולה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Suez+One&family=Frank+Ruhl+Libre:wght@700;900&family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1b2a57;
+    --navy-deep:#0b1431;
+    --gold:#e8b73c;
+    --gold-soft:#f7dc8a;
+    --wine:#8c1a32;
+    --parch:#f7eed8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;color:var(--parch);
+    font-family:"Heebo","Arial Hebrew",Arial,sans-serif;
+    background:radial-gradient(ellipse at 30% 45%,#2a3d7a 0,var(--navy) 38%,var(--navy-deep) 100%)}
+  body.idle{cursor:none}
+
+  /* אורות זעירים ברקע */
+  .sparks{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .sparks i{position:absolute;bottom:-4vmin;width:.7vmin;height:.7vmin;border-radius:50%;
+    background:radial-gradient(circle,#fff6d6 0,rgba(232,183,60,.9) 40%,transparent 70%);
+    animation:rise linear infinite;opacity:0}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.9}90%{opacity:.6}100%{transform:translateY(-110vh);opacity:0}}
+
+  /* מסגרת זהב כפולה */
+  .frame{position:fixed;inset:2.2vmin;border:.35vmin solid var(--gold);border-radius:2vmin;pointer-events:none;
+    box-shadow:0 0 0 .9vmin rgba(232,183,60,.12) inset}
+  .frame::after{content:"";position:absolute;inset:1.1vmin;border:.12vmin solid rgba(232,183,60,.55);border-radius:1.4vmin}
+
+  .bh{position:fixed;top:4.2vmin;right:5vmin;font-family:"Frank Ruhl Libre",serif;font-weight:900;font-size:3.4vmin;color:#fff}
+  .logo{position:fixed;top:4.2vmin;left:5vmin;background:var(--wine);color:#fff;text-align:center;
+    padding:.8vmin 2vmin 1vmin;border-radius:.8vmin;box-shadow:0 0 0 .25vmin #fff,0 1vmin 2.5vmin rgba(0,0,0,.45)}
+  .logo b{display:block;font-family:"Frank Ruhl Libre",serif;font-weight:900;font-size:4.4vmin;line-height:1}
+  .logo span{display:block;font-size:1.35vmin;font-weight:600;letter-spacing:.05em;margin-top:.3vmin}
+  .logo small{display:block;font-size:1.25vmin;color:var(--gold-soft);margin-top:.2vmin}
+
+  .stage{position:relative;height:100%;display:grid;grid-template-columns:1fr auto;align-items:center;
+    gap:4vw;padding:9vmin 8vmin 9vmin}
+  .text{position:relative;z-index:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.8vmin}
+
+  h1{font-family:"Suez One",serif;font-weight:400;font-size:15vmin;line-height:.95;white-space:nowrap;
+    background:linear-gradient(180deg,#fff6d6 0%,#f7dc8a 30%,#e8b73c 62%,#b8841c 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 .7vmin 0 rgba(0,0,0,.45)) drop-shadow(0 0 3vmin rgba(232,183,60,.4))}
+  .minhag{display:flex;align-items:baseline;gap:2vmin;font-family:"Frank Ruhl Libre",serif;font-weight:700;font-size:5.4vmin;color:#fff}
+  .minhag em{font-style:normal;color:var(--gold);font-size:.8em}
+
+  .invite{position:relative;font-weight:800;font-size:4.2vmin;color:var(--navy-deep);padding:1vmin 5vmin;
+    background:linear-gradient(180deg,#f7dc8a,#e8b73c);border-radius:.6vmin;box-shadow:0 1vmin 2.4vmin rgba(0,0,0,.4)}
+  .invite::before,.invite::after{content:"";position:absolute;top:50%;width:3vmin;height:100%;transform:translateY(-50%);
+    background:#b8841c;z-index:-1}
+  .invite::before{right:-2vmin;clip-path:polygon(0 0,100% 0,65% 50%,100% 100%,0 100%)}
+  .invite::after{left:-2vmin;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,35% 50%)}
+
+  .when{display:flex;flex-direction:column;align-items:center;gap:.6vmin;margin-top:1vmin}
+  .when .occ{font-family:"Frank Ruhl Libre",serif;font-weight:900;font-size:5.6vmin;color:#fff}
+  .when .date{font-size:3.6vmin;font-weight:600;color:var(--gold-soft)}
+  .when .date span{direction:ltr;unicode-bidi:isolate}
+
+  .orn{display:flex;align-items:center;gap:1.4vmin;color:var(--gold);font-size:2.4vmin}
+  .orn i{display:block;width:16vmin;height:.3vmin;border-radius:1vmin}
+  .orn i:first-child{background:linear-gradient(270deg,var(--gold),transparent)}
+  .orn i:last-child{background:linear-gradient(90deg,var(--gold),transparent)}
+
+  .where{display:flex;flex-direction:column;align-items:center;gap:.4vmin}
+  .where .shul{font-family:"Frank Ruhl Libre",serif;font-weight:900;font-size:5vmin;color:#fff}
+  .where .addr{font-size:3.2vmin;color:var(--parch);opacity:.9}
+
+  .time{display:flex;align-items:baseline;gap:2vmin;margin-top:.6vmin;padding:1.2vmin 4.4vmin;border-radius:10vmin;
+    border:.35vmin solid var(--gold);background:rgba(11,20,49,.55);box-shadow:0 0 3vmin rgba(232,183,60,.35)}
+  .time span{font-size:4vmin;font-weight:800;color:var(--gold-soft)}
+  .time b{font-size:7.6vmin;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+
+  .joy{font-family:"Suez One",serif;font-size:5.4vmin;color:var(--gold);margin-top:1vmin;
+    text-shadow:0 .5vmin 0 rgba(0,0,0,.4),0 0 2.4vmin rgba(232,183,60,.5);animation:pulse 2.8s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+
+  /* ספר התורה */
+  .torah{height:64vmin;position:relative;display:flex;align-items:center;justify-content:center}
+  .torah::before{content:"";position:absolute;width:62vmin;height:62vmin;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,rgba(232,183,60,.22) 0 6deg,transparent 6deg 15deg);
+    -webkit-mask:radial-gradient(circle,#000 20%,transparent 70%);mask:radial-gradient(circle,#000 20%,transparent 70%);
+    animation:spin 60s linear infinite}
+  .torah::after{content:"";position:absolute;width:40vmin;height:40vmin;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,215,110,.45),transparent 70%)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .torah svg{position:relative;z-index:1;height:100%;width:auto;filter:drop-shadow(0 2.4vmin 3vmin rgba(0,0,0,.55));
+    animation:sway 4s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+
+  @media (prefers-reduced-motion:reduce){ .torah svg,.torah::before,.joy,.sparks i{animation:none} }
+
+  /* מסך לאורך */
+  @media (max-aspect-ratio:1/1){
+    .stage{grid-template-columns:1fr;grid-template-rows:auto 1fr;justify-items:center;padding:14vmin 5vmin 8vmin;gap:3vh}
+    .torah{order:-1;height:30vh}
+    .torah::before{width:34vh;height:34vh}
+    .torah::after{width:24vh;height:24vh}
+    h1{font-size:15vmin}
+  }
+</style>
+</head>
+<body>
+  <div class="sparks" id="sparks"></div>
+  <div class="frame"></div>
+  <div class="bh">ב״ה</div>
+  <div class="logo"><b>חב״ד</b><span>כל הלב לכל אחד</span><small>מרכז חב״ד עפולה</small></div>
+
+  <main class="stage">
+    <section class="text">
+      <h1>הקפות שניות</h1>
+      <div class="minhag">על פי מנהג האריז״ל</div>
+      <div class="invite">כולם מוזמנים – אנשים, נשים וטף</div>
+
+      <div class="when">
+        <div class="occ">מוצאי חג שמחת תורה</div>
+        <div class="date">מוצאי שבת קודש, כ״ב בתשרי תשפ״ז · <span>3.10.26</span></div>
+      </div>
+
+      <div class="orn"><i></i>✦<i></i></div>
+
+      <div class="where">
+        <div class="shul">בבית הכנסת חב״ד המרכזי</div>
+        <div class="addr">שדרות ארלוזורוב 31, עפולה</div>
+      </div>
+
+      <div class="time"><span>משעה</span><b>21:30</b></div>
+
+      <div class="joy">שמחה וריקודים עד בלי די!</div>
+    </section>
+
+    <div class="torah" aria-hidden="true">
+      <svg viewBox="0 0 200 420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wood" x1="0" x2="1"><stop offset="0" stop-color="#6b3b12"/><stop offset=".5" stop-color="#b8763a"/><stop offset="1" stop-color="#5a300e"/></linearGradient>
+          <linearGradient id="velvet" x1="0" x2="1"><stop offset="0" stop-color="#5e0f22"/><stop offset=".45" stop-color="#a82446"/><stop offset="1" stop-color="#5e0f22"/></linearGradient>
+          <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2c0"/><stop offset=".5" stop-color="#e8b73c"/><stop offset="1" stop-color="#a8761a"/></linearGradient>
+        </defs>
+        <!-- ידיות עליונות -->
+        <rect x="58" y="8" width="10" height="46" rx="4" fill="url(#wood)"/>
+        <rect x="132" y="8" width="10" height="46" rx="4" fill="url(#wood)"/>
+        <!-- כתר -->
+        <path d="M40 70 L52 40 L72 60 L100 28 L128 60 L148 40 L160 70 Z" fill="url(#gold)" stroke="#8a5f12" stroke-width="2"/>
+        <rect x="38" y="68" width="124" height="14" rx="4" fill="url(#gold)" stroke="#8a5f12" stroke-width="2"/>
+        <circle cx="52" cy="38" r="5" fill="#fff2c0"/><circle cx="100" cy="25" r="6" fill="#fff2c0"/><circle cx="148" cy="38" r="5" fill="#fff2c0"/>
+        <circle cx="70" cy="75" r="3" fill="#8c1a32"/><circle cx="100" cy="75" r="3" fill="#1b2a57"/><circle cx="130" cy="75" r="3" fill="#8c1a32"/>
+        <!-- מעיל -->
+        <path d="M34 90 Q100 78 166 90 L172 360 Q100 372 28 360 Z" fill="url(#velvet)" stroke="#e8b73c" stroke-width="3"/>
+        <path d="M44 104 Q100 94 156 104" fill="none" stroke="#e8b73c" stroke-width="2"/>
+        <path d="M40 342 Q100 352 160 342" fill="none" stroke="#e8b73c" stroke-width="2"/>
+        <!-- מגן דוד -->
+        <g transform="translate(100 190)" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round">
+          <path d="M0 -44 L38 22 L-38 22 Z"/><path d="M0 44 L38 -22 L-38 -22 Z"/>
+        </g>
+        <text x="100" y="292" text-anchor="middle" font-family="Frank Ruhl Libre, serif" font-weight="900" font-size="26" fill="url(#gold)">כתר תורה</text>
+        <!-- שוליים -->
+        <path d="M28 360 Q100 372 172 360 L172 372 Q100 386 28 372 Z" fill="url(#gold)"/>
+        <!-- ידיות תחתונות -->
+        <rect x="56" y="378" width="14" height="10" rx="3" fill="url(#gold)"/>
+        <rect x="130" y="378" width="14" height="10" rx="3" fill="url(#gold)"/>
+        <rect x="58" y="386" width="10" height="30" rx="4" fill="url(#wood)"/>
+        <rect x="132" y="386" width="10" height="30" rx="4" fill="url(#wood)"/>
+      </svg>
+    </div>
+  </main>
+
+<script>
+(function(){
+  /* ניצוצות עולים */
+  var box = document.getElementById('sparks');
+  for(var i = 0; i < 40; i++){
+    var s = document.createElement('i');
+    s.style.left = (Math.random()*100) + '%';
+    s.style.animationDuration = (8 + Math.random()*10) + 's';
+    s.style.animationDelay = (-Math.random()*18) + 's';
+    var k = .6 + Math.random()*1.2;
+    s.style.width = s.style.height = k + 'vmin';
+    box.appendChild(s);
+  }
+
+  /* מסך מלא: F או לחיצה כפולה */
+  function fullscreen(){
+    var d = document.documentElement;
+    if(!document.fullscreenElement){ (d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d); }
+    else if(document.exitFullscreen){ document.exitFullscreen(); }
+  }
+  document.addEventListener('keydown', function(e){ if(e.key==='f' || e.key==='F' || e.key==='כ') fullscreen(); });
+  document.addEventListener('dblclick', fullscreen);
+
+  var idleT;
+  function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(function(){ document.body.classList.add('idle'); }, 3000); }
+  document.addEventListener('mousemove', wake); wake();
+})();
+</script>
+</body>
+</html>
