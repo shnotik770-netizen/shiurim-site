@@ -163,6 +163,7 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/hebdate.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -241,7 +242,7 @@
     const fam = $("fFamily").value, cat = $("fCat").value;
     const list = data.rows.filter((r) => (!fam || r.family === fam) && (!cat || r.activity === cat));
     $("reports").innerHTML = list.length ? list.map((r) => {
-      const t = new Date(r.time).toLocaleString("he-IL", { timeZone:"Asia/Jerusalem", day:"numeric", month:"numeric", hour:"2-digit", minute:"2-digit" });
+      const t = `${hebDate(r.time)} · ${hebTime(r.time)}`;
       return `<div class="item">
         <div class="main"><b>${esc(r.family)}</b><small>${esc(r.activityName)} · ${t}</small></div>
         <label class="bk" title="כמה דליים (אפשר לשנות)">🪣<input type="number" min="1" max="1000" value="${r.buckets}" data-edit="${esc(r.id)}" aria-label="מספר הדליים בדיווח" /></label>

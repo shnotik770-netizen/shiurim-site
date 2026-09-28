@@ -310,6 +310,7 @@
 <div class="toast" id="toast" role="status"></div>
 <div class="splash" id="splash"></div>
 
+<script src="/hebdate.js"></script>
 <script>
 (() => {
   const COLORS = {
@@ -547,8 +548,7 @@
     const dayMax = Math.max(0, ...dayList.map((d) => d[1]));
     const dayName = (k) => {
       if (k === today) return "היום";
-      const d = new Date(k + "T12:00:00");
-      return d.toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "numeric" });
+      return hebDate(k + "T12:00:00+03:00", { weekday: true });
     };
     $("byDay").innerHTML = dayList.length
       ? dayList.map(([k, v]) => meterRow("", dayName(k), "", v, dayMax)).join("")

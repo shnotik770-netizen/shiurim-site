@@ -11,6 +11,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { hebDate, time: hebTime } = require("./public/hebdate.js");
 
 const PORT = process.env.PORT || 3000;
 const GOAL = Number(process.env.GOAL) || 770;
@@ -98,7 +99,7 @@ function toCsv() {
   const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
   const lines = [["תאריך", "משפחה", "קטגוריה", "דליים"].map(q).join(",")];
   for (const r of rows) {
-    const t = new Date(r.time).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
+    const t = `${hebDate(r.time, { year: true })} ${hebTime(r.time)}`;
     lines.push([t, r.family, r.activityName, r.buckets].map(q).join(","));
   }
   return "\ufeff" + lines.join("\r\n");
