@@ -105,6 +105,9 @@
     background:linear-gradient(135deg,var(--coral),var(--pink)); box-shadow:0 6px 16px #e8664a55;
   }
   .send:disabled{opacity:.55; cursor:not-allowed; box-shadow:none}
+  .send.incomplete{opacity:.6; box-shadow:none}
+  select.missing{border-color:#e0533a; box-shadow:0 0 0 4px #fde8e4}
+  .acts.missing{outline:2px solid #e0533a; outline-offset:4px; border-radius:16px}
 
   .msg{margin-top:12px; padding:12px 14px; border-radius:14px; font-weight:700; display:none}
   .msg.ok{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#e5f6e8; color:#23733a}
@@ -356,7 +359,24 @@
     const n = amount;
     $("pails").textContent = "🪣".repeat(Math.min(n, 12)) + (n > 12 ? "…" : "");
     $("calcText").textContent = chosen ? `${n === 1 ? "דלי אחד" : n + " דליים"} של שמחה · ${chosen.name}` : "בחרו קטגוריה";
-    $("send").disabled = busy || !chosen || !$("family").value;
+    // הכפתור לא נחסם כשחסר משהו – לחיצה עליו מסבירה מה חסר
+    $("send").disabled = busy;
+    $("send").classList.toggle("incomplete", !chosen || !$("family").value);
+    $("family").classList.toggle("missing", showMissing && !$("family").value);
+    $("acts").classList.toggle("missing", showMissing && !chosen);
+    if (showMissing && chosen && $("family").value) { showMissing = false; showMsg("", ""); }
+  }
+
+  let showMissing = false;
+  function explainMissing() {
+    const noFamily = !$("family").value, noCat = !chosen;
+    showMissing = true;
+    update();
+    const what = noFamily && noCat ? "משפחה וקטגוריה" : noFamily ? "משפחה" : "קטגוריה";
+    showMsg("err", `כדי להמשיך צריך לבחור ${what} 👆`);
+    const first = noFamily ? $("family") : $("acts");
+    first.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (noFamily) $("family").focus({ preventScroll: true });
   }
 
   function daysLeft() {
@@ -599,7 +619,7 @@
 
   function openDialog() {
     // כל דיווח מתחיל נקי: בלי משפחה ובלי קטגוריה בחורות
-    showMsg("", ""); amount = 1; chosen = null;
+    showMsg("", ""); amount = 1; chosen = null; showMissing = false;
     $("family").value = "";
     $("acts").querySelectorAll(".act").forEach((b) => b.setAttribute("aria-pressed", "false"));
     update();
@@ -633,7 +653,8 @@
 
   $("form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (busy || !chosen || !$("family").value) return;
+    if (busy) return;
+    if (!chosen || !$("family").value) { explainMissing(); return; }
     busy = true; update();
     $("send").textContent = "שומר...";
     try {
