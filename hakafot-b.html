@@ -32,9 +32,11 @@
   .logo img{display:block;height:7vmin;width:auto}
 
   /* ---------- פריסה ---------- */
-  .stage{position:relative;height:calc(100% - var(--tick));display:grid;grid-template-columns:52% 48%;align-items:center}
+  .stage{position:relative;height:calc(100% - var(--tick));display:grid;
+    grid-template-columns:1fr var(--sq);grid-template-rows:var(--sq) 1fr;column-gap:3vmin;padding:0 3vmin 2.4vmin}
+  :root{--sq:min(66vh,48vw)}
   :root{--tick:7.5vmin}
-  .info{position:relative;z-index:3;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2.2vmin;padding:9vmin 2vmin 2vmin 0}
+  .info{grid-column:1;grid-row:1;position:relative;z-index:3;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.2vmin;padding:9vmin 0 0}
 
   .eyebrow{display:flex;align-items:center;gap:1.6vmin;font-family:"Secular One",sans-serif;font-size:3.8vmin;color:var(--teal);letter-spacing:.04em}
   .eyebrow::before,.eyebrow::after{content:"";width:8vmin;height:.35vmin;border-radius:1vmin;background:currentColor;opacity:.7}
@@ -43,26 +45,27 @@
     color:var(--gold);text-shadow:0 .5vmin 0 var(--gold-deep),0 1vmin 0 #9a5a0c,0 1.6vmin 0 #5c2c06,0 2.6vmin 3vmin rgba(0,0,0,.6),0 0 6vmin rgba(255,201,60,.35)}
   h1 span{display:inline-block;animation:hop 1.4s ease-in-out infinite;animation-delay:calc(var(--i) * .09s)}
   h1 .gap{width:.28em}
+  h1 .word{display:inline-block;white-space:nowrap}
   @keyframes hop{0%,60%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-.12em) rotate(-3deg)}}
 
   .invite{font-weight:900;font-size:3.9vmin;color:var(--night);padding:1vmin 4vmin;border-radius:10vmin;
     background:linear-gradient(90deg,var(--teal),#9cf7ee,var(--teal));box-shadow:0 1vmin 3vmin rgba(62,224,208,.35);transform:rotate(-1.5deg)}
 
-  .tickets{display:grid;grid-template-columns:1.25fr 1.25fr .9fr;gap:1.8vmin;width:100%;max-width:96vmin;margin-top:1.4vmin}
+  .tickets{grid-column:1/-1;grid-row:2;align-self:center;display:grid;grid-template-columns:1.3fr 1.3fr .8fr;gap:2.4vmin;width:100%;max-width:150vmin;margin:0 auto;position:relative;z-index:3}
   .tk{position:relative;border-radius:1.8vmin;padding:1.8vmin 1.6vmin 2vmin;background:rgba(255,255,255,.07);
     border:.25vmin dashed rgba(255,201,60,.6);backdrop-filter:blur(4px);display:flex;flex-direction:column;justify-content:center;gap:.6vmin}
   .tk:nth-child(1){transform:rotate(1.5deg)}
   .tk:nth-child(3){transform:rotate(-2deg)}
-  .tk small{font-size:2.1vmin;font-weight:800;color:var(--gold);letter-spacing:.05em}
-  .tk b{font-family:"Secular One",sans-serif;font-weight:400;font-size:3.3vmin;line-height:1.15;color:#fff}
-  .tk span{font-size:2.3vmin;line-height:1.3;opacity:.9}
+  .tk small{font-size:2.4vmin;font-weight:800;color:var(--gold);letter-spacing:.05em}
+  .tk b{font-family:"Secular One",sans-serif;font-weight:400;font-size:3.8vmin;line-height:1.15;color:#fff}
+  .tk span{font-size:2.7vmin;line-height:1.3;opacity:.9}
   .tk .ltr{direction:ltr;unicode-bidi:isolate}
   .tk.time{background:linear-gradient(160deg,var(--gold),#ff9f1c);border:0;color:var(--night);box-shadow:0 1.2vmin 3.6vmin rgba(255,170,40,.4)}
   .tk.time small{color:var(--wine)}
   .tk.time b{font-family:"Heebo",sans-serif;font-weight:900;font-size:7.4vmin;line-height:1;color:var(--night);font-variant-numeric:tabular-nums}
 
   /* ---------- הבמה עם הריקוד ---------- */
-  .scene{position:relative;height:100%;min-height:0}
+  .scene{grid-column:2;grid-row:1;position:relative;height:100%;min-height:0;overflow:hidden;margin-top:6vmin;border-radius:3vmin}
   .beam{position:absolute;top:-10%;width:30%;height:120%;transform-origin:50% 0;mix-blend-mode:screen;pointer-events:none;
     background:linear-gradient(180deg,rgba(255,230,160,.35),rgba(255,230,160,0) 85%);clip-path:polygon(45% 0,55% 0,100% 100%,0 100%);
     animation:sweep 7s ease-in-out infinite alternate}
@@ -87,20 +90,15 @@
   @keyframes legL{from{transform:rotate(0)}to{transform:rotate(22deg)}}
   @keyframes legR{from{transform:rotate(-20deg)}to{transform:rotate(0)}}
 
-  /* נושא ספר התורה במרכז */
-  .bearer{position:absolute;left:50%;bottom:17%;height:62%;aspect-ratio:140/300;transform:translateX(-50%);z-index:50;
-    filter:drop-shadow(0 0 3vmin rgba(255,210,120,.55))}
-  .bearer svg{width:100%;height:100%;overflow:visible;animation:lift 1.24s ease-in-out infinite}
-  @keyframes lift{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3%) rotate(2deg)}}
 
   /* כלי נגינה מרחפים */
   .inst{position:absolute;z-index:60;filter:drop-shadow(0 1vmin 1.4vmin rgba(0,0,0,.5));animation:float 4.2s ease-in-out infinite}
   .inst svg{display:block;width:100%;height:100%;overflow:visible}
   @keyframes float{0%,100%{transform:translateY(0) rotate(var(--r0))}50%{transform:translateY(-6%) rotate(var(--r1))}}
-  .violin{width:8%;aspect-ratio:60/160;top:30%;left:3%;--r0:-24deg;--r1:-14deg}
-  .clarinet{width:4.4%;aspect-ratio:30/170;top:10%;right:6%;--r0:22deg;--r1:32deg;animation-delay:-1.2s}
-  .trumpet{width:18%;aspect-ratio:170/70;top:14%;left:38%;--r0:-8deg;--r1:4deg;animation-delay:-2.4s}
-  .drum{width:15%;aspect-ratio:110/100;bottom:4%;right:2%;--r0:-4deg;--r1:3deg;animation-duration:3s}
+  .violin{width:11%;aspect-ratio:60/160;top:30%;left:3%;--r0:-24deg;--r1:-14deg}
+  .clarinet{width:6%;aspect-ratio:30/170;top:8%;right:5%;--r0:22deg;--r1:32deg;animation-delay:-1.2s}
+  .trumpet{width:28%;aspect-ratio:170/70;top:15%;left:16%;--r0:-8deg;--r1:4deg;animation-delay:-2.4s}
+  .drum{width:18%;aspect-ratio:110/100;bottom:25%;left:41%;z-index:50;--r0:-4deg;--r1:3deg;animation-duration:3s}
   .bow{transform-origin:30px 90px;animation:saw .5s ease-in-out infinite alternate}
   @keyframes saw{from{transform:translate(-6px,4px) rotate(58deg)}to{transform:translate(8px,-6px) rotate(58deg)}}
   .stick-a{transform-origin:20px 8px;animation:tap .3s ease-in-out infinite alternate}
@@ -124,13 +122,22 @@
 
   /* ---------- מסך לאורך ---------- */
   @media (max-aspect-ratio:1/1){
-    .stage{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-    .info{padding:12vmin 4vmin 0}
-    h1{font-size:26vmin}
-    .tickets{max-width:none}
-    .scene{min-height:40vh}
-    .trumpet{top:4%;width:22%}
-    .clarinet{top:2%}
+    :root{--sq:48vw}
+    .info{padding-top:15vmin;gap:1.6vmin}
+    h1{line-height:1.02}
+    h1 .word{display:block}
+    h1 .gap{display:none}
+    .eyebrow{font-size:3.4vmin}
+    .eyebrow::before,.eyebrow::after{width:4vmin}
+    .invite{font-size:3.2vmin;padding:1vmin 2.4vmin}
+    .scene{margin-top:12vmin}
+    .tickets{grid-template-columns:1fr;max-width:80vmin;gap:3vmin}
+    .tk{padding:3vmin}
+    .tk:nth-child(n){transform:none}
+    .tk small{font-size:3.4vmin}
+    .tk b{font-size:5.4vmin}
+    .tk span{font-size:3.8vmin}
+    .tk.time b{font-size:11vmin}
   }
 </style>
 </head>
@@ -144,70 +151,29 @@
       <div class="eyebrow">על פי מנהג האריז״ל</div>
       <h1 id="title" aria-label="הקפות שניות">הקפות שניות</h1>
       <div class="invite">כולם מוזמנים – אנשים, נשים וטף!</div>
-      <div class="tickets">
-        <div class="tk">
-          <small>מתי?</small>
-          <b>מוצאי חג שמחת תורה</b>
-          <span>מוצאי שבת קודש<br>כ״ב בתשרי תשפ״ז · <span class="ltr">3.10.26</span></span>
-        </div>
-        <div class="tk">
-          <small>איפה?</small>
-          <b>בית הכנסת חב״ד המרכזי</b>
-          <span>שדרות ארלוזורוב 31<br>עפולה</span>
-        </div>
-        <div class="tk time">
-          <small>משעה</small>
-          <b>21:30</b>
-        </div>
-      </div>
     </section>
+    <div class="tickets">
+      <div class="tk">
+        <small>מתי?</small>
+        <b>מוצאי חג שמחת תורה</b>
+        <span>מוצאי שבת קודש<br>כ״ב בתשרי תשפ״ז · <span class="ltr">3.10.26</span></span>
+      </div>
+      <div class="tk">
+        <small>איפה?</small>
+        <b>בית הכנסת חב״ד המרכזי</b>
+        <span>שדרות ארלוזורוב 31<br>עפולה</span>
+      </div>
+      <div class="tk time">
+        <small>משעה</small>
+        <b>21:30</b>
+      </div>
+    </div>
 
     <section class="scene" id="scene" aria-hidden="true">
       <div class="beam a"></div><div class="beam b"></div>
       <div class="floor"></div>
       <div class="ring" id="ring"></div>
 
-      <!-- חסיד מרים ספר תורה -->
-      <div class="bearer">
-        <svg viewBox="0 0 140 300" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="bv" x1="0" x2="1"><stop offset="0" stop-color="#5e0f22"/><stop offset=".5" stop-color="#b3294d"/><stop offset="1" stop-color="#5e0f22"/></linearGradient>
-            <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2c0"/><stop offset=".5" stop-color="#ffc93c"/><stop offset="1" stop-color="#b07414"/></linearGradient>
-            <linearGradient id="bw" x1="0" x2="1"><stop offset="0" stop-color="#6b3b12"/><stop offset=".5" stop-color="#c0803e"/><stop offset="1" stop-color="#5a300e"/></linearGradient>
-          </defs>
-          <!-- ספר התורה -->
-          <rect x="50" y="0" width="8" height="18" rx="3" fill="url(#bw)"/>
-          <rect x="82" y="0" width="8" height="18" rx="3" fill="url(#bw)"/>
-          <path d="M40 26 L48 8 L60 20 L70 4 L80 20 L92 8 L100 26 Z" fill="url(#bg)" stroke="#8a5f12" stroke-width="1.5"/>
-          <rect x="38" y="24" width="64" height="8" rx="3" fill="url(#bg)"/>
-          <path d="M36 32 Q70 26 104 32 L106 108 Q70 114 34 108 Z" fill="url(#bv)" stroke="#ffc93c" stroke-width="2"/>
-          <path d="M40 44 Q70 38 100 44" fill="none" stroke="#ffc93c" stroke-width="1.6"/>
-          <path d="M38 98 Q70 104 102 98" fill="none" stroke="#ffc93c" stroke-width="1.6"/>
-          <path d="M54 76 L58 60 L64 68 L70 56 L76 68 L82 60 L86 76 Z" fill="url(#bg)"/>
-          <rect x="54" y="76" width="32" height="5" rx="2" fill="url(#bg)"/>
-          <rect x="50" y="108" width="8" height="12" rx="3" fill="url(#bw)"/>
-          <rect x="82" y="108" width="8" height="12" rx="3" fill="url(#bw)"/>
-          <!-- ידיים מורמות -->
-          <path d="M50 168 L54 118" stroke="#15151b" stroke-width="11" stroke-linecap="round"/>
-          <path d="M90 168 L86 118" stroke="#15151b" stroke-width="11" stroke-linecap="round"/>
-          <circle cx="54" cy="116" r="6" fill="#f1c9a5"/><circle cx="86" cy="116" r="6" fill="#f1c9a5"/>
-          <!-- גוף -->
-          <path d="M48 162 Q70 156 92 162 L102 250 Q70 258 38 250 Z" fill="#15151b"/>
-          <path d="M63 160 L77 160 L70 186 Z" fill="#fff"/>
-          <rect x="44" y="204" width="52" height="4" fill="#000"/>
-          <path d="M42 250 L40 270 M46 251 L46 272 M98 250 L100 270 M94 251 L94 272" stroke="#fff" stroke-width="1.6"/>
-          <path d="M62 246 L58 290 M78 246 L82 290" stroke="#15151b" stroke-width="11" stroke-linecap="round"/>
-          <ellipse cx="55" cy="293" rx="9" ry="5" fill="#000"/><ellipse cx="85" cy="293" rx="9" ry="5" fill="#000"/>
-          <!-- ראש -->
-          <circle cx="70" cy="144" r="15" fill="#f1c9a5"/>
-          <path d="M56 146 Q58 176 70 180 Q82 176 84 146 Q77 156 70 156 Q63 156 56 146 Z" fill="#3a2414"/>
-          <circle cx="64" cy="141" r="1.6" fill="#222"/><circle cx="76" cy="141" r="1.6" fill="#222"/>
-          <path d="M64 149 Q70 154 76 149" stroke="#8a3b2a" stroke-width="1.6" fill="none"/>
-          <ellipse cx="70" cy="131" rx="24" ry="5" fill="#0b0b10"/>
-          <path d="M55 131 L57 112 Q70 106 83 112 L85 131 Z" fill="#0b0b10"/>
-          <rect x="55.5" y="126" width="29" height="3" fill="#2d2d38"/>
-        </svg>
-      </div>
 
       <!-- כינור -->
       <div class="inst violin">
@@ -266,9 +232,11 @@
 (function(){
   /* כותרת – כל אות קופצת בנפרד */
   var t = document.getElementById('title'), txt = t.textContent, html = '';
+  html = '<span class="word">';
   for(var i = 0; i < txt.length; i++){
-    html += txt[i] === ' ' ? '<span class="gap"></span>' : '<span style="--i:' + i + '" aria-hidden="true">' + txt[i] + '</span>';
+    html += txt[i] === ' ' ? '</span><span class="gap"></span><span class="word">' : '<span style="--i:' + i + '" aria-hidden="true">' + txt[i] + '</span>';
   }
+  html += '</span>';
   t.innerHTML = html;
   /* הכותרת ממלאת את רוחב העמודה בלי לגלוש */
   function fitTitle(){
@@ -341,7 +309,7 @@
     if(t0 === null) t0 = ts;
     var sec = (ts - t0)/1000;
     var w = scene.clientWidth, h = scene.clientHeight;
-    var dh = h*0.36, cx = w/2, cy = h*0.66, rx = w*0.36, ry = h*0.12;
+    var dh = h*0.34, cx = w/2, cy = h*0.72, rx = w*0.36, ry = h*0.13;
     people.forEach(function(p){
       var a = p.phase + sec*0.42;
       var depth = (Math.sin(a)+1)/2;                  /* 1 = קדימה, 0 = מאחור */
@@ -365,7 +333,7 @@
     n.className = 'note';
     n.textContent = NOTES[Math.floor(Math.random()*4)];
     n.style.left = (10 + Math.random()*80) + '%';
-    n.style.top = (45 + Math.random()*35) + '%';
+    n.style.top = (55 + Math.random()*30) + '%';
     n.style.fontSize = (3 + Math.random()*3.5) + 'vmin';
     n.style.color = NC[Math.floor(Math.random()*4)];
     n.style.setProperty('--dx', ((Math.random()-.5)*16) + 'vmin');
