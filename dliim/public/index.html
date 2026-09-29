@@ -190,6 +190,22 @@
 
   /* ---------- חיוך שנופל לדלי ---------- */
   #smiles .drop{animation:drop .9s cubic-bezier(.3,.6,.4,1.25) both; transform-box:fill-box; transform-origin:center}
+  /* החיוכים בדלי רוקדים כל הזמן */
+  #smiles .dance, #smiles .spin{transform-box:fill-box; transform-origin:center; animation-iteration-count:infinite; animation-timing-function:ease-in-out}
+  #smiles .dance{animation-name:dance}
+  #smiles .spin{animation-name:spin}
+  @keyframes dance{
+    0%,100%{transform:translateY(0) rotate(-16deg)}
+    25%{transform:translateY(-1.6px) rotate(0deg)}
+    50%{transform:translateY(0) rotate(16deg)}
+    75%{transform:translateY(-1.6px) rotate(0deg)}
+  }
+  @keyframes spin{
+    0%{transform:translateY(0) rotate(0deg)}
+    50%{transform:translateY(-2px) rotate(180deg)}
+    100%{transform:translateY(0) rotate(360deg)}
+  }
+  @media (prefers-reduced-motion: reduce){ #smiles .dance, #smiles .spin{animation:none} }
   @keyframes drop{
     0%{transform:translateY(calc(var(--fall) * -1)) rotate(-25deg); opacity:0}
     15%{opacity:1}
@@ -408,8 +424,8 @@
   // מקומות לחיוכים בתוך הדלי, מהתחתית למעלה ומהמרכז לצדדים. פנים הדלי: y 36..118, הדפנות נפתחות כלפי מעלה.
   const FACES = ["😊","😄","😁","🥰","😃","🤩","😆","☺️"];
   const SLOTS = (() => {
-    const size = 16, out = [];
-    for (let y = 118 - size / 2, row = 0; y > 42; y -= size - 3, row++) {
+    const size = 8, out = [];   // חיוכים קטנים – 87 מקומות, כך שכל חיוך הוא בערך 9 דליים
+    for (let y = 118 - size / 2, row = 0; y > 40; y -= size - 1, row++) {
       const half = 42 - 10 * ((y - 34) / 84) - size / 2 - 1;      // כמה אפשר לזוז מהמרכז בשורה הזאת
       const shift = row % 2 ? size / 4 : -size / 4;
       const xs = [];
@@ -428,9 +444,13 @@
     const from = first ? count : Math.min(smilesShown, count);
     $("smiles").innerHTML = SLOTS.slice(0, count).map((p, i) => {
       const falling = !reduceMotion && (i >= from || (drop && i === count - 1));
-      const delay = falling ? Math.max(0, i - from) * 0.12 : 0;
-      return `<text x="${p.x}" y="${p.y + 5.5}" font-size="15" text-anchor="middle"${falling
-        ? ` class="drop" style="--fall:${p.y + 30}px; animation-delay:${delay}s"` : ""}>${p.face}</text>`;
+      const delay = falling ? Math.min(Math.max(0, i - from) * 0.05, 1.5) : 0;
+      // כל חיוך "רוקד" בקצב קצת אחר; כל חמישי מסתובב סיבוב שלם
+      const dance = `${i % 5 === 4 ? "spin" : "dance"}`;
+      const dur = (1.1 + ((i * 7) % 9) / 10).toFixed(2), lag = (-((i * 13) % 17) / 10).toFixed(1);
+      return `<g${falling ? ` class="drop" style="--fall:${p.y + 30}px; animation-delay:${delay}s"` : ""}>` +
+        `<text x="${p.x}" y="${p.y + 2.8}" font-size="7.6" text-anchor="middle" class="${dance}"` +
+        ` style="animation-duration:${dur}s; animation-delay:${lag}s">${p.face}</text></g>`;
     }).join("");
     smilesShown = count;
   }
