@@ -241,6 +241,7 @@
   /* ---------- חיוך שנופל לדלי ---------- */
   .smiles .drop{animation:drop .9s cubic-bezier(.3,.6,.4,1.25) both; transform-box:fill-box; transform-origin:center}
   /* החיוכים בדלי רוקדים כל הזמן */
+  .paused .smiles .dance, .paused .smiles .spin{animation-play-state:paused}
   .smiles .dance, .smiles .spin{transform-box:fill-box; transform-origin:center; animation-iteration-count:infinite; animation-timing-function:ease-in-out}
   .smiles .dance{animation-name:dance}
   .smiles .spin{animation-name:spin}
@@ -506,6 +507,7 @@
 
   // מציג count חיוכים. חיוכים חדשים (או drop=true) "נופלים" לדלי מלמעלה.
   function renderSmiles(count, drop = false) {
+    if (count === smilesShown && !drop) return;   // בלי שינוי – לא בונים מחדש (חוסך עבודה לטלפון)
     const first = smilesShown < 0;
     const from = first ? count : Math.min(smilesShown, count);
     $("smiles").innerHTML = smilesMarkup(count, from, drop);
@@ -882,8 +884,25 @@
       showToast("<span>לא הצלחנו לטעון את האתר — רעננו את הדף.</span>", 60000);
     }
     refresh();
-    setInterval(refresh, 30000);
+    // מתעדכן כל 30 שניות, רק כשהדף מוצג על המסך
+    setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
   })();
+
+  // ---------- חיסכון בכוח לטלפון ----------
+  // החיוכים בדלי הקטן רוקדים רק כשהוא נראה על המסך ולא כשהמסך המלא פתוח
+  const bucketEl = $("bucketSvg");
+  let bucketVisible = true;
+  const syncDance = () => bucketEl.classList.toggle("paused", !bucketVisible || document.hidden || $("big").open);
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => { bucketVisible = e.isIntersecting; syncDance(); }).observe(bucketEl);
+  }
+  document.addEventListener("visibilitychange", syncDance);
+  $("big").addEventListener("close", syncDance);
+  bucketEl.addEventListener("click", syncDance);
+
+  // אם משהו נשבר בדפדפן – הודעה ידידותית במקום מסך תקוע
+  window.addEventListener("error", () => showToast("<span>משהו השתבש — רעננו את הדף 🙏</span><button type=\"button\" onclick=\"location.reload()\">רענון</button>", 20000));
 })();
 </script>
 </body>

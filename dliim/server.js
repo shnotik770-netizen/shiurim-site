@@ -52,17 +52,43 @@ const publicConfig = () => ({
 // ---------- אחסון ----------
 // כל הדיווחים בזיכרון, ונשמרים לקובץ אחרי כל שינוי (כתיבה לקובץ זמני ואז החלפה).
 fs.mkdirSync(DATA_DIR, { recursive: true });
-function loadJson(file, fallback) {
+// ---------- גיבויים ----------
+// עותק יומי של הדיווחים בתיקייה backups (נשמרים 30 האחרונים)
+const BACKUP_DIR = path.join(DATA_DIR, "backups");
+fs.mkdirSync(BACKUP_DIR, { recursive: true });
+function latestBackup(prefix) {
+  const files = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith(prefix)).sort();
+  return files.length ? path.join(BACKUP_DIR, files[files.length - 1]) : null;
+}
+async function dailyBackup(file, prefix) {
+  const day = new Date().toISOString().slice(0, 10);
+  const target = path.join(BACKUP_DIR, `${prefix}-${day}.json`);
+  await fs.promises.copyFile(file, target);
+  const old = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith(prefix)).sort().slice(0, -30);
+  await Promise.all(old.map((f) => fs.promises.unlink(path.join(BACKUP_DIR, f))));
+}
+
+// קובץ פגום לא מפיל את השרת: שומרים אותו בצד וממשיכים מהגיבוי האחרון
+function loadJson(file, fallback, prefix) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
   } catch (err) {
     if (err.code === "ENOENT") return fallback;
-    console.error("לא ניתן לקרוא את", file, err);
-    process.exit(1);
+    console.error("קובץ פגום:", file, err.message);
+    try { fs.renameSync(file, `${file}.corrupt-${Date.now()}`); } catch {}
+    const backup = prefix && latestBackup(prefix);
+    if (backup) {
+      try {
+        const data = JSON.parse(fs.readFileSync(backup, "utf8"));
+        console.error("שוחזר מגיבוי:", backup);
+        return data;
+      } catch (e) { console.error("גם הגיבוי פגום:", backup, e.message); }
+    }
+    return fallback;
   }
 }
-let rows = loadJson(DATA_FILE, []);
-let config = loadJson(CONFIG_FILE, DEFAULT_CONFIG);
+let rows = loadJson(DATA_FILE, [], "reports");
+let config = loadJson(CONFIG_FILE, DEFAULT_CONFIG, "config");
 if (!Array.isArray(config.plain)) config.plain = DEFAULT_CONFIG.plain.filter((f) => config.families.includes(f));
 // שם הקטגוריה בדיווחים תמיד לפי ההגדרות העדכניות
 for (const r of rows) {
@@ -73,15 +99,23 @@ for (const r of rows) {
 let saving = Promise.resolve();
 function writeJson(file, obj) {
   const snapshot = JSON.stringify(obj, null, 1);
-  saving = saving.then(async () => {
+  // .catch לפני – כדי שכשל אחד בכתיבה לא יתקע את כל השמירות שאחריו
+  const job = saving.catch(() => {}).then(async () => {
     const tmp = file + ".tmp";
     await fs.promises.writeFile(tmp, snapshot);
     await fs.promises.rename(tmp, file);
   });
-  return saving;
+  saving = job;
+  return job;
 }
-const save = () => writeJson(DATA_FILE, rows);
-const saveConfig = () => writeJson(CONFIG_FILE, config);
+const save = () => writeJson(DATA_FILE, rows).then(() =>
+  dailyBackup(DATA_FILE, "reports").catch((e) => console.error("גיבוי נכשל:", e.message)));
+const saveConfig = () => writeJson(CONFIG_FILE, config).then(() =>
+  dailyBackup(CONFIG_FILE, "config").catch((e) => console.error("גיבוי נכשל:", e.message)));
+
+// שגיאה לא צפויה נרשמת ביומן ולא מפילה את השרת
+process.on("uncaughtException", (err) => console.error("שגיאה לא צפויה:", err));
+process.on("unhandledRejection", (err) => console.error("שגיאה לא צפויה:", err));
 
 async function addRow(row) {
   rows.push(row);
