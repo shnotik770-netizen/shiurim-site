@@ -44,6 +44,7 @@ const bucketsText = (n) => (n === 1 ? "דלי אחד" : `${n} דליים`);
 const ruleOf = (a) => (a.unit ? `על כל ${a.unit} — ${bucketsText(a.value)}` : bucketsText(a.value));
 const publicConfig = () => ({
   goal: config.goal,
+  bonusGoal: config.bonusGoal || 0,
   families: config.families,
   plain: config.plain,
   activities: config.activities.map((a) => ({ ...a, rule: ruleOf(a) })),
@@ -151,7 +152,7 @@ function summarize() {
     .map(([family, buckets]) => ({ family, buckets }))
     .sort((a, b) => b.buckets - a.buckets);
   const reports = rows.slice().sort((a, b) => String(b.time).localeCompare(String(a.time)));
-  return { goal: config.goal, total, families: board, reports };
+  return { goal: config.goal, bonusGoal: config.bonusGoal || 0, total, families: board, reports };
 }
 
 // ---------- HTTP ----------
@@ -192,6 +193,9 @@ function isAdmin(req) {
 function validateConfig(body) {
   const goal = Math.floor(Number(body.goal));
   if (!(goal >= 1 && goal <= 100000)) throw new Error("יעד לא תקין");
+  // יעד בונוס: 0 = אין; אחרת חייב להיות גדול מהיעד
+  const bonusGoal = Math.floor(Number(body.bonusGoal) || 0);
+  if (bonusGoal && !(bonusGoal > goal && bonusGoal <= 100000)) throw new Error("יעד הבונוס צריך להיות גדול מהיעד");
 
   const families = (Array.isArray(body.families) ? body.families : []).map((f) => cleanFamily(f)).filter(Boolean);
   if (!families.length) throw new Error("צריך לפחות משפחה אחת");
@@ -220,7 +224,7 @@ function validateConfig(body) {
     .map(([from, to]) => [cleanFamily(from), cleanFamily(to)])
     .filter(([from, to]) => from && to && from !== to && families.includes(to));
 
-  return { goal, families, plain, activities, renames };
+  return { goal, bonusGoal, families, plain, activities, renames };
 }
 
 const MIME = {
