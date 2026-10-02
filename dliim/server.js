@@ -212,6 +212,7 @@ function validateConfig(body) {
       icon: cleanText(a.icon, 8) || "🪣",
       unit: cleanText(a.unit, 20),
       value,
+      active: a.active !== false,   // קטגוריה לא פעילה: אי אפשר לדווח עליה, אבל הדליים שנאספו נשמרים
     };
   });
   if (!activities.length) throw new Error("צריך לפחות קטגוריה אחת");
@@ -277,6 +278,7 @@ const server = http.createServer(async (req, res) => {
       const buckets = Math.floor(Number(body.buckets));
       if (!config.families.includes(family)) return sendJson(res, 400, { ok: false, error: "נא לבחור משפחה מהרשימה" });
       if (!act) return sendJson(res, 400, { ok: false, error: "נא לבחור קטגוריה" });
+      if (act.active === false) return sendJson(res, 400, { ok: false, error: "הקטגוריה הזו כבר לא פעילה" });
       if (!(buckets >= 1 && buckets <= 100)) return sendJson(res, 400, { ok: false, error: "מספר דליים לא תקין" });
       const row = {
         id: crypto.randomUUID(),

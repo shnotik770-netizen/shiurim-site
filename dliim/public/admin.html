@@ -63,6 +63,10 @@
   #families .edit-row input.grow{flex:1 1 0; min-width:0}
   .plain{order:1; flex-basis:100%; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; padding:0 4px}
   .cat{background:var(--soft); border-radius:14px; padding:10px; display:grid; gap:8px}
+  .cat.off{background:#eee8f0; opacity:.75}
+  .cat.off input.name{text-decoration:line-through; color:var(--muted)}
+  .cat .active{display:flex; align-items:center; gap:6px; font-size:14px; font-weight:800; color:var(--plum); cursor:pointer}
+  .cat .used{font-size:13px; color:var(--muted); font-weight:700}
   .cat .line{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
   .cat .line label{font-size:13px; font-weight:700; color:var(--muted)}
   .cat input.icon{width:56px; text-align:center; font-size:20px; padding:5px}
@@ -141,7 +145,8 @@
     <!-- קטגוריות -->
     <section class="card" data-panel="cats" hidden>
       <h2>קטגוריות ושווי הדליים</h2>
-      <p class="hint">השווי מוצג למשפחות ליד כל קטגוריה, למשל: "על כל חצי שעה — 2 דליים". משאירים יחידה ריקה אם זה לכל פעם.</p>
+      <p class="hint">השווי מוצג למשפחות ליד כל קטגוריה, למשל: "על כל חצי שעה — 2 דליים". משאירים יחידה ריקה אם זה לכל פעם.
+        קטגוריה שהסתיימה (למשל ארבעת המינים אחרי סוכות) — מורידים את הסימון "פעילה": היא נעלמת מחלון הדיווח, והדליים שנאספו בה נשמרים ונספרים.</p>
       <div class="list" id="cats"></div>
       <button class="ghost" id="addCat" type="button" style="margin-top:8px">+ קטגוריה חדשה</button>
     </section>
@@ -266,8 +271,10 @@
   }
 
   function renderCats() {
+    const used = {};
+    data.rows.forEach((r) => { used[r.activity] = (used[r.activity] || 0) + (Number(r.buckets) || 0); });
     $("cats").innerHTML = draft.activities.map((a, i) => `
-      <div class="cat">
+      <div class="cat${a.active === false ? " off" : ""}">
         <div class="line">
           <input class="icon" value="${esc(a.icon)}" data-c="${i}" data-k="icon" maxlength="8" aria-label="אייקון" />
           <input class="name" value="${esc(a.name)}" data-c="${i}" data-k="name" maxlength="60" placeholder="שם הקטגוריה" />
@@ -281,6 +288,10 @@
           <label>דליים</label>
         </div>
         <div class="preview" data-prev="${i}">יוצג: ${esc(ruleOf(a))}</div>
+        <div class="line" style="justify-content:space-between">
+          <label class="active"><input type="checkbox" data-c="${i}" data-k="active"${a.active !== false ? " checked" : ""} /> פעילה</label>
+          <span class="used">${used[a.id] ? `נאספו ${used[a.id]} דליים` : ""}</span>
+        </div>
       </div>`).join("");
   }
 
@@ -374,7 +385,8 @@
   $("cats").addEventListener("input", (e) => {
     const i = e.target.dataset.c, k = e.target.dataset.k;
     if (i === undefined) return;
-    draft.activities[i][k] = k === "value" ? Number(e.target.value) : e.target.value;
+    draft.activities[i][k] = k === "value" ? Number(e.target.value) : k === "active" ? e.target.checked : e.target.value;
+    if (k === "active") e.target.closest(".cat").classList.toggle("off", !e.target.checked);
     const prev = document.querySelector(`[data-prev="${i}"]`);
     if (prev) prev.textContent = "יוצג: " + ruleOf(draft.activities[i]);
     markDirty();

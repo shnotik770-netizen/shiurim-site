@@ -455,7 +455,8 @@
   }
 
   function renderActs() {
-    $("acts").innerHTML = activities.map((a) => {
+    // בחלון הדיווח רק קטגוריות פעילות; קטגוריות שהסתיימו נשארות בהיסטוריה ובפירוט
+    $("acts").innerHTML = activities.filter((a) => a.active !== false).map((a) => {
       const [c, tint] = COLORS[a.id] || ["var(--coral)", "#fde8e4"];
       return `<button type="button" class="act" data-id="${a.id}" aria-pressed="false" style="--c:${c};--tint:${tint}">
         <span class="ic">${a.icon}</span>
@@ -579,7 +580,8 @@
     if ($("pourers").childElementCount) return;
     // כל דלי קטן מייצג קטגוריה (אייקון בפינה); לחיצה עליו מראה איך אוספים בה דליים
     $("pourers").innerHTML = POURERS.map(([x, y, flip, d], k) => {
-      const a = activities[k % activities.length] || { icon: "🪣" };
+      const live = activities.filter((x) => x.active !== false);
+      const a = live[k % live.length] || { icon: "🪣" };
       return `
       <div class="pourer" data-k="${k}" style="left:${x}%; top:${y}%; --flip:${flip}; --d:${d}s" role="button" tabindex="0" aria-label="${esc(a.name || "")}">
         <div class="flip">
@@ -595,7 +597,8 @@
   let tipTimer = null;
   function showPour(pourer) {
     const k = +pourer.dataset.k, [x, y, flip] = POURERS[k];
-    const a = activities[k % activities.length];
+    const live = activities.filter((x) => x.active !== false);
+    const a = live[k % live.length];
     if (!a) return;
     document.querySelectorAll("#big .tip").forEach((t) => t.remove());
     const tip = document.createElement("div");
@@ -756,7 +759,7 @@
       meterRow(f.buckets > 0 && i < 3 ? medals[i] : i + 1, f.family,
         famReports[f.family] ? nReports(famReports[f.family]) : "", f.buckets, famMax, f.family === me ? " me" : "")).join("");
 
-    const cats = new Map(activities.map((a) => [a.id, { name: a.name, icon: a.icon, buckets: 0, n: 0 }]));
+    const cats = new Map(activities.map((a) => [a.id, { name: a.name + (a.active === false ? " (הסתיימה)" : ""), icon: a.icon, buckets: 0, n: 0 }]));
     for (const r of reports) {
       if (!cats.has(r.activity)) cats.set(r.activity, { name: r.activityName, icon: "🪣", buckets: 0, n: 0 });
       const c = cats.get(r.activity); c.buckets += Number(r.buckets) || 0; c.n++;
