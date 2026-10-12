@@ -37,7 +37,26 @@ const DEFAULT_CONFIG = {
     { id: "shoeva",  name: "יוצאים עם הילדים לשמחת בית השואבה בחוץ", icon: "🎶", unit: "שעה",    value: 2 },
   ],
 };
+// הגדרות היארצייט – הכול ניתן לשינוי מדף המנהל (לשונית "יארצייט")
+const DEFAULT_YAHRZEIT = {
+  open: true,
+  title: "יארצייט ר' זלמן ניסן פנחס ב\"ר יעקב נוטיק ע\"ה",
+  date: "יום ראשון, ז' חשוון",
+  note: "",
+  events: [
+    { icon: "🚐", label: "איסוף להר הזיתים", time: "10:00", place: "הבית של אמא, אמרי בינה 1" },
+    { icon: "🍽️", label: "סעודה", time: "13:00", place: "שיכון חב\"ד" },
+  ],
+  familyLabel: "משפחה",
+  questions: [
+    { id: "bus", label: "מקומות ישיבה נדרשים בהסעה", hint: "" },
+    { id: "men", label: "גברים בהר הזיתים", hint: "" },
+    { id: "meal", label: "משתתפים בסעודה", hint: "מעל גיל שנתיים" },
+  ],
+};
 const CONFIG_FILE = path.join(DATA_DIR, "config.json");
+const RSVP_FILE = path.join(DATA_DIR, "yahrzeit.json");
+const YZLOG_FILE = path.join(DATA_DIR, "yahrzeit-log.json");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
 const bucketsText = (n) => (n === 1 ? "דלי אחד" : `${n} דליים`);
@@ -49,6 +68,7 @@ const publicConfig = () => ({
   plain: config.plain,
   activities: config.activities.map((a) => ({ ...a, rule: ruleOf(a) })),
 });
+const publicYahrzeit = () => ({ ...config.yahrzeit, families: config.families });
 
 // ---------- אחסון ----------
 // כל הדיווחים בזיכרון, ונשמרים לקובץ אחרי כל שינוי (כתיבה לקובץ זמני ואז החלפה).
@@ -91,6 +111,10 @@ function loadJson(file, fallback, prefix) {
 let rows = loadJson(DATA_FILE, [], "reports");
 let config = loadJson(CONFIG_FILE, DEFAULT_CONFIG, "config");
 if (!Array.isArray(config.plain)) config.plain = DEFAULT_CONFIG.plain.filter((f) => config.families.includes(f));
+if (!config.yahrzeit) config.yahrzeit = DEFAULT_YAHRZEIT;
+// רישום ליארצייט: רשומה לכל מספר טלפון (נכנסים עם הטלפון כדי לעדכן) + יומן פעולות
+let rsvps = loadJson(RSVP_FILE, {}, "yahrzeit");
+let yzLog = loadJson(YZLOG_FILE, [], "yahrzeit-log");
 // שם הקטגוריה בדיווחים תמיד לפי ההגדרות העדכניות
 for (const r of rows) {
   const act = config.activities.find((a) => a.id === r.activity);
@@ -111,6 +135,20 @@ function writeJson(file, obj) {
 }
 const save = () => writeJson(DATA_FILE, rows).then(() =>
   dailyBackup(DATA_FILE, "reports").catch((e) => console.error("גיבוי נכשל:", e.message)));
+const saveRsvp = () => Promise.all([
+  writeJson(RSVP_FILE, rsvps).then(() => dailyBackup(RSVP_FILE, "yahrzeit").catch((e) => console.error("גיבוי נכשל:", e.message))),
+  writeJson(YZLOG_FILE, yzLog),
+]);
+function logYz(action, rec, by, extra = {}) {
+  yzLog.push({ time: new Date().toISOString(), action, by, phone: rec.phone, name: rec.name, family: rec.family, answers: rec.answers, ...extra });
+  if (yzLog.length > 5000) yzLog = yzLog.slice(-5000);
+}
+// טלפון ישראלי: רק ספרות, 972+ הופך ל-0
+function cleanPhone(p) {
+  let d = String(p || "").replace(/\D/g, "");
+  if (d.startsWith("972")) d = "0" + d.slice(3);
+  return /^0\d{8,9}$/.test(d) ? d : "";
+}
 const saveConfig = () => writeJson(CONFIG_FILE, config).then(() =>
   dailyBackup(CONFIG_FILE, "config").catch((e) => console.error("גיבוי נכשל:", e.message)));
 
@@ -225,7 +263,32 @@ function validateConfig(body) {
     .map(([from, to]) => [cleanFamily(from), cleanFamily(to)])
     .filter(([from, to]) => from && to && from !== to && families.includes(to));
 
-  return { goal, bonusGoal, families, plain, activities, renames };
+  const yahrzeit = validateYahrzeit(body.yahrzeit || config.yahrzeit);
+  return { goal, bonusGoal, families, plain, activities, yahrzeit, renames };
+}
+
+function validateYahrzeit(y) {
+  const events = (Array.isArray(y.events) ? y.events : []).map((e) => ({
+    icon: cleanText(e.icon, 8),
+    label: cleanText(e.label, 60),
+    time: cleanText(e.time, 20),
+    place: cleanText(e.place, 80),
+  })).filter((e) => e.label || e.time || e.place);
+  const questions = (Array.isArray(y.questions) ? y.questions : []).map((q) => ({
+    id: /^[\w-]{1,40}$/.test(q.id || "") ? q.id : crypto.randomUUID().slice(0, 8),
+    label: cleanText(q.label, 80),
+    hint: cleanText(q.hint, 80),
+  })).filter((q) => q.label);
+  if (new Set(questions.map((q) => q.id)).size !== questions.length) throw new Error("מזהה שאלה כפול");
+  return {
+    open: y.open !== false,
+    title: cleanText(y.title, 100) || "רישום",
+    date: cleanText(y.date, 60),
+    note: cleanText(y.note, 200),
+    events,
+    familyLabel: cleanText(y.familyLabel, 40) || "משפחה",
+    questions,
+  };
 }
 
 const MIME = {
@@ -298,6 +361,42 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true });
     }
 
+    if (pathname === "/api/yahrzeit" && req.method === "GET") {
+      return sendJson(res, 200, { ok: true, ...publicYahrzeit() });
+    }
+
+    // כניסה עם מספר טלפון: מחזיר את הרישום הקיים כדי לעדכן אותו
+    if (pathname === "/api/yahrzeit/lookup" && req.method === "POST") {
+      const phone = cleanPhone((await readBody(req)).phone);
+      if (!phone) return sendJson(res, 400, { ok: false, error: "מספר טלפון לא תקין" });
+      await new Promise((r) => setTimeout(r, 300));   // מאט ניחושים
+      return sendJson(res, 200, { ok: true, rsvp: rsvps[phone] || null });
+    }
+
+    if (pathname === "/api/yahrzeit" && req.method === "POST") {
+      const y = config.yahrzeit;
+      if (y.open === false) return sendJson(res, 400, { ok: false, error: "הרישום סגור" });
+      const body = await readBody(req);
+      const phone = cleanPhone(body.phone);
+      const name = cleanText(body.name, 40);
+      const family = cleanFamily(body.family);
+      if (!phone) return sendJson(res, 400, { ok: false, error: "נא להזין מספר טלפון תקין" });
+      if (!name) return sendJson(res, 400, { ok: false, error: "נא להזין שם פרטי" });
+      if (!config.families.includes(family)) return sendJson(res, 400, { ok: false, error: "נא לבחור משפחה מהרשימה" });
+      const answers = {};
+      for (const q of y.questions) {
+        const n = Math.floor(Number(body.answers && body.answers[q.id]));
+        if (!(n >= 0 && n <= 200)) return sendJson(res, 400, { ok: false, error: `מספר לא תקין: ${q.label}` });
+        answers[q.id] = n;
+      }
+      const prev = rsvps[phone];
+      const now = new Date().toISOString();
+      rsvps[phone] = { phone, name, family, answers, time: now, first: prev ? prev.first || prev.time : now };
+      logYz(prev ? "update" : "create", rsvps[phone], "user", prev ? { before: { name: prev.name, family: prev.family, answers: prev.answers } } : {});
+      await saveRsvp();
+      return sendJson(res, 200, { ok: true, updated: !!prev, rsvp: rsvps[phone] });
+    }
+
     if (pathname === "/api/export.csv" && req.method === "GET") {
       res.writeHead(200, {
         "Content-Type": "text/csv; charset=utf-8",
@@ -316,7 +415,17 @@ const server = http.createServer(async (req, res) => {
 
       if (pathname === "/api/admin/data" && req.method === "GET") {
         const all = rows.slice().sort((a, b) => String(b.time).localeCompare(String(a.time)));
-        return sendJson(res, 200, { ok: true, config, rows: all });
+        return sendJson(res, 200, { ok: true, config, rows: all, rsvps: Object.values(rsvps), yzLog: yzLog.slice().reverse() });
+      }
+
+      if (pathname === "/api/admin/rsvp-delete" && req.method === "POST") {
+        const body = await readBody(req);
+        const phone = cleanPhone(body.phone);
+        if (!rsvps[phone]) return sendJson(res, 404, { ok: false, error: "הרישום לא נמצא" });
+        logYz("delete", rsvps[phone], "admin");
+        delete rsvps[phone];
+        await saveRsvp();
+        return sendJson(res, 200, { ok: true });
       }
 
       if (pathname === "/api/admin/delete-report" && req.method === "POST") {
@@ -350,8 +459,11 @@ const server = http.createServer(async (req, res) => {
           const act = newConfig.activities.find((a) => a.id === r.activity);
           if (act && r.activityName !== act.name) { r.activityName = act.name; changed = true; }
         }
+        let rsvpChanged = false;
+        for (const r of Object.values(rsvps)) for (const [from, to] of renames) if (r.family === from) { r.family = to; rsvpChanged = true; }
         config = newConfig;
         await saveConfig();
+        if (rsvpChanged) await saveRsvp();
         if (changed) await save();
         return sendJson(res, 200, { ok: true, config });
       }

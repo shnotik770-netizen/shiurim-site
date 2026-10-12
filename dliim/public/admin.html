@@ -35,7 +35,7 @@
   .icon-btn:hover{background:var(--soft)}
   .icon-btn.del:hover{background:#fde8e4; color:var(--red)}
 
-  .tabs{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:14px}
+  .tabs{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; margin-top:14px}
   .tabs button{background:#fff; color:var(--plum); border:1px solid var(--line); padding:9px 4px; font-size:14px; line-height:1.2}
   .tabs button[aria-selected="true"]{background:var(--plum); color:#fff; border-color:var(--plum)}
 
@@ -85,6 +85,33 @@
   .login input{width:100%; margin:12px 0; font-size:18px; text-align:center}
   .login button{width:100%; font-size:18px; padding:12px}
   [hidden]{display:none !important}
+  /* ---------- יארצייט ---------- */
+  .yz-tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin-bottom:12px}
+  .yz-tile{background:#f4f7fc; border:1px solid #dfe6f2; border-radius:14px; padding:10px; text-align:center}
+  .yz-tile b{display:block; font-size:26px; color:#1f3b6e; line-height:1.1}
+  .yz-tile span{font-size:13px; color:var(--muted); font-weight:700}
+  .yz-sub{font-size:16px; font-weight:800; color:var(--plum); margin:16px 0 8px}
+  .yz-table{width:100%; border-collapse:collapse; font-size:14px}
+  .yz-table th{background:#f4f7fc; color:#1f3b6e; font-weight:800; text-align:right; padding:8px 6px; border-bottom:2px solid #dfe6f2}
+  .yz-table td{padding:8px 6px; border-bottom:1px solid #eef1f6; vertical-align:top}
+  .yz-table td.num, .yz-table th.num{text-align:center}
+  .yz-table tr.fam td{background:#fbf2e2; font-weight:800}
+  .yz-wrap{overflow-x:auto; border:1px solid #e6e9f0; border-radius:12px}
+  .missing-fams{font-size:14px; color:var(--red); font-weight:700}
+  .log{display:grid; gap:6px; max-height:420px; overflow:auto}
+  .log .e{background:var(--soft); border-radius:10px; padding:8px 10px; font-size:14px}
+  .log .e b{color:var(--plum)}
+  .log .e .t{color:var(--muted); font-size:12px; font-weight:700}
+  .log .e .chg{color:#1f3b6e; font-size:13px}
+  .tag{display:inline-block; font-size:12px; font-weight:800; padding:1px 8px; border-radius:99px; margin-inline-start:6px}
+  .tag.create{background:#e5f6e8; color:var(--green)} .tag.update{background:#eef2f9; color:#1f3b6e} .tag.delete{background:#fde8e4; color:var(--red)}
+  .yz-set{display:grid; gap:8px}
+  .yz-set > label{font-size:13px; font-weight:800; color:var(--muted)}
+  .ev-row{display:grid; grid-template-columns:52px 1fr 80px auto; gap:6px; align-items:center}
+  .ev-row .place{grid-column:2 / 4}
+  .q-row{display:grid; grid-template-columns:2fr 1fr auto; gap:6px; align-items:center}
+  .q-row input, .ev-row input{min-width:0}
+  .yz-openlbl{display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; color:var(--plum); cursor:pointer}
 </style>
 </head>
 <body>
@@ -118,6 +145,7 @@
       <button role="tab" data-tab="families" aria-selected="false">משפחות</button>
       <button role="tab" data-tab="cats" aria-selected="false">קטגוריות</button>
       <button role="tab" data-tab="settings" aria-selected="false">יעד</button>
+      <button role="tab" data-tab="yz" aria-selected="false">יארצייט</button>
     </div>
 
     <!-- דיווחים -->
@@ -158,6 +186,36 @@
       <h2 style="margin-top:16px">⭐ יעד בונוס</h2>
       <p class="hint">רשות. כשמגיעים ליעד, האתר עובר ל"סבב בונוס" בעיצוב זהב ומראה כמה נשאר ליעד הבונוס. משאירים 0 או ריק כדי לבטל.</p>
       <div class="edit-row"><input class="grow" type="number" id="bonusGoal" min="0" max="100000" placeholder="למשל 1000" /></div>
+    </section>
+
+    <!-- יארצייט -->
+    <section class="card" data-panel="yz" hidden>
+      <h2>🕯️ רישום ליארצייט</h2>
+      <div class="yz-tiles" id="yzTiles"></div>
+      <button class="ghost" id="yzCsv" type="button">⬇️ הורדה לאקסל</button>
+
+      <div class="yz-sub">לפי משפחה</div>
+      <div class="yz-wrap"><table class="yz-table" id="yzTable"></table></div>
+      <div class="missing-fams" id="yzMissing" style="margin-top:8px"></div>
+
+      <div class="yz-sub">📜 יומן פעולות</div>
+      <div class="log" id="yzLog"></div>
+
+      <div class="yz-sub">⚙️ הגדרות הטופס</div>
+      <div class="yz-set">
+        <label class="yz-openlbl"><input type="checkbox" id="yzOpenChk" /> הרישום פתוח (כשמבטלים — הטופס מציג "הרישום נסגר")</label>
+        <label>כותרת</label><input type="text" id="yzTitleIn" maxlength="100" />
+        <label>תאריך (טקסט חופשי)</label><input type="text" id="yzDateIn" maxlength="60" />
+        <label>הערה לנרשמים (רשות)</label><input type="text" id="yzNoteIn" maxlength="200" />
+        <label>אירועים: אייקון · שם · שעה · מקום</label>
+        <div class="list" id="yzEvents"></div>
+        <button class="ghost" id="yzAddEv" type="button">+ אירוע</button>
+        <label style="margin-top:6px">כותרת שדה המשפחה</label><input type="text" id="yzFamLabel" maxlength="40" />
+        <label>שאלות מספריות: שאלה · הבהרה</label>
+        <div class="list" id="yzQEdit"></div>
+        <button class="ghost" id="yzAddQ" type="button">+ שאלה</button>
+        <p class="hint" style="margin:4px 0 0">טלפון, שם פרטי ומשפחה נשאלים תמיד. שינוי ניסוח של שאלה שומר את התשובות שכבר התקבלו.</p>
+      </div>
     </section>
 
     <div class="savebar" id="savebar">
@@ -241,7 +299,7 @@
     $("fCat").innerHTML = `<option value="">כל הקטגוריות</option>` +
       data.config.activities.map((a) => `<option value="${esc(a.id)}"${a.id === cat ? " selected" : ""}>${esc(a.name)}</option>`).join("");
 
-    renderReports(); renderFamilies(); renderCats();
+    renderReports(); renderFamilies(); renderCats(); renderYz();
     $("goal").value = draft.goal;
     $("bonusGoal").value = draft.bonusGoal || "";
     markDirty();
@@ -294,6 +352,106 @@
         </div>
       </div>`).join("");
   }
+
+  // ---------- יארצייט ----------
+  const actName = { create: "נרשם", update: "עדכן", delete: "נמחק ע\"י מנהל" };
+  function renderYz() {
+    const y = draft.yahrzeit, qs = data.config.yahrzeit.questions;
+    const list = (data.rsvps || []).slice().sort((a, b) => a.family.localeCompare(b.family, "he") || a.name.localeCompare(b.name, "he"));
+    const sum = (id) => list.reduce((t, r) => t + (Number(r.answers[id]) || 0), 0);
+    const famsIn = new Set(list.map((r) => r.family));
+    $("yzTiles").innerHTML =
+      `<div class="yz-tile"><b>${list.length}</b><span>נרשמים</span></div>` +
+      `<div class="yz-tile"><b>${famsIn.size}/${data.config.families.length}</b><span>משפחות</span></div>` +
+      qs.map((q) => `<div class="yz-tile"><b>${sum(q.id)}</b><span>${esc(q.label)}</span></div>`).join("");
+    // טבלה לפי משפחה, עם שורת סיכום למשפחה שיש בה כמה נרשמים
+    let rowsHtml = "";
+    const byFam = {};
+    list.forEach((r) => (byFam[r.family] = byFam[r.family] || []).push(r));
+    Object.keys(byFam).sort((a, b) => a.localeCompare(b, "he")).forEach((fam) => {
+      const rs = byFam[fam];
+      if (rs.length > 1) rowsHtml += `<tr class="fam"><td colspan="2">${esc(fam)} · סה"כ</td>${qs.map((q) => `<td class="num">${rs.reduce((t, r) => t + (r.answers[q.id] || 0), 0)}</td>`).join("")}<td></td></tr>`;
+      rs.forEach((r) => {
+        rowsHtml += `<tr><td><b>${esc(r.name)}</b><br><small>${esc(r.family)}</small></td>
+          <td><a href="tel:${esc(r.phone)}" dir="ltr">${esc(r.phone)}</a><br><small>${hebDate(r.time)} ${hebTime(r.time)}</small></td>
+          ${qs.map((q) => `<td class="num">${r.answers[q.id] ?? "—"}</td>`).join("")}
+          <td><button class="icon-btn del" data-yzdel="${esc(r.phone)}" title="מחיקה" aria-label="מחיקת רישום">🗑️</button></td></tr>`;
+      });
+    });
+    $("yzTable").innerHTML = list.length
+      ? `<thead><tr><th>שם</th><th>טלפון</th>${qs.map((q) => `<th class="num">${esc(q.label)}</th>`).join("")}<th></th></tr></thead><tbody>${rowsHtml}</tbody>`
+      : `<tbody><tr><td class="empty">עוד אין נרשמים</td></tr></tbody>`;
+    const missing = data.config.families.filter((f) => !famsIn.has(f));
+    $("yzMissing").textContent = missing.length ? `עוד לא נרשמו: ${missing.join(" · ")}` : "✓ כל המשפחות נרשמו";
+    // יומן פעולות
+    const qLabel = (id) => (qs.find((q) => q.id === id) || {}).label || id;
+    $("yzLog").innerHTML = (data.yzLog || []).length ? data.yzLog.map((e) => {
+      let chg = "";
+      if (e.action === "update" && e.before) {
+        const diffs = [];
+        if (e.before.name !== e.name) diffs.push(`שם: ${esc(e.before.name)} ← ${esc(e.name)}`);
+        if (e.before.family !== e.family) diffs.push(`משפחה: ${esc(e.before.family)} ← ${esc(e.family)}`);
+        Object.keys(e.answers || {}).forEach((k) => { if ((e.before.answers || {})[k] !== e.answers[k]) diffs.push(`${esc(qLabel(k))}: ${(e.before.answers || {})[k] ?? "—"} ← ${e.answers[k]}`); });
+        chg = diffs.length ? diffs.join(" · ") : "ללא שינוי";
+      } else {
+        chg = Object.entries(e.answers || {}).map(([k, v]) => `${esc(qLabel(k))}: ${v}`).join(" · ");
+      }
+      return `<div class="e"><span class="t">${hebDate(e.time)} ${hebTime(e.time)}</span><span class="tag ${e.action}">${actName[e.action] || e.action}</span><br>
+        <b>${esc(e.name)}</b> · ${esc(e.family)} · <span dir="ltr">${esc(e.phone)}</span><div class="chg">${chg}</div></div>`;
+    }).join("") : `<div class="empty">אין עדיין פעולות</div>`;
+    // הגדרות
+    $("yzOpenChk").checked = y.open !== false;
+    $("yzTitleIn").value = y.title; $("yzDateIn").value = y.date; $("yzNoteIn").value = y.note || ""; $("yzFamLabel").value = y.familyLabel;
+    $("yzEvents").innerHTML = y.events.map((e, i) => `
+      <div class="cat"><div class="ev-row">
+        <input class="icon" value="${esc(e.icon)}" data-ev="${i}" data-k="icon" maxlength="8" aria-label="אייקון" />
+        <input value="${esc(e.label)}" data-ev="${i}" data-k="label" maxlength="60" placeholder="שם האירוע" />
+        <input value="${esc(e.time)}" data-ev="${i}" data-k="time" maxlength="20" placeholder="שעה" />
+        <button class="icon-btn del" data-delev="${i}" aria-label="מחיקת אירוע">🗑️</button>
+        <input class="place" value="${esc(e.place)}" data-ev="${i}" data-k="place" maxlength="80" placeholder="מקום" />
+      </div></div>`).join("");
+    $("yzQEdit").innerHTML = y.questions.map((q, i) => `
+      <div class="q-row">
+        <input value="${esc(q.label)}" data-qq="${i}" data-k="label" maxlength="80" placeholder="השאלה" />
+        <input value="${esc(q.hint || "")}" data-qq="${i}" data-k="hint" maxlength="80" placeholder="הבהרה (רשות)" />
+        <button class="icon-btn del" data-delq="${i}" aria-label="מחיקת שאלה">🗑️</button>
+      </div>`).join("");
+  }
+  const yzSet = (k, v) => { draft.yahrzeit[k] = v; markDirty(); };
+  $("yzOpenChk").addEventListener("change", (e) => yzSet("open", e.target.checked));
+  $("yzTitleIn").addEventListener("input", (e) => yzSet("title", e.target.value));
+  $("yzDateIn").addEventListener("input", (e) => yzSet("date", e.target.value));
+  $("yzNoteIn").addEventListener("input", (e) => yzSet("note", e.target.value));
+  $("yzFamLabel").addEventListener("input", (e) => yzSet("familyLabel", e.target.value));
+  $("yzEvents").addEventListener("input", (e) => { const i = e.target.dataset.ev; if (i === undefined) return; draft.yahrzeit.events[i][e.target.dataset.k] = e.target.value; markDirty(); });
+  $("yzQEdit").addEventListener("input", (e) => { const i = e.target.dataset.qq; if (i === undefined) return; draft.yahrzeit.questions[i][e.target.dataset.k] = e.target.value; markDirty(); });
+  $("yzEvents").addEventListener("click", (e) => { const i = e.target.closest("[data-delev]")?.dataset.delev; if (i === undefined) return; draft.yahrzeit.events.splice(+i, 1); renderYz(); markDirty(); });
+  $("yzQEdit").addEventListener("click", (e) => {
+    const i = e.target.closest("[data-delq]")?.dataset.delq; if (i === undefined) return;
+    if (!confirm(`למחוק את השאלה "${draft.yahrzeit.questions[+i].label}"?\nהתשובות שכבר נשמרו לא יימחקו, אבל לא יוצגו.`)) return;
+    draft.yahrzeit.questions.splice(+i, 1); renderYz(); markDirty();
+  });
+  $("yzAddEv").addEventListener("click", () => { draft.yahrzeit.events.push({ icon: "📍", label: "", time: "", place: "" }); renderYz(); markDirty(); });
+  $("yzAddQ").addEventListener("click", () => { draft.yahrzeit.questions.push({ id: "", label: "", hint: "" }); renderYz(); markDirty(); });
+  $("yzTable").addEventListener("click", async (e) => {
+    const phone = e.target.closest("[data-yzdel]")?.dataset.yzdel;
+    if (!phone || busy) return;
+    const r = data.rsvps.find((x) => x.phone === phone);
+    if (!confirm(`למחוק את הרישום של ${r.name} (${r.family})?`)) return;
+    busy = true;
+    try { await api("/api/admin/rsvp-delete", { phone }); await load(); toast("הרישום נמחק"); }
+    catch (err) { toast("לא נמחק: " + err.message); }
+    finally { busy = false; }
+  });
+  $("yzCsv").addEventListener("click", () => {
+    const qs = data.config.yahrzeit.questions;
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [["משפחה", "שם פרטי", "טלפון", ...qs.map((x) => x.label), "עודכן"].map(q).join(",")];
+    (data.rsvps || []).forEach((r) => lines.push([r.family, r.name, r.phone, ...qs.map((x) => r.answers[x.id] ?? ""), `${hebDate(r.time)} ${hebTime(r.time)}`].map(q).join(",")));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = "yahrzeit.csv"; a.click();
+  });
 
   // ---------- אירועים ----------
   document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {

@@ -178,6 +178,65 @@
   body.view-only .fab, body.view-only #dlg{display:none !important}
   body.view-only .wrap{padding-bottom:40px}
 
+  /* ---------- רישום ליארצייט (עיצוב רשמי ונקי) ---------- */
+  .yz-banner{
+    margin-top:16px; display:flex; align-items:center; gap:14px; width:100%; text-align:right; cursor:pointer;
+    font:inherit; color:#1f2a44; background:#fff; border:1px solid #d9dfeb; border-inline-start:5px solid #1f3b6e;
+    border-radius:16px; padding:14px 16px; box-shadow:0 4px 16px rgba(31,59,110,.10);
+  }
+  .yz-banner .ic{font-size:30px; width:48px; height:48px; flex:0 0 48px; display:grid; place-items:center; background:#eef2f9; border-radius:12px}
+  .yz-banner b{display:block; font-size:17px; font-weight:800; color:#1f3b6e}
+  .yz-banner small{display:block; font-size:14px; color:#5b6680; font-weight:600}
+  .yz-banner .go{margin-inline-start:auto; background:#1f3b6e; color:#fff; font-weight:800; font-size:14px; padding:8px 14px; border-radius:10px; white-space:nowrap}
+  body.view-only .yz-banner{display:none}
+
+  dialog.yz{
+    width:min(520px, calc(100% - 24px)); max-height:calc(100dvh - 24px); overflow:auto; padding:0;
+    border:none; border-radius:18px; background:#fff; color:#1f2a44; box-shadow:0 24px 60px rgba(15,25,50,.35);
+    font-family:"Assistant",system-ui,sans-serif;
+  }
+  dialog.yz::backdrop{background:rgba(15,25,50,.55)}
+  .yz-head{background:linear-gradient(135deg,#1f3b6e,#2c5291); color:#fff; padding:20px 20px 18px; position:relative}
+  .yz-head .kicker{font-size:13px; font-weight:700; letter-spacing:.04em; color:#c9d6ef}
+  .yz-head h2{margin:4px 0 2px; font-size:22px; font-weight:800; line-height:1.3}
+  .yz-head .date{font-size:16px; font-weight:700; color:#ffe7a3}
+  .yz-head .x{position:absolute; top:14px; left:14px; background:rgba(255,255,255,.15); color:#fff}
+  .yz-body{padding:18px 20px 20px}
+  .yz-events{display:grid; gap:8px; margin-bottom:16px}
+  .yz-ev{display:flex; gap:12px; align-items:flex-start; border:1px solid #e3e8f2; border-radius:12px; padding:10px 12px; background:#f8fafd}
+  .yz-ev .ic{font-size:22px; line-height:1.2}
+  .yz-ev b{display:block; font-size:16px; color:#1f3b6e}
+  .yz-ev .meta{font-size:14px; color:#4a5570; font-weight:600}
+  .yz-ev .time{display:inline-block; background:#1f3b6e; color:#fff; border-radius:6px; padding:0 7px; margin-inline-end:6px; font-weight:800}
+  .yz-note{font-size:14px; color:#4a5570; background:#fff8e6; border:1px solid #f2dfa8; border-radius:10px; padding:8px 12px; margin-bottom:14px}
+  .yz-field{margin-top:14px}
+  .yz-field > label{display:block; font-size:15px; font-weight:800; color:#1f2a44; margin-bottom:6px}
+  .yz-field > label small{font-weight:600; color:#6b7590}
+  .yz select{border-color:#d9dfeb; font-size:17px}
+  .yz-in{width:100%; font:inherit; font-size:17px; font-weight:700; color:#1f2a44; padding:11px 14px; border-radius:12px; border:2px solid #d9dfeb; background:#fff}
+  .yz-in:focus{outline:none; border-color:#2c5291}
+  #yzPhone{direction:ltr; text-align:right}
+  .yz-in.bad{border-color:#e0533a}
+  .yz select:focus{border-color:#2c5291}
+  .yz-q{display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid #e3e8f2; border-radius:12px; padding:10px 12px}
+  .yz-q .txt{font-size:15px; font-weight:800; color:#1f2a44; line-height:1.3}
+  .yz-q .txt small{display:block; font-weight:600; color:#6b7590; font-size:13px}
+  .yz-step{display:flex; align-items:center; gap:6px; flex:0 0 auto}
+  .yz-step button{width:38px; height:38px; border-radius:10px; border:1px solid #cfd7e6; background:#f3f6fb; color:#1f3b6e; font-size:22px; font-weight:800; cursor:pointer}
+  .yz-step input{width:56px; height:38px; text-align:center; font:inherit; font-size:18px; font-weight:800; color:#1f2a44; border:1px solid #cfd7e6; border-radius:10px}
+  .yz-qs{display:grid; gap:8px}
+  .yz-status{font-size:14px; font-weight:700; margin-top:10px; padding:8px 12px; border-radius:10px; display:none}
+  .yz-status.info{display:block; background:#eef2f9; color:#1f3b6e}
+  .yz-status.err{display:block; background:#fde8e4; color:#a8321a}
+  .yz-submit{width:100%; margin-top:16px; padding:14px; border:none; border-radius:12px; cursor:pointer; font:inherit; font-size:18px; font-weight:800; color:#fff; background:#1f3b6e}
+  .yz-submit:disabled{opacity:.6; cursor:not-allowed}
+  .yz-done{text-align:center; padding:10px 0}
+  .yz-done .big{font-size:48px; color:#2b9a55; line-height:1}
+  .yz-done h3{margin:8px 0 4px; font-size:20px; color:#1f3b6e}
+  .yz-done ul{list-style:none; padding:0; margin:12px 0 0; text-align:right; border:1px solid #e3e8f2; border-radius:12px}
+  .yz-done li{display:flex; justify-content:space-between; padding:9px 12px; border-top:1px solid #eef1f6; font-weight:700}
+  .yz-done li:first-child{border-top:none}
+
   /* ---------- חלון דיווח ---------- */
   .fab{
     position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:20;
@@ -316,6 +375,12 @@
     <div class="quote">אדרבא להראות בעצמו תמיד תנועות משמחות, כאילו הוא מלא שמחה בליבו... וסופו להיות כן.</div>
   </header>
 
+  <button type="button" class="yz-banner" id="yzOpen" hidden>
+    <span class="ic">🕯️</span>
+    <span><b id="yzBTitle">רישום ליארצייט</b><small id="yzBDate"></small></span>
+    <span class="go">להרשמה</span>
+  </button>
+
   <section class="card tap" id="progressCard" role="button" tabindex="0" aria-haspopup="dialog" aria-label="פירוט הדליים שנאספו">
     <div class="progress">
       <svg class="bucket" id="bucketSvg" viewBox="0 0 120 130" role="button" tabindex="0" aria-label="הגדלת דלי השמחה למסך מלא">
@@ -419,6 +484,37 @@
     <div class="big-hint">לחצו על דלי קטן כדי לראות איך אוספים דליים 👆</div>
   </div>
 </dialog>
+<dialog class="yz" id="yz" aria-labelledby="yzTitle">
+  <div class="yz-head">
+    <div class="kicker">טופס רישום</div>
+    <h2 id="yzTitle"></h2>
+    <div class="date" id="yzDate"></div>
+    <button type="button" class="x" id="yzClose" aria-label="סגירה">✕</button>
+  </div>
+  <div class="yz-body">
+    <div id="yzForm">
+      <div class="yz-events" id="yzEvents"></div>
+      <div class="yz-note" id="yzNote" hidden></div>
+      <div class="yz-field">
+        <label for="yzPhone">מספר טלפון <small>— נרשמתם כבר? הקלידו את המספר כדי לעדכן</small></label>
+        <input class="yz-in" id="yzPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000" maxlength="16" />
+      </div>
+      <div class="yz-field">
+        <label for="yzName">שם פרטי</label>
+        <input class="yz-in" id="yzName" type="text" autocomplete="given-name" maxlength="40" />
+      </div>
+      <div class="yz-field">
+        <label for="yzFamily" id="yzFamilyLabel">משפחה</label>
+        <select id="yzFamily"><option value="">בחרו משפחה...</option></select>
+      </div>
+      <div class="yz-field"><div class="yz-qs" id="yzQs"></div></div>
+      <div class="yz-status" id="yzStatus"></div>
+      <button type="button" class="yz-submit" id="yzSend">שליחת רישום</button>
+    </div>
+    <div class="yz-done" id="yzDone" hidden></div>
+  </div>
+</dialog>
+
 <button type="button" class="fab" id="open">🪣 דיווח חדש</button>
 <div class="toast" id="toast" role="status"></div>
 <div class="splash" id="splash"></div>
@@ -917,7 +1013,92 @@
     } finally { busy = false; update(); }
   }
 
+  // ---------- רישום ליארצייט ----------
+  let yz = null;
+  async function loadYz() {
+    try {
+      yz = await api("/api/yahrzeit");
+      $("yzBTitle").textContent = yz.open ? "רישום ליארצייט" : "יארצייט · הרישום נסגר";
+      $("yzBDate").innerHTML = [esc(yz.date), yz.events.filter((e) => e.time).map((e) => `${esc(e.icon || "")} ${esc(e.time)}`).join(" · ")].filter(Boolean).join("<br>");
+      $("yzOpen").hidden = false;
+    } catch {}
+  }
+  function renderYz() {
+    $("yzTitle").textContent = yz.title;
+    $("yzDate").textContent = yz.date;
+    $("yzEvents").innerHTML = yz.events.map((e) => `
+      <div class="yz-ev"><span class="ic">${esc(e.icon || "📍")}</span>
+        <div><b>${esc(e.label)}</b><div class="meta">${e.time ? `<span class="time">${esc(e.time)}</span>` : ""}${esc(e.place)}</div></div>
+      </div>`).join("");
+    $("yzNote").hidden = !yz.note; $("yzNote").textContent = yz.note;
+    $("yzFamilyLabel").textContent = yz.familyLabel;
+    $("yzFamily").innerHTML = `<option value="">בחרו משפחה...</option>` + yz.families.map((f) => `<option>${esc(f)}</option>`).join("");
+    $("yzQs").innerHTML = yz.questions.map((q) => `
+      <div class="yz-q"><div class="txt">${esc(q.label)}${q.hint ? `<small>${esc(q.hint)}</small>` : ""}</div>
+        <div class="yz-step"><button type="button" data-step="-1" data-q="${esc(q.id)}" aria-label="פחות">−</button>
+          <input type="number" min="0" max="200" inputmode="numeric" value="0" data-q="${esc(q.id)}" aria-label="${esc(q.label)}" />
+          <button type="button" data-step="1" data-q="${esc(q.id)}" aria-label="יותר">+</button></div>
+      </div>`).join("");
+    $("yzForm").hidden = false; $("yzDone").hidden = true;
+    $("yzPhone").value = ""; $("yzName").value = ""; lookedUp = ""; $("yzPhone").classList.remove("bad");
+    $("yzSend").textContent = "שליחת רישום";
+    yzStatus(yz.open ? "" : "info", yz.open ? "" : "הרישום נסגר. לשאלות פנו למארגנים.");
+    $("yzSend").disabled = !yz.open;
+  }
+  function yzStatus(kind, text) { const el = $("yzStatus"); el.className = "yz-status " + kind; el.textContent = text; }
+  $("yzOpen").addEventListener("click", async () => { await loadYz(); if (!yz) return; renderYz(); $("yz").showModal(); });
+  $("yzClose").addEventListener("click", () => $("yz").close());
+  $("yzQs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-step]"); if (!b) return;
+    const inp = $("yzQs").querySelector(`input[data-q="${b.dataset.q}"]`);
+    inp.value = Math.max(0, Math.min(200, (Number(inp.value) || 0) + Number(b.dataset.step)));
+  });
+  // טלפון: 050-1234567 / 0501234567 / +972501234567
+  const normPhone = (p) => { let d = String(p).replace(/\D/g, ""); if (d.startsWith("972")) d = "0" + d.slice(3); return /^0\d{8,9}$/.test(d) ? d : ""; };
+  let lookedUp = "";
+  async function lookupPhone() {
+    const phone = normPhone($("yzPhone").value);
+    $("yzPhone").classList.toggle("bad", !!$("yzPhone").value && !phone);
+    if (!phone || phone === lookedUp) return;
+    lookedUp = phone;
+    try {
+      const r = await api("/api/yahrzeit/lookup", { phone });
+      if (r.rsvp) {
+        $("yzName").value = r.rsvp.name;
+        $("yzFamily").value = yz.families.includes(r.rsvp.family) ? r.rsvp.family : "";
+        $("yzQs").querySelectorAll("input[data-q]").forEach((i) => { i.value = r.rsvp.answers[i.dataset.q] ?? 0; });
+        yzStatus("info", `שלום ${r.rsvp.name}! מצאנו את הרישום שלכם (${hebDate(r.rsvp.time)}). אפשר לעדכן ולשלוח שוב.`);
+        $("yzSend").textContent = "עדכון רישום";
+      } else if (!$("yzStatus").classList.contains("err")) {
+        yzStatus("", ""); $("yzSend").textContent = "שליחת רישום";
+      }
+    } catch {}
+  }
+  $("yzPhone").addEventListener("input", () => { if (normPhone($("yzPhone").value)) lookupPhone(); });
+  $("yzPhone").addEventListener("blur", lookupPhone);
+  $("yzSend").addEventListener("click", async () => {
+    const phone = normPhone($("yzPhone").value), name = $("yzName").value.trim(), family = $("yzFamily").value;
+    if (!phone) { yzStatus("err", "נא להזין מספר טלפון תקין"); $("yzPhone").classList.add("bad"); $("yzPhone").focus(); return; }
+    if (!name) { yzStatus("err", "נא להזין שם פרטי"); $("yzName").focus(); return; }
+    if (!family) { yzStatus("err", "נא לבחור משפחה"); $("yzFamily").focus(); return; }
+    const answers = {};
+    $("yzQs").querySelectorAll("input[data-q]").forEach((i) => { answers[i.dataset.q] = Math.max(0, Math.floor(Number(i.value) || 0)); });
+    $("yzSend").disabled = true; $("yzSend").textContent = "שולח...";
+    try {
+      const r = await api("/api/yahrzeit", { phone, name, family, answers });
+      $("yzForm").hidden = true; $("yzDone").hidden = false;
+      $("yzDone").innerHTML = `<div class="big">✓</div><h3>${r.updated ? "הרישום עודכן" : "הרישום התקבל"} — תודה!</h3>
+        <div style="color:#4a5570;font-weight:700">${esc(name)} · ${esc(family)} · <span dir="ltr">${esc(phone)}</span></div>
+        <div style="color:#6b7590;font-size:14px;margin-top:6px">כדי לעדכן בהמשך — פותחים את הטופס ומקלידים את מספר הטלפון.</div>
+        <ul>${yz.questions.map((q) => `<li><span>${esc(q.label)}</span><span>${answers[q.id]}</span></li>`).join("")}</ul>
+        <button type="button" class="yz-submit" id="yzOk">סגירה</button>`;
+      $("yzOk").addEventListener("click", () => $("yz").close());
+    } catch (err) { yzStatus("err", "השליחה לא הצליחה — " + err.message); }
+    finally { $("yzSend").disabled = false; $("yzSend").textContent = "שליחת רישום"; }
+  });
+
   (async () => {
+    loadYz();
     daysLeft();
     try {
       const cfg = await api("/api/config");
