@@ -362,7 +362,8 @@
     const famsIn = new Set(list.map((r) => r.family));
     $("yzTiles").innerHTML =
       `<div class="yz-tile"><b>${list.length}</b><span>נרשמים</span></div>` +
-      `<div class="yz-tile"><b>${famsIn.size}/${data.config.families.length}</b><span>משפחות</span></div>` +
+      `<div class="yz-tile"><b>${data.config.families.filter((f) => famsIn.has(f)).length}/${data.config.families.length}</b><span>משפחות מהרשימה</span></div>` +
+      `<div class="yz-tile"><b>${[...famsIn].filter((f) => !data.config.families.includes(f)).length}</b><span>אורחים / משפחות נוספות</span></div>` +
       qs.map((q) => `<div class="yz-tile"><b>${sum(q.id)}</b><span>${esc(q.label)}</span></div>`).join("");
     // טבלה לפי משפחה, עם שורת סיכום למשפחה שיש בה כמה נרשמים
     let rowsHtml = "";

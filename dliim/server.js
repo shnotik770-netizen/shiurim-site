@@ -382,7 +382,8 @@ const server = http.createServer(async (req, res) => {
       const family = cleanFamily(body.family);
       if (!phone) return sendJson(res, 400, { ok: false, error: "נא להזין מספר טלפון תקין" });
       if (!name) return sendJson(res, 400, { ok: false, error: "נא להזין שם פרטי" });
-      if (!config.families.includes(family)) return sendJson(res, 400, { ok: false, error: "נא לבחור משפחה מהרשימה" });
+      // משפחה: טקסט חופשי (יש גם אורחים שאינם ברשימת המשפחות)
+      if (!family) return sendJson(res, 400, { ok: false, error: "נא לכתוב שם משפחה" });
       const answers = {};
       for (const q of y.questions) {
         const n = Math.floor(Number(body.answers && body.answers[q.id]));

@@ -504,7 +504,8 @@
       </div>
       <div class="yz-field">
         <label for="yzFamily" id="yzFamilyLabel">משפחה</label>
-        <select id="yzFamily"><option value="">בחרו משפחה...</option></select>
+        <input class="yz-in" id="yzFamily" type="text" list="yzFamList" autocomplete="family-name" maxlength="40" placeholder="הקלידו שם משפחה" />
+        <datalist id="yzFamList"></datalist>
       </div>
       <div class="yz-field"><div class="yz-qs" id="yzQs"></div></div>
       <div class="yz-status" id="yzStatus"></div>
@@ -1031,7 +1032,8 @@
       </div>`).join("");
     $("yzNote").hidden = !yz.note; $("yzNote").textContent = yz.note;
     $("yzFamilyLabel").textContent = yz.familyLabel;
-    $("yzFamily").innerHTML = `<option value="">בחרו משפחה...</option>` + yz.families.map((f) => `<option>${esc(f)}</option>`).join("");
+    $("yzFamList").innerHTML = yz.families.map((f) => `<option value="${esc(f)}"></option>`).join("");   // הצעות בלבד – אפשר לכתוב כל שם
+    $("yzFamily").value = "";
     $("yzQs").innerHTML = yz.questions.map((q) => `
       <div class="yz-q"><div class="txt">${esc(q.label)}${q.hint ? `<small>${esc(q.hint)}</small>` : ""}</div>
         <div class="yz-step"><button type="button" data-step="-1" data-q="${esc(q.id)}" aria-label="פחות">−</button>
@@ -1064,7 +1066,7 @@
       const r = await api("/api/yahrzeit/lookup", { phone });
       if (r.rsvp) {
         $("yzName").value = r.rsvp.name;
-        $("yzFamily").value = yz.families.includes(r.rsvp.family) ? r.rsvp.family : "";
+        $("yzFamily").value = r.rsvp.family;
         $("yzQs").querySelectorAll("input[data-q]").forEach((i) => { i.value = r.rsvp.answers[i.dataset.q] ?? 0; });
         yzStatus("info", `שלום ${r.rsvp.name}! מצאנו את הרישום שלכם (${hebDate(r.rsvp.time)}). אפשר לעדכן ולשלוח שוב.`);
         $("yzSend").textContent = "עדכון רישום";
@@ -1076,10 +1078,10 @@
   $("yzPhone").addEventListener("input", () => { if (normPhone($("yzPhone").value)) lookupPhone(); });
   $("yzPhone").addEventListener("blur", lookupPhone);
   $("yzSend").addEventListener("click", async () => {
-    const phone = normPhone($("yzPhone").value), name = $("yzName").value.trim(), family = $("yzFamily").value;
+    const phone = normPhone($("yzPhone").value), name = $("yzName").value.trim(), family = $("yzFamily").value.trim();
     if (!phone) { yzStatus("err", "נא להזין מספר טלפון תקין"); $("yzPhone").classList.add("bad"); $("yzPhone").focus(); return; }
     if (!name) { yzStatus("err", "נא להזין שם פרטי"); $("yzName").focus(); return; }
-    if (!family) { yzStatus("err", "נא לבחור משפחה"); $("yzFamily").focus(); return; }
+    if (!family) { yzStatus("err", "נא לכתוב שם משפחה"); $("yzFamily").focus(); return; }
     const answers = {};
     $("yzQs").querySelectorAll("input[data-q]").forEach((i) => { answers[i.dataset.q] = Math.max(0, Math.floor(Number(i.value) || 0)); });
     $("yzSend").disabled = true; $("yzSend").textContent = "שולח...";
