@@ -96,6 +96,12 @@
   .yz-table td{padding:8px 6px; border-bottom:1px solid #eef1f6; vertical-align:top}
   .yz-table td.num, .yz-table th.num{text-align:center}
   .yz-table tr.fam td{background:#fbf2e2; font-weight:800}
+  .yz-table th{font-size:12px; padding:6px 4px; line-height:1.25}
+  .yz-table td{padding:7px 4px}
+  .yz-table td a{font-size:13px}
+  .yz-table td small{font-size:11px}
+  .yz-table td.num{font-size:15px; font-weight:800}
+  .yz-table tfoot td{background:#1f3b6e; color:#fff; font-weight:800; font-size:15px; border:none}
   .yz-wrap{overflow-x:auto; border:1px solid #e6e9f0; border-radius:12px}
   .missing-fams{font-size:14px; color:var(--red); font-weight:700}
   .log{display:grid; gap:6px; max-height:420px; overflow:auto}
@@ -380,7 +386,8 @@
       });
     });
     $("yzTable").innerHTML = list.length
-      ? `<thead><tr><th>שם</th><th>טלפון</th>${qs.map((q) => `<th class="num">${esc(q.label)}</th>`).join("")}<th></th></tr></thead><tbody>${rowsHtml}</tbody>`
+      ? `<thead><tr><th>שם</th><th>טלפון</th>${qs.map((q) => `<th class="num">${esc(q.label)}</th>`).join("")}<th></th></tr></thead><tbody>${rowsHtml}</tbody>` +
+        `<tfoot><tr><td colspan="2">סה"כ · ${list.length} נרשמים</td>${qs.map((q) => `<td class="num">${sum(q.id)}</td>`).join("")}<td></td></tr></tfoot>`
       : `<tbody><tr><td class="empty">עוד אין נרשמים</td></tr></tbody>`;
     const missing = data.config.families.filter((f) => !famsIn.has(f));
     $("yzMissing").textContent = missing.length ? `עוד לא נרשמו: ${missing.join(" · ")}` : "✓ כל המשפחות נרשמו";
@@ -449,6 +456,7 @@
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = [["משפחה", "שם פרטי", "טלפון", ...qs.map((x) => x.label), "עודכן"].map(q).join(",")];
     (data.rsvps || []).forEach((r) => lines.push([r.family, r.name, r.phone, ...qs.map((x) => r.answers[x.id] ?? ""), `${hebDate(r.time)} ${hebTime(r.time)}`].map(q).join(",")));
+    lines.push(["סה\"כ", `${(data.rsvps || []).length} נרשמים`, "", ...qs.map((x) => (data.rsvps || []).reduce((t, r) => t + (Number(r.answers[x.id]) || 0), 0)), ""].map(q).join(","));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
     a.download = "yahrzeit.csv"; a.click();
